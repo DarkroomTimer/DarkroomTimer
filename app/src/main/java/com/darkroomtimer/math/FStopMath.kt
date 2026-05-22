@@ -43,7 +43,7 @@ object FStopMath {
 
     fun formatStop(numerator: Int, denominator: Int): String {
         val (n, d) = simplify(numerator, denominator)
-        if (n == 0) return "0"
+        if (n == 0 || d == 0) return "0"
 
         val absN = abs(n)
         val whole = absN / d

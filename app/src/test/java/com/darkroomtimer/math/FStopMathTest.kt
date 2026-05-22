@@ -47,5 +47,6 @@ class FStopMathTest {
         assertEquals("-2/3", FStopMath.formatStop(-2, 3))
         assertEquals("-2 1/3", FStopMath.formatStop(-7, 3))
         assertEquals("-1", FStopMath.formatStop(-3, 3))
+        assertEquals("0", FStopMath.formatStop(1, 0))
     }
 }
