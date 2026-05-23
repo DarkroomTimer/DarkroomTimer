@@ -197,26 +197,18 @@ class StorageServiceTest {
     }
 
     @Test
-    fun `importBackup should reject syntactically invalid JSON`() {
-        runBlocking {
-            try {
-                storageService.importBackup("{")
-            } catch (e: Exception) {
-                assertTrue(e is IllegalArgumentException)
-                assertTrue(e.message!!.contains("Malformed JSON format"))
-            }
+    fun `importBackup should reject syntactically invalid JSON`() = runBlocking {
+        val exception = assertThrows(IllegalArgumentException::class.java) {
+            runBlocking { storageService.importBackup("{") }
         }
+        assertTrue(exception.message!!.contains("Malformed JSON format"))
     }
 
     @Test
-    fun `importBackup should reject empty or non-JSON string`() {
-        runBlocking {
-            try {
-                storageService.importBackup("")
-            } catch (e: Exception) {
-                assertTrue(e is IllegalArgumentException)
-                assertTrue(e.message!!.contains("Malformed JSON format"))
-            }
+    fun `importBackup should reject empty or non-JSON string`() = runBlocking {
+        val exception = assertThrows(IllegalArgumentException::class.java) {
+            runBlocking { storageService.importBackup("") }
         }
+        assertTrue(exception.message!!.contains("Malformed JSON format"))
     }
 }
