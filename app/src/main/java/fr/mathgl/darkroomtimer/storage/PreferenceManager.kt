@@ -2,6 +2,7 @@ package fr.mathgl.darkroomtimer.storage
 
 import android.content.Context
 import android.content.SharedPreferences
+import fr.mathgl.darkroomtimer.math.ContrastGrade
 
 /**
  * Manager for handling basic scalar settings for the application using SharedPreferences.
@@ -34,6 +35,10 @@ class PreferenceManager private constructor(context: Context) {
     var defaultContrastGradeIndex: Int
         get() = prefs.getInt(KEY_DEFAULT_CONTRAST_GRADE_INDEX, 5)
         set(value) = prefs.edit().putInt(KEY_DEFAULT_CONTRAST_GRADE_INDEX, value).apply()
+
+    var defaultContrastGrade: ContrastGrade
+        get() = ContrastGrade.fromIndex(defaultContrastGradeIndex)
+        set(value) { defaultContrastGradeIndex = value.index }
 
     var defaultStopNumerator: Int
         get() = prefs.getInt(KEY_DEFAULT_STOP_NUMERATOR, 1)
