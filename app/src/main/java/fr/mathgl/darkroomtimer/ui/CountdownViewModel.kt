@@ -1,9 +1,12 @@
 package fr.mathgl.darkroomtimer.ui
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import android.content.Intent
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import fr.mathgl.darkroomtimer.math.ContrastGrade
 import fr.mathgl.darkroomtimer.system.CountdownTimer
+import fr.mathgl.darkroomtimer.system.ForegroundTimerService
 import fr.mathgl.darkroomtimer.system.RelayState
 import fr.mathgl.darkroomtimer.system.TimerState
 import kotlinx.coroutines.Job
@@ -21,7 +24,7 @@ data class CountdownUiState(
     val configuredTimeMs: Long
 )
 
-class CountdownViewModel : ViewModel() {
+class CountdownViewModel(application: Application) : AndroidViewModel(application) {
 
     private val timer = CountdownTimer()
     private var tickJob: Job? = null
@@ -44,19 +47,22 @@ class CountdownViewModel : ViewModel() {
             timerState = TimerState.RUNNING,
             relayState = RelayState.RUNNING
         )
+        sendServiceIntent(ForegroundTimerService.ACTION_START, timer.remainingMs())
         tickJob = viewModelScope.launch {
             while (true) {
                 delay(50L)
                 val ended = timer.tick()
+                val remaining = maxOf(0L, timer.remainingMs())
                 _uiState.value = currentState().copy(
-                    displayTime = CountdownTimer.formatTime(maxOf(0L, timer.remainingMs())),
+                    displayTime = CountdownTimer.formatTime(remaining),
                     timerState = timer.state,
                     relayState = if (timer.state == TimerState.RUNNING) RelayState.RUNNING else RelayState.IDLE
                 )
-                if (ended) {
-                    tickJob = null
-                    break
-                }
+                sendServiceIntent(
+                    if (ended) ForegroundTimerService.ACTION_STOP else ForegroundTimerService.ACTION_UPDATE,
+                    remaining
+                )
+                if (ended) { tickJob = null; break }
             }
         }
     }
@@ -64,12 +70,12 @@ class CountdownViewModel : ViewModel() {
     fun pause() {
         if (timer.state != TimerState.RUNNING) return
         timer.pause()
-        tickJob?.cancel()
-        tickJob = null
+        tickJob?.cancel(); tickJob = null
         _uiState.value = currentState().copy(
             timerState = TimerState.PAUSED,
             relayState = RelayState.IDLE
         )
+        sendServiceIntent(ForegroundTimerService.ACTION_STOP, 0L)
     }
 
     fun resume() {
@@ -79,14 +85,20 @@ class CountdownViewModel : ViewModel() {
             timerState = TimerState.RUNNING,
             relayState = RelayState.RUNNING
         )
+        sendServiceIntent(ForegroundTimerService.ACTION_START, timer.remainingMs())
         tickJob = viewModelScope.launch {
             while (true) {
                 delay(50L)
                 val ended = timer.tick()
+                val remaining = maxOf(0L, timer.remainingMs())
                 _uiState.value = currentState().copy(
-                    displayTime = CountdownTimer.formatTime(maxOf(0L, timer.remainingMs())),
+                    displayTime = CountdownTimer.formatTime(remaining),
                     timerState = timer.state,
                     relayState = if (timer.state == TimerState.RUNNING) RelayState.RUNNING else RelayState.IDLE
+                )
+                sendServiceIntent(
+                    if (ended) ForegroundTimerService.ACTION_STOP else ForegroundTimerService.ACTION_UPDATE,
+                    remaining
                 )
                 if (ended) { tickJob = null; break }
             }
@@ -95,14 +107,14 @@ class CountdownViewModel : ViewModel() {
 
     fun stop() {
         if (timer.state == TimerState.STOPPED) return
-        tickJob?.cancel()
-        tickJob = null
+        tickJob?.cancel(); tickJob = null
         timer.stop()
         _uiState.value = currentState().copy(
             displayTime = CountdownTimer.formatTime(timer.configuredTimeMs),
             timerState = TimerState.STOPPED,
             relayState = RelayState.IDLE
         )
+        sendServiceIntent(ForegroundTimerService.ACTION_STOP, 0L)
     }
 
     fun adjustTime(deltaMs: Long) {
@@ -120,6 +132,14 @@ class CountdownViewModel : ViewModel() {
     }
 
     private fun currentState() = _uiState.value
+
+    private fun sendServiceIntent(action: String, remainingMs: Long) {
+        val intent = Intent(getApplication(), ForegroundTimerService::class.java).apply {
+            this.action = action
+            putExtra(ForegroundTimerService.EXTRA_REMAINING_MS, remainingMs)
+        }
+        getApplication<Application>().startForegroundService(intent)
+    }
 
     override fun onCleared() {
         super.onCleared()
