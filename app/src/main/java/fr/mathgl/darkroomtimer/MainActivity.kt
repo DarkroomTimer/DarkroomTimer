@@ -12,10 +12,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import fr.mathgl.darkroomtimer.ui.theme.DarkroomTimerTheme
+import com.darkroomtimer.system.LuminosityManager
 
 class MainActivity : ComponentActivity() {
+    private lateinit var luminosityManager: LuminosityManager
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        luminosityManager = LuminosityManager(this)
+        luminosityManager.setWindow(window)
+
         enableEdgeToEdge()
         setContent {
             DarkroomTimerTheme {
@@ -27,6 +34,16 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        luminosityManager.start()
+    }
+
+    override fun onStop() {
+        super.onStop()
+        luminosityManager.stop()
     }
 }
 
