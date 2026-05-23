@@ -71,7 +71,7 @@ class StorageService(
             gson.fromJson(json, BackupData::class.java)
         } catch (e: JsonSyntaxException) {
             throw IllegalArgumentException("Malformed JSON format", e)
-        } ?: throw IllegalArgumentException("Invalid JSON: backup data is null")
+        } ?: throw IllegalArgumentException("Malformed JSON format")
 
         validateBackupData(backupData)
 
