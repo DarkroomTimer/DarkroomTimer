@@ -1,7 +1,7 @@
-package com.darkroomtimer.storage
+package fr.mathgl.darkroomtimer.storage
 
-import com.darkroomtimer.storage.room.EnlargerProfileDao
-import com.darkroomtimer.storage.room.EnlargerProfileEntity
+import fr.mathgl.darkroomtimer.storage.room.EnlargerProfileDao
+import fr.mathgl.darkroomtimer.storage.room.EnlargerProfileEntity
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.*
 import org.junit.Before

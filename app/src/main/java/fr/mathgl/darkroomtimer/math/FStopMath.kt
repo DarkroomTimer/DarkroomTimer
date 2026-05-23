@@ -1,4 +1,4 @@
-package com.darkroomtimer.math
+package fr.mathgl.darkroomtimer.math
 
 import kotlin.math.abs
 import kotlin.math.pow

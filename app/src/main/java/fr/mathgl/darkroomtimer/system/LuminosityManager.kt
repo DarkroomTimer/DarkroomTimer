@@ -1,4 +1,4 @@
-package com.darkroomtimer.system
+package fr.mathgl.darkroomtimer.system
 
 import android.content.Context
 import android.hardware.Sensor

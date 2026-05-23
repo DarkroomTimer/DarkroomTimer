@@ -12,7 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import fr.mathgl.darkroomtimer.ui.theme.DarkroomTimerTheme
-import com.darkroomtimer.system.LuminosityManager
+import fr.mathgl.darkroomtimer.system.LuminosityManager
 
 class MainActivity : ComponentActivity() {
     private lateinit var luminosityManager: LuminosityManager

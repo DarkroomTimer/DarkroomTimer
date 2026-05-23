@@ -1,4 +1,4 @@
-package com.darkroomtimer.storage.room
+package fr.mathgl.darkroomtimer.storage.room
 
 import android.content.Context
 import androidx.room.Database

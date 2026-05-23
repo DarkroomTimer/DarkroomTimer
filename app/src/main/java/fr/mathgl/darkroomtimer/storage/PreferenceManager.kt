@@ -1,4 +1,4 @@
-package com.darkroomtimer.storage
+package fr.mathgl.darkroomtimer.storage
 
 import android.content.Context
 import android.content.SharedPreferences

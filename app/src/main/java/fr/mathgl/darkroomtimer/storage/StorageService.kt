@@ -1,8 +1,8 @@
-package com.darkroomtimer.storage
+package fr.mathgl.darkroomtimer.storage
 
 import android.content.Context
-import com.darkroomtimer.storage.room.EnlargerProfileDao
-import com.darkroomtimer.storage.room.EnlargerProfileEntity
+import fr.mathgl.darkroomtimer.storage.room.EnlargerProfileDao
+import fr.mathgl.darkroomtimer.storage.room.EnlargerProfileEntity
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonSyntaxException

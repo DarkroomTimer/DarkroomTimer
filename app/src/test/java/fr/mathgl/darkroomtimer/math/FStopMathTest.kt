@@ -1,4 +1,4 @@
-package com.darkroomtimer.math
+package fr.mathgl.darkroomtimer.math
 
 import org.junit.Assert.assertEquals
 import org.junit.Test
