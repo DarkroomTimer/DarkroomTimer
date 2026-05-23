@@ -1,6 +1,5 @@
 package com.darkroomtimer.storage
 
-import android.content.Context
 import com.darkroomtimer.storage.room.EnlargerProfileDao
 import com.darkroomtimer.storage.room.EnlargerProfileEntity
 import kotlinx.coroutines.runBlocking
@@ -11,17 +10,15 @@ import org.mockito.ArgumentMatchers.anyInt
 import org.mockito.kotlin.*
 
 class StorageServiceTest {
-    private lateinit var context: Context
     private lateinit var preferenceManager: PreferenceManager
     private lateinit var profileDao: EnlargerProfileDao
     private lateinit var storageService: StorageService
 
     @Before
     fun setup() {
-        context = mock()
         preferenceManager = mock()
         profileDao = mock()
-        storageService = StorageService(context, preferenceManager, profileDao)
+        storageService = StorageService(preferenceManager, profileDao)
     }
 
     @Test

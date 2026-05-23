@@ -5,6 +5,7 @@ import com.darkroomtimer.storage.room.EnlargerProfileDao
 import com.darkroomtimer.storage.room.EnlargerProfileEntity
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
+import com.google.gson.JsonSyntaxException
 import java.time.Instant
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
@@ -14,7 +15,6 @@ import java.time.format.DateTimeFormatter
  * It also provides functionality for exporting and importing application data via JSON.
  */
 class StorageService(
-    private val context: Context,
     private val preferenceManager: PreferenceManager,
     private val profileDao: EnlargerProfileDao
 ) {
@@ -67,8 +67,11 @@ class StorageService(
      * Throws [IllegalArgumentException] if validation fails.
      */
     suspend fun importBackup(json: String) {
-        val backupData = gson.fromJson(json, BackupData::class.java)
-            ?: throw IllegalArgumentException("Invalid JSON: backup data is null")
+        val backupData = try {
+            gson.fromJson(json, BackupData::class.java)
+        } catch (e: JsonSyntaxException) {
+            throw IllegalArgumentException("Malformed JSON format", e)
+        } ?: throw IllegalArgumentException("Invalid JSON: backup data is null")
 
         validateBackupData(backupData)
 
