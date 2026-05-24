@@ -23,6 +23,9 @@ sealed class DevelopmentStep {
     /** Retourne le type d'étape */
     abstract val type: DevelopmentStepType
 
+    /** Copy method returning DevelopmentStep for polymorphic use */
+    abstract fun copyWithElapsed(newElapsed: Long): DevelopmentStep
+
     data class BathStep(
         override val id: Int = 0,
         override val name: String,
@@ -36,6 +39,10 @@ sealed class DevelopmentStep {
         fun isPreEndAlertTriggered(elapsed: Long): Boolean {
             return elapsed >= (durationSeconds - preEndAlertSeconds)
         }
+
+        override fun copyWithElapsed(newElapsed: Long): DevelopmentStep {
+            return this.copy(elapsedSeconds = newElapsed)
+        }
     }
 
     data class PauseStep(
@@ -48,6 +55,10 @@ sealed class DevelopmentStep {
 
         /** Always returns false for PauseStep */
         fun isPreEndAlertTriggered(elapsed: Long): Boolean = false
+
+        override fun copyWithElapsed(newElapsed: Long): DevelopmentStep {
+            return this.copy(elapsedSeconds = newElapsed)
+        }
     }
 }
 
