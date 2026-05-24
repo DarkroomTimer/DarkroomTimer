@@ -52,13 +52,11 @@ data class DevelopmentProfileEntity(
     val updatedAt: Long = System.currentTimeMillis()
 ) {
     fun toDomain(): DevelopmentProfile {
-        // Decoder JSON -> List<DevelopmentStep>
-        // Simplifie pour l'instant : retourne un profil vide
         return DevelopmentProfile(
             id = id,
             name = name,
             navigationMode = if (navigationModeIndex == 1) DevelopmentNavigationMode.AUTOMATIC else DevelopmentNavigationMode.MANUAL,
-            steps = emptyList(), // A implémenter avec Gson/Kotlinx.serialization
+            steps = DevelopmentStepSerializer.deserializeSteps(stepsJson),
             createdAt = createdAt,
             updatedAt = updatedAt
         )
@@ -66,12 +64,11 @@ data class DevelopmentProfileEntity(
 
     companion object {
         fun fromDomain(profile: DevelopmentProfile): DevelopmentProfileEntity {
-            // Serialiser List<DevelopmentStep> -> JSON
             return DevelopmentProfileEntity(
                 id = profile.id,
                 name = profile.name,
                 navigationModeIndex = if (profile.navigationMode == DevelopmentNavigationMode.AUTOMATIC) 1 else 0,
-                stepsJson = "", // A implémenter
+                stepsJson = DevelopmentStepSerializer.serializeSteps(profile.steps),
                 createdAt = profile.createdAt,
                 updatedAt = profile.updatedAt
             )
