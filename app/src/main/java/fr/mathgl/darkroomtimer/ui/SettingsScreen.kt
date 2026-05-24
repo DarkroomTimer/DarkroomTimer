@@ -29,6 +29,10 @@ fun SettingsScreen(
     var metronomeEnabled by remember { mutableStateOf(prefs.metronomeEnabled) }
     var metronomeCadenceMs by remember { mutableStateOf(prefs.metronomeCadenceMs) }
     var defaultGrade by remember { mutableStateOf(prefs.defaultContrastGrade) }
+    var luminosityMode by remember { mutableStateOf(prefs.luminosityMode) }
+    var luminosityMin by remember { mutableStateOf(prefs.luminosityMin) }
+    var luminosityMax by remember { mutableStateOf(prefs.luminosityMax) }
+    var luminosityFixed by remember { mutableStateOf(prefs.luminosityFixed) }
 
     Column(
         modifier = Modifier
@@ -123,6 +127,33 @@ fun SettingsScreen(
             }
         }
 
+        // LUMINOSITÉ ÉCRAN
+        SettingsSectionHeader("LUMINOSITÉ ÉCRAN")
+        SettingsDropdown(
+            label = "Mode",
+            options = listOf("ADAPTIVE", "FIXED"),
+            selected = luminosityMode,
+            onSelect = { luminosityMode = it; prefs.luminosityMode = it }
+        )
+        if (luminosityMode == "ADAPTIVE") {
+            LuminositySlider(
+                label = "Minimum : ${(luminosityMin * 100).toInt()}%",
+                value = luminosityMin,
+                onValueChange = { luminosityMin = it; prefs.luminosityMin = it }
+            )
+            LuminositySlider(
+                label = "Maximum : ${(luminosityMax * 100).toInt()}%",
+                value = luminosityMax,
+                onValueChange = { luminosityMax = it; prefs.luminosityMax = it }
+            )
+        } else {
+            LuminositySlider(
+                label = "Luminosité fixe : ${(luminosityFixed * 100).toInt()}%",
+                value = luminosityFixed,
+                onValueChange = { luminosityFixed = it; prefs.luminosityFixed = it }
+            )
+        }
+
         // BLUETOOTH
         SettingsSectionHeader("BLUETOOTH")
         Text(
@@ -215,5 +246,25 @@ private fun SettingsDropdown(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun LuminositySlider(label: String, value: Float, onValueChange: (Float) -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp)
+    ) {
+        Text(text = label, color = Color.White, fontSize = 14.sp)
+        Slider(
+            value = value,
+            onValueChange = onValueChange,
+            valueRange = 0f..1f,
+            colors = SliderDefaults.colors(
+                thumbColor = Color(0xFFCC2200),
+                activeTrackColor = Color(0xFFCC2200)
+            )
+        )
     }
 }

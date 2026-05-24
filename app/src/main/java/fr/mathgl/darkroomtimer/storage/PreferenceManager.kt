@@ -91,6 +91,23 @@ class PreferenceManager private constructor(context: Context) {
         get() = prefs.getInt(KEY_ENLARGER_PROFILE_ID, 0)
         set(value) = prefs.edit().putInt(KEY_ENLARGER_PROFILE_ID, value).apply()
 
+    // Luminosity Settings
+    var luminosityMode: String
+        get() = prefs.getString(KEY_LUMINOSITY_MODE, "ADAPTIVE") ?: "ADAPTIVE"
+        set(value) = prefs.edit().putString(KEY_LUMINOSITY_MODE, value).apply()
+
+    var luminosityMin: Float
+        get() = prefs.getFloat(KEY_LUMINOSITY_MIN, 0.01f)
+        set(value) = prefs.edit().putFloat(KEY_LUMINOSITY_MIN, value).apply()
+
+    var luminosityMax: Float
+        get() = prefs.getFloat(KEY_LUMINOSITY_MAX, 0.10f)
+        set(value) = prefs.edit().putFloat(KEY_LUMINOSITY_MAX, value).apply()
+
+    var luminosityFixed: Float
+        get() = prefs.getFloat(KEY_LUMINOSITY_FIXED, 0.05f)
+        set(value) = prefs.edit().putFloat(KEY_LUMINOSITY_FIXED, value).apply()
+
     companion object {
         private const val PREFS_NAME = "darkroom_timer_prefs"
 
@@ -116,6 +133,11 @@ class PreferenceManager private constructor(context: Context) {
         private const val KEY_BLUETOOTH_DEVICE_NAME = "pref_bluetooth_device_name"
 
         private const val KEY_ENLARGER_PROFILE_ID = "pref_enlarger_profile_id"
+
+        private const val KEY_LUMINOSITY_MODE = "pref_luminosity_mode"
+        private const val KEY_LUMINOSITY_MIN = "pref_luminosity_min"
+        private const val KEY_LUMINOSITY_MAX = "pref_luminosity_max"
+        private const val KEY_LUMINOSITY_FIXED = "pref_luminosity_fixed"
 
         @Volatile
         private var INSTANCE: PreferenceManager? = null

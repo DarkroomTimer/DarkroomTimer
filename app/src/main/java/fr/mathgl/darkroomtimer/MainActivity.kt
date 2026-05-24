@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import fr.mathgl.darkroomtimer.development.DevelopmentProfile
 import fr.mathgl.darkroomtimer.development.DevelopmentSession
+import fr.mathgl.darkroomtimer.storage.PreferenceManager
 import fr.mathgl.darkroomtimer.system.LuminosityManager
 import fr.mathgl.darkroomtimer.ui.*
 import fr.mathgl.darkroomtimer.ui.theme.DarkroomTimerTheme
@@ -43,7 +44,20 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    override fun onStart() { super.onStart(); luminosityManager.start() }
+    override fun onStart() {
+        super.onStart()
+        val prefs = PreferenceManager.getInstance(this)
+        luminosityManager.setConfig(
+            LuminosityManager.Config(
+                mode = if (prefs.luminosityMode == "FIXED") LuminosityManager.Mode.FIXED
+                       else LuminosityManager.Mode.ADAPTIVE,
+                minBrightness = prefs.luminosityMin,
+                maxBrightness = prefs.luminosityMax,
+                fixedBrightness = prefs.luminosityFixed
+            )
+        )
+        luminosityManager.start()
+    }
     override fun onStop() { super.onStop(); luminosityManager.stop() }
 }
 
