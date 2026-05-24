@@ -109,10 +109,10 @@ class StorageService(
                 profile.turnOffDelayMs < 0 || profile.fallTimeMs < 0 || profile.fallTimeEquivMs < 0) {
                 throw IllegalArgumentException("Profile ${profile.name} contains negative delays")
             }
-            if (profile.riseTimeEquivMs >= profile.riseTimeMs) {
+            if (profile.riseTimeMs > 0 && profile.riseTimeEquivMs >= profile.riseTimeMs) {
                 throw IllegalArgumentException("Profile ${profile.name}: riseTimeEquivMs must be less than riseTimeMs")
             }
-            if (profile.fallTimeEquivMs >= profile.fallTimeMs) {
+            if (profile.fallTimeMs > 0 && profile.fallTimeEquivMs >= profile.fallTimeMs) {
                 throw IllegalArgumentException("Profile ${profile.name}: fallTimeEquivMs must be less than fallTimeMs")
             }
         }
