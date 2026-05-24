@@ -40,7 +40,7 @@ class ESPhomeHttpRelayController(
                 .build()
 
             okHttpClient.newCall(request).execute().use { response ->
-                if (response.isSuccessful || response.code == 404) { // 404 might still mean the device is reachable
+                if (response.isSuccessful) {
                     client = okHttpClient
                     connectionState.value = ConnectionState.Connected
                     Result.success(Unit)

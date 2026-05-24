@@ -34,7 +34,8 @@ class CountdownTimer(private val clock: () -> Long = { System.currentTimeMillis(
     fun resume() {
         check(state == TimerState.PAUSED) { "resume() called from state $state" }
         val now = clock()
-        startAt = now - (pauseAt - startAt)
+        val elapsed = maxOf(0L, pauseAt - startAt)
+        startAt = now - elapsed
         state = TimerState.RUNNING
     }
 

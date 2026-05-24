@@ -114,30 +114,7 @@ open class CountdownViewModel(
         audioSystem?.startExposure()
         _uiState.update { it.copy(timerState = TimerState.RUNNING, enlargerOverride = false, safelightOverride = false) }
         sendServiceIntent(ForegroundTimerService.ACTION_START, timer.remainingMs())
-        tickJob = viewModelScope.launch {
-            while (true) {
-                delay(50L)
-                val ended = timer.tick()
-                val remaining = maxOf(0L, timer.remainingMs())
-                _uiState.update { it.copy(
-                    displayTime = CountdownTimer.formatTime(remaining),
-                    timerState = timer.state
-                ) }
-                sendServiceIntent(
-                    if (ended) ForegroundTimerService.ACTION_STOP else ForegroundTimerService.ACTION_UPDATE,
-                    remaining
-                )
-                if (ended) {
-                    viewModelScope.launch {
-                        relaySystem.setEnlarger(false)
-                        relaySystem.setSafelight(false)
-                    }
-                    audioSystem?.stopExposure()
-                    tickJob = null
-                    break
-                }
-            }
-        }
+        tickJob = launchTickJob()
     }
 
     fun pause() {
@@ -163,28 +140,30 @@ open class CountdownViewModel(
         audioSystem?.resume()
         _uiState.update { it.copy(timerState = TimerState.RUNNING) }
         sendServiceIntent(ForegroundTimerService.ACTION_START, timer.remainingMs())
-        tickJob = viewModelScope.launch {
-            while (true) {
-                delay(50L)
-                val ended = timer.tick()
-                val remaining = maxOf(0L, timer.remainingMs())
-                _uiState.update { it.copy(
-                    displayTime = CountdownTimer.formatTime(remaining),
-                    timerState = timer.state
-                ) }
-                sendServiceIntent(
-                    if (ended) ForegroundTimerService.ACTION_STOP else ForegroundTimerService.ACTION_UPDATE,
-                    remaining
-                )
-                if (ended) {
-                    viewModelScope.launch {
-                        relaySystem.setEnlarger(false)
-                        relaySystem.setSafelight(false)
-                    }
-                    audioSystem?.stopExposure()
-                    tickJob = null
-                    break
+        tickJob = launchTickJob()
+    }
+
+    private fun launchTickJob(): Job = viewModelScope.launch {
+        while (true) {
+            delay(50L)
+            val ended = timer.tick()
+            val remaining = maxOf(0L, timer.remainingMs())
+            _uiState.update { it.copy(
+                displayTime = CountdownTimer.formatTime(remaining),
+                timerState = timer.state
+            ) }
+            sendServiceIntent(
+                if (ended) ForegroundTimerService.ACTION_STOP else ForegroundTimerService.ACTION_UPDATE,
+                remaining
+            )
+            if (ended) {
+                viewModelScope.launch {
+                    relaySystem.setEnlarger(false)
+                    relaySystem.setSafelight(false)
                 }
+                audioSystem?.stopExposure()
+                tickJob = null
+                break
             }
         }
     }

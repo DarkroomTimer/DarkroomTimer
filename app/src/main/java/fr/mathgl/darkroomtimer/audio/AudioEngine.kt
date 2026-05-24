@@ -72,7 +72,7 @@ class ToneGeneratorAudioEngine(
             newTg
         }
 
-        // Jouer le ton dans un thread séparé pour ne pas bloquer
+        currentThread?.interrupt()
         currentThread = Thread {
             tg.startTone(ToneGenerator.TONE_PROP_BEEP, durationMs)
             Thread.sleep(durationMs.toLong())
@@ -95,6 +95,7 @@ class ToneGeneratorAudioEngine(
             newTg
         }
 
+        currentThread?.interrupt()
         currentThread = Thread {
             for (i in 0 until beepCount) {
                 tg.startTone(ToneGenerator.TONE_PROP_BEEP, beepDurationMs)
