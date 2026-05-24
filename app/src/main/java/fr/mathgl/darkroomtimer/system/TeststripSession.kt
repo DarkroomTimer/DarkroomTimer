@@ -52,6 +52,9 @@ class TeststripSession(
             "start() called from state $state"
         }
         if (state == PAUSED) {
+            exposureStartAt = clock()
+            elapsedBeforePause = 0L
+            pauseStartAt = null
             state = EXPOSING
             return
         }
