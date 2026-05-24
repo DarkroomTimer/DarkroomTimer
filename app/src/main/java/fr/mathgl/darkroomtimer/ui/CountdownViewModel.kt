@@ -110,7 +110,15 @@ open class CountdownViewModel(
                     if (ended) ForegroundTimerService.ACTION_STOP else ForegroundTimerService.ACTION_UPDATE,
                     remaining
                 )
-                if (ended) { tickJob = null; break }
+                if (ended) {
+                    viewModelScope.launch {
+                        relaySystem.setEnlarger(false)
+                        relaySystem.setSafelight(false)
+                    }
+                    audioSystem?.stopExposure()
+                    tickJob = null
+                    break
+                }
             }
         }
     }
@@ -151,7 +159,15 @@ open class CountdownViewModel(
                     if (ended) ForegroundTimerService.ACTION_STOP else ForegroundTimerService.ACTION_UPDATE,
                     remaining
                 )
-                if (ended) { tickJob = null; break }
+                if (ended) {
+                    viewModelScope.launch {
+                        relaySystem.setEnlarger(false)
+                        relaySystem.setSafelight(false)
+                    }
+                    audioSystem?.stopExposure()
+                    tickJob = null
+                    break
+                }
             }
         }
     }
