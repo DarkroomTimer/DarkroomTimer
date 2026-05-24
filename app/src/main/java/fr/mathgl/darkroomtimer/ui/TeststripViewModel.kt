@@ -2,10 +2,12 @@ package fr.mathgl.darkroomtimer.ui
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import fr.mathgl.darkroomtimer.math.ContrastGrade
 import fr.mathgl.darkroomtimer.math.TeststripEngine
 import fr.mathgl.darkroomtimer.system.RelaySystem
+import fr.mathgl.darkroomtimer.system.StandaloneRelaySystem
 import fr.mathgl.darkroomtimer.system.TeststripSession
 import fr.mathgl.darkroomtimer.system.TeststripState
 import kotlinx.coroutines.Job
@@ -192,5 +194,30 @@ class TeststripViewModel(
         super.onCleared()
         exposureJob?.cancel()
         tickJob?.cancel()
+    }
+
+    companion object {
+        val Factory: ViewModelProvider.Factory = object : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : androidx.lifecycle.ViewModel> create(
+                modelClass: Class<T>
+            ): T {
+                throw IllegalStateException(
+                    "TeststripViewModel requires CreationExtras. Use factory with create(modelClass, extras) override."
+                )
+            }
+
+            override fun <T : androidx.lifecycle.ViewModel> create(
+                modelClass: Class<T>,
+                extras: androidx.lifecycle.viewmodel.CreationExtras
+            ): T {
+                val application = extras[
+                    ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY
+                ] as? Application
+                    ?: throw IllegalStateException("Application not available")
+                val relaySystem = StandaloneRelaySystem()
+                return TeststripViewModel(application, relaySystem) as T
+            }
+        }
     }
 }

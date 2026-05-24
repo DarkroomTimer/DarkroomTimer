@@ -5,8 +5,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -22,7 +20,7 @@ import fr.mathgl.darkroomtimer.system.TeststripState
 
 @Composable
 fun TeststripScreen(
-    viewModel: TeststripViewModel = viewModel(),
+    viewModel: TeststripViewModel = viewModel(factory = TeststripViewModel.Factory),
     onBack: () -> Unit = {}
 ) {
     val state by viewModel.uiState.collectAsState()
@@ -31,12 +29,10 @@ fun TeststripScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.Black)
-            .verticalScroll(rememberScrollState())
             .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Spacer(modifier = Modifier.height(16.dp))
-
         // Header avec titre et bouton retour
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -53,8 +49,6 @@ fun TeststripScreen(
                 Text("← Retour", color = Color(0xFFCC2200))
             }
         }
-
-        Spacer(modifier = Modifier.height(16.dp))
 
         // Session state indicator
         Row(
@@ -95,12 +89,14 @@ fun TeststripScreen(
             Spacer(modifier = Modifier.height(24.dp))
         }
 
-        // Liste des patches
+        // Liste des patches - uses weight to take remaining space
         LazyVerticalGrid(
             columns = GridCells.Fixed(3),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
         ) {
             itemsIndexed(state.patchTimesMs) { index, timeMs ->
                 PatchItem(
@@ -200,8 +196,6 @@ fun TeststripScreen(
                 Text("DÉMARRER", fontSize = 20.sp, fontWeight = FontWeight.Bold)
             }
         }
-
-        Spacer(modifier = Modifier.height(16.dp))
     }
 }
 

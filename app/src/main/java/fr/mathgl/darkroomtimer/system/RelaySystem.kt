@@ -1,12 +1,43 @@
 package fr.mathgl.darkroomtimer.system
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.flow.*
 
 data class DriverCapabilities(
     val canPause: Boolean,
     val hasSafelight: Boolean
 )
+
+/**
+ * A simple RelaySystem for standalone mode (no physical hardware).
+ * Uses mock controllers that always succeed.
+ */
+class StandaloneRelaySystem(
+    private val scope: kotlinx.coroutines.CoroutineScope = kotlinx.coroutines.MainScope()
+) : RelaySystem(
+    enlarger = object : RelayController {
+        override val state = MutableStateFlow(RelayState.OFF)
+        override val connectionState = MutableStateFlow(ConnectionState.Connected)
+        override val canPause = true
+        override suspend fun connect(): Result<Unit> = Result.success(Unit)
+        override suspend fun disconnect() {}
+        override suspend fun set(on: Boolean): Result<Unit> = Result.success(Unit)
+        override suspend fun startTimed(durationMs: Long): Result<Unit> = Result.success(Unit)
+    },
+    safelight = object : RelayController {
+        override val state = MutableStateFlow(RelayState.OFF)
+        override val connectionState = MutableStateFlow(ConnectionState.Connected)
+        override val canPause = true
+        override suspend fun connect(): Result<Unit> = Result.success(Unit)
+        override suspend fun disconnect() {}
+        override suspend fun set(on: Boolean): Result<Unit> = Result.success(Unit)
+        override suspend fun startTimed(durationMs: Long): Result<Unit> = Result.success(Unit)
+    },
+    scope = scope
+) {
+    override suspend fun startTimedExposure(durationMs: Long): Result<Unit> = Result.success(Unit)
+}
 
 open class RelaySystem(
     open val enlarger: RelayController,
