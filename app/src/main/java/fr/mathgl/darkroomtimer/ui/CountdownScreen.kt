@@ -15,6 +15,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import fr.mathgl.darkroomtimer.system.RelayState
 import fr.mathgl.darkroomtimer.system.TimerState
 
 @Composable
@@ -62,8 +63,8 @@ fun CountdownScreen(
 
         // Relay indicators
         RelayIndicators(
-            enlargerOn = state.relayState.enlargerOn,
-            safelightOn = state.relayState.safelightOn
+            enlargerOn = state.relayState.enlarger == RelayState.ON,
+            safelightOn = state.relayState.safelight == RelayState.ON
         )
 
         Spacer(modifier = Modifier.height(24.dp))
