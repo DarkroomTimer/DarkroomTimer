@@ -48,22 +48,6 @@ open class CountdownViewModel(
     private var audioSystem: AudioSystem? = null
     private var tickJob: Job? = null
 
-    private fun getAudioSystem(): AudioSystem {
-        if (audioSystem == null) {
-            try {
-                val context = getApplication<Application>()
-                val preferenceManager = PreferenceManager.getInstance(context)
-                val audioPreferences = AudioPreferences(preferenceManager.prefs)
-                val audioEngine = ToneGeneratorAudioEngine(audioPreferences.buzzerVolume)
-                audioSystem = AudioSystem(audioEngine, audioPreferences, audioPreferences.buzzerVolume)
-            } catch (e: Exception) {
-                // In test environments or when prefs are unavailable, audioSystem remains null
-                // Audio operations will be silently skipped
-            }
-        }
-        return audioSystem!!
-    }
-
     private val _uiState = MutableStateFlow(
         CountdownUiState(
             displayTime = CountdownTimer.formatTime(timer.configuredTimeMs),
@@ -79,6 +63,17 @@ open class CountdownViewModel(
     val uiState: StateFlow<CountdownUiState> = _uiState.asStateFlow()
 
     init {
+        // Initialize audio from preferences
+        try {
+            val context = getApplication<Application>()
+            val preferenceManager = PreferenceManager.getInstance(context)
+            val audioPreferences = AudioPreferences(preferenceManager.prefs)
+            val audioEngine = ToneGeneratorAudioEngine(audioPreferences.buzzerVolume)
+            audioSystem = AudioSystem(audioEngine, audioPreferences, audioPreferences.buzzerVolume)
+        } catch (e: Exception) {
+            // audio unavailable in test environment
+        }
+
         viewModelScope.launch {
             relaySystem.relayStates.collect { relayState ->
                 _uiState.update { it.copy(relayState = relayState) }
