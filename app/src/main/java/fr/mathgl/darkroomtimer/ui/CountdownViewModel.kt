@@ -5,9 +5,13 @@ import android.content.Intent
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import fr.mathgl.darkroomtimer.audio.AudioPreferences
+import fr.mathgl.darkroomtimer.audio.AudioSystem
+import fr.mathgl.darkroomtimer.audio.ToneGeneratorAudioEngine
 import fr.mathgl.darkroomtimer.math.BurnDodgeEntry
 import fr.mathgl.darkroomtimer.math.BurnDodgeType
 import fr.mathgl.darkroomtimer.math.ContrastGrade
+import fr.mathgl.darkroomtimer.storage.PreferenceManager
 import fr.mathgl.darkroomtimer.system.BurnDodgeManager
 import fr.mathgl.darkroomtimer.system.CountdownTimer
 import fr.mathgl.darkroomtimer.system.ForegroundTimerService
@@ -41,7 +45,24 @@ open class CountdownViewModel(
 
     private val timer = CountdownTimer()
     private val burnDodgeManager = BurnDodgeManager()
+    private var audioSystem: AudioSystem? = null
     private var tickJob: Job? = null
+
+    private fun getAudioSystem(): AudioSystem {
+        if (audioSystem == null) {
+            try {
+                val context = getApplication<Application>()
+                val preferenceManager = PreferenceManager.getInstance(context)
+                val audioPreferences = AudioPreferences(preferenceManager.prefs)
+                val audioEngine = ToneGeneratorAudioEngine(audioPreferences.buzzerVolume)
+                audioSystem = AudioSystem(audioEngine, audioPreferences, audioPreferences.buzzerVolume)
+            } catch (e: Exception) {
+                // In test environments or when prefs are unavailable, audioSystem remains null
+                // Audio operations will be silently skipped
+            }
+        }
+        return audioSystem!!
+    }
 
     private val _uiState = MutableStateFlow(
         CountdownUiState(
@@ -78,6 +99,7 @@ open class CountdownViewModel(
             }
         }
 
+        audioSystem?.startExposure()
         _uiState.update { it.copy(timerState = TimerState.RUNNING) }
         sendServiceIntent(ForegroundTimerService.ACTION_START, timer.remainingMs())
         tickJob = viewModelScope.launch {
@@ -106,6 +128,7 @@ open class CountdownViewModel(
             relaySystem.setEnlarger(false)
             relaySystem.setSafelight(false)
         }
+        audioSystem?.pause()
         _uiState.update { it.copy(timerState = TimerState.PAUSED) }
         sendServiceIntent(ForegroundTimerService.ACTION_STOP, 0L)
     }
@@ -117,6 +140,7 @@ open class CountdownViewModel(
             relaySystem.setEnlarger(true)
             relaySystem.setSafelight(true)
         }
+        audioSystem?.resume()
         _uiState.update { it.copy(timerState = TimerState.RUNNING) }
         sendServiceIntent(ForegroundTimerService.ACTION_START, timer.remainingMs())
         tickJob = viewModelScope.launch {
@@ -140,11 +164,15 @@ open class CountdownViewModel(
     fun stop() {
         if (timer.state == TimerState.STOPPED) return
         val wasPaused = timer.state == TimerState.PAUSED
+        val timerCompletedNaturally = timer.state == TimerState.RUNNING
         tickJob?.cancel(); tickJob = null
         timer.stop()
         viewModelScope.launch {
             relaySystem.setEnlarger(false)
             relaySystem.setSafelight(false)
+        }
+        if (timerCompletedNaturally) {
+            audioSystem?.stopExposure()
         }
         _uiState.update { it.copy(
             displayTime = CountdownTimer.formatTime(timer.configuredTimeMs),
@@ -214,6 +242,7 @@ open class CountdownViewModel(
     override fun onCleared() {
         super.onCleared()
         tickJob?.cancel()
+        audioSystem?.release()
     }
 
     companion object {
