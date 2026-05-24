@@ -4,8 +4,12 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import fr.mathgl.darkroomtimer.audio.AudioPreferences
+import fr.mathgl.darkroomtimer.audio.AudioSystem
+import fr.mathgl.darkroomtimer.audio.ToneGeneratorAudioEngine
 import fr.mathgl.darkroomtimer.math.ContrastGrade
 import fr.mathgl.darkroomtimer.math.TeststripEngine
+import fr.mathgl.darkroomtimer.storage.PreferenceManager
 import fr.mathgl.darkroomtimer.system.RelaySystem
 import fr.mathgl.darkroomtimer.system.StandaloneRelaySystem
 import fr.mathgl.darkroomtimer.system.TeststripSession
@@ -41,6 +45,23 @@ class TeststripViewModel(
 
     private var exposureJob: Job? = null
     private var tickJob: Job? = null
+    private var audioSystem: AudioSystem? = null
+
+    private fun getAudioSystem(): AudioSystem {
+        if (audioSystem == null) {
+            try {
+                val context = getApplication<Application>()
+                val preferenceManager = PreferenceManager.getInstance(context)
+                val audioPreferences = AudioPreferences(preferenceManager.prefs)
+                val audioEngine = ToneGeneratorAudioEngine(audioPreferences.buzzerVolume)
+                audioSystem = AudioSystem(audioEngine, audioPreferences, audioPreferences.buzzerVolume)
+            } catch (e: Exception) {
+                // In test environments or when prefs are unavailable, audioSystem remains null
+                // Audio operations will be silently skipped
+            }
+        }
+        return audioSystem!!
+    }
 
     private val _uiState = MutableStateFlow(TeststripUiState(
         sessionState = TeststripState.CONFIGURED,
@@ -103,6 +124,7 @@ class TeststripViewModel(
             relaySystem.setEnlarger(false)
             relaySystem.setSafelight(false)
         }
+        audioSystem?.pause()
         updateUiState()
     }
 
@@ -110,6 +132,7 @@ class TeststripViewModel(
         if (session.state != TeststripState.PAUSED) return
         session.resume()
         updateUiState()
+        audioSystem?.resume()
         startExposure()
     }
 
@@ -123,7 +146,13 @@ class TeststripViewModel(
             relaySystem.setEnlarger(false)
             relaySystem.setSafelight(false)
         }
+        audioSystem?.stopTeststripPatch()
         session.finishExposure()
+
+        // Check if session is complete or if we need to wrap around to next patch
+        if (session.isSessionComplete) {
+            audioSystem?.stopTeststripSession()
+        }
         updateUiState()
     }
 
@@ -150,6 +179,7 @@ class TeststripViewModel(
             relaySystem.setEnlarger(false)
             relaySystem.setSafelight(false)
         }
+        audioSystem?.stop()
         session.abandon()
         updateUiState()
     }
@@ -194,6 +224,7 @@ class TeststripViewModel(
         super.onCleared()
         exposureJob?.cancel()
         tickJob?.cancel()
+        audioSystem?.release()
     }
 
     companion object {
