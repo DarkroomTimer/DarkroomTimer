@@ -17,14 +17,21 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.dp
 import fr.mathgl.darkroomtimer.development.DevelopmentProfile
 import fr.mathgl.darkroomtimer.development.DevelopmentSession
-import fr.mathgl.darkroomtimer.development.DevelopmentSessionState
 import fr.mathgl.darkroomtimer.system.LuminosityManager
 import fr.mathgl.darkroomtimer.ui.CountdownScreen
 import fr.mathgl.darkroomtimer.ui.DevelopmentSessionScreen
 import fr.mathgl.darkroomtimer.ui.TeststripScreen
+import fr.mathgl.darkroomtimer.ui.DevelopmentProfileListScreen
+import fr.mathgl.darkroomtimer.ui.DevelopmentLaunchScreen
 import fr.mathgl.darkroomtimer.ui.theme.DarkroomTimerTheme
 
 enum class AppMode { COUNTDOWN, TESTSTRIP, DEVELOPMENT }
+
+/**
+ * États du flux de développement dans MainActivity.
+ * Permet de naviguer entre la liste des profils, l'écran de lancement et la session.
+ */
+enum class DevelopmentFlowState { LIST, LAUNCH, SESSION }
 
 class MainActivity : ComponentActivity() {
     private lateinit var luminosityManager: LuminosityManager
@@ -61,10 +68,8 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun ModeSelectorScreen() {
     var selectedMode by rememberSaveable { mutableStateOf<AppMode?>(null) }
-    var selectedDevelopmentProfileState by rememberSaveable { mutableStateOf<DevelopmentProfile?>(null) }
 
     if (selectedMode == null) {
-        // Mode selection screen
         Column(
             modifier = Modifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -105,52 +110,76 @@ fun ModeSelectorScreen() {
             AppMode.COUNTDOWN -> CountdownScreen()
             AppMode.TESTSTRIP -> TeststripScreen(onBack = { selectedMode = null })
             AppMode.DEVELOPMENT -> {
-                val profile = selectedDevelopmentProfileState
-                if (profile != null) {
-                    val firstStep = profile.steps.firstOrNull()
-                    DevelopmentSessionScreen(
-                        stepName = firstStep?.name ?: "Étape",
-                        stepElapsedSeconds = 0,
-                        stepRemainingSeconds = firstStep?.durationSeconds ?: 0,
-                        progress = 0,
-                        state = DevelopmentSessionState.CONFIGURED,
-                        totalSteps = profile.stepCount(),
-                        currentStepIndex = -1,
-                        onStart = { /* TODO: Start session */ },
-                        onPause = { /* TODO: Pause session */ },
-                        onResume = { /* TODO: Resume session */ },
-                        onNextStep = { /* TODO: Next step */ },
-                        onCancel = { selectedDevelopmentProfileState = null }
-                    )
-                } else {
-                    // Show profile selection placeholder
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            text = "Mode Développement",
-                            color = Color.White,
-                            fontSize = 24.sp
+                var developmentFlowState by rememberSaveable { mutableStateOf(DevelopmentFlowState.LIST) }
+                var selectedProfile by rememberSaveable { mutableStateOf<DevelopmentProfile?>(null) }
+                var developmentSession by remember { mutableStateOf<DevelopmentSession?>(null) }
+
+                LaunchedEffect(developmentSession) {
+                    while (developmentSession?.isRunning == true) {
+                        kotlinx.coroutines.delay(1000)
+                        developmentSession?.tick()
+                    }
+                }
+
+                when (developmentFlowState) {
+                    DevelopmentFlowState.LIST -> {
+                        DevelopmentProfileListScreen(
+                            onNavigateToSession = { profile ->
+                                selectedProfile = profile
+                                developmentSession = DevelopmentSession(profile)
+                                developmentFlowState = DevelopmentFlowState.SESSION
+                            },
+                            onBack = { selectedMode = null }
                         )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            text = "Sélectionnez un profil pour commencer",
-                            color = Color.Gray,
-                            fontSize = 16.sp
+                    }
+                    DevelopmentFlowState.LAUNCH -> {
+                        DevelopmentLaunchScreen(
+                            onLaunchSession = { profile ->
+                                selectedProfile = profile
+                                developmentSession = DevelopmentSession(profile)
+                                developmentFlowState = DevelopmentFlowState.SESSION
+                            },
+                            onNavigateToProfiles = {
+                                developmentFlowState = DevelopmentFlowState.LIST
+                            },
+                            onBack = {
+                                developmentFlowState = DevelopmentFlowState.LIST
+                            }
                         )
-                        Spacer(modifier = Modifier.height(32.dp))
-                        Button(
-                            onClick = { /* TODO: Navigate to profile list */ },
-                            modifier = Modifier.width(200.dp)
-                        ) {
-                            Text("Choisir un profil", color = Color.Black)
-                        }
-                        Spacer(modifier = Modifier.height(16.dp))
-                        TextButton(onClick = { selectedMode = null }) {
-                            Text("← Retour", color = Color(0xFFCC2200))
+                    }
+                    DevelopmentFlowState.SESSION -> {
+                        val session = developmentSession
+                        if (session != null) {
+                            val state = session.state
+                            val currentStep = session.currentStep
+                            DevelopmentSessionScreen(
+                                stepName = currentStep?.name ?: "Étape",
+                                stepElapsedSeconds = session.currentStepElapsedSeconds,
+                                stepRemainingSeconds = session.currentStepRemainingSeconds,
+                                progress = session.progress,
+                                state = state,
+                                totalSteps = session.totalSteps,
+                                currentStepIndex = if (session.currentStepIndex >= 0) session.currentStepIndex + 1 else 0,
+                                onStart = { session.start() },
+                                onPause = { session.pause() },
+                                onResume = { session.resume() },
+                                onNextStep = { session.nextStep() },
+                                onCancel = {
+                                    session.cancel()
+                                    developmentSession = null
+                                    selectedProfile = null
+                                    developmentFlowState = DevelopmentFlowState.LIST
+                                }
+                            )
+                        } else {
+                            DevelopmentProfileListScreen(
+                                onNavigateToSession = { profile ->
+                                    selectedProfile = profile
+                                    developmentSession = DevelopmentSession(profile)
+                                    developmentFlowState = DevelopmentFlowState.SESSION
+                                },
+                                onBack = { selectedMode = null }
+                            )
                         }
                     }
                 }
