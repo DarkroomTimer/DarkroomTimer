@@ -47,22 +47,6 @@ class TeststripViewModel(
     private var tickJob: Job? = null
     private var audioSystem: AudioSystem? = null
 
-    private fun getAudioSystem(): AudioSystem {
-        if (audioSystem == null) {
-            try {
-                val context = getApplication<Application>()
-                val preferenceManager = PreferenceManager.getInstance(context)
-                val audioPreferences = AudioPreferences(preferenceManager.prefs)
-                val audioEngine = ToneGeneratorAudioEngine(audioPreferences.buzzerVolume)
-                audioSystem = AudioSystem(audioEngine, audioPreferences, audioPreferences.buzzerVolume)
-            } catch (e: Exception) {
-                // In test environments or when prefs are unavailable, audioSystem remains null
-                // Audio operations will be silently skipped
-            }
-        }
-        return audioSystem!!
-    }
-
     private val _uiState = MutableStateFlow(TeststripUiState(
         sessionState = TeststripState.CONFIGURED,
         currentPatchIndex = -1,
@@ -84,6 +68,17 @@ class TeststripViewModel(
     private val session: TeststripSession
 
     init {
+        // Initialize audio from preferences
+        try {
+            val context = getApplication<Application>()
+            val preferenceManager = PreferenceManager.getInstance(context)
+            val audioPreferences = AudioPreferences(preferenceManager.prefs)
+            val audioEngine = ToneGeneratorAudioEngine(audioPreferences.buzzerVolume)
+            audioSystem = AudioSystem(audioEngine, audioPreferences, audioPreferences.buzzerVolume)
+        } catch (e: Exception) {
+            // audio unavailable in test environment
+        }
+
         engine = TeststripEngine(baseTimeMs = 8000, numerator = 1, denominator = 3, patchCount = 6)
         session = TeststripSession(engine = engine)
         updateUiState()
