@@ -8,7 +8,7 @@ import fr.mathgl.darkroomtimer.math.ContrastGrade
  * Manager for handling basic scalar settings for the application using SharedPreferences.
  */
 class PreferenceManager private constructor(context: Context) {
-    private val prefs: SharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    internal val prefs: SharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
     // General Settings
     var metronomeEnabled: Boolean
