@@ -4,14 +4,23 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.TypeConverters
 import androidx.sqlite.db.SupportSQLiteDatabase
+import fr.mathgl.darkroomtimer.development.DevelopmentDao
+import fr.mathgl.darkroomtimer.development.DevelopmentProfileEntity
+import fr.mathgl.darkroomtimer.development.DevelopmentStepTypeConverter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-@Database(entities = [EnlargerProfileEntity::class], version = 1)
+@Database(
+    entities = [EnlargerProfileEntity::class, DevelopmentProfileEntity::class],
+    version = 2
+)
+@TypeConverters(DevelopmentStepTypeConverter::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun enlargerProfileDao(): EnlargerProfileDao
+    abstract fun developmentDao(): DevelopmentDao
 
     companion object {
         @Volatile
