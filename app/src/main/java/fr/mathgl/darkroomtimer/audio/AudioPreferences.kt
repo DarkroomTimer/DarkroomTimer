@@ -3,45 +3,39 @@ package fr.mathgl.darkroomtimer.audio
 import android.content.SharedPreferences
 
 /**
+ * Interface for audio-related settings, enabling testability.
+ */
+interface AudioSettingsProvider {
+    var isMetronomeEnabled: Boolean
+    var metronomeCadenceMs: Int
+    val metronomeFrequencyHz: Int
+    val metronomeDurationMs: Int
+    var isStartBeepEnabled: Boolean
+    var buzzerVolume: AudioVolume
+}
+
+/**
  * Wraps SharedPreferences for audio-related settings.
  */
-class AudioPreferences(private val prefs: SharedPreferences) {
+class AudioPreferences(private val prefs: SharedPreferences) : AudioSettingsProvider {
 
-    /**
-     * Whether the metronome is enabled during exposures.
-     */
-    var isMetronomeEnabled: Boolean
+    override var isMetronomeEnabled: Boolean
         get() = prefs.getBoolean(KEY_METRONOME_ENABLED, false)
         set(value) = prefs.edit().putString(KEY_METRONOME_ENABLED, value.toString()).apply()
 
-    /**
-     * Metronome cadence in milliseconds (time between clicks).
-     */
-    var metronomeCadenceMs: Int
+    override var metronomeCadenceMs: Int
         get() = prefs.getInt(KEY_METRONOME_CADENCE_MS, DEFAULT_METRONOME_CADENCE_MS)
         set(value) = prefs.edit().putInt(KEY_METRONOME_CADENCE_MS, value).apply()
 
-    /**
-     * Metronome frequency in Hz (read-only, fixed at 250Hz).
-     */
-    val metronomeFrequencyHz: Int = DEFAULT_METRONOME_FREQUENCY_HZ
+    override val metronomeFrequencyHz: Int = DEFAULT_METRONOME_FREQUENCY_HZ
 
-    /**
-     * Metronome click duration in milliseconds (read-only, fixed at 25ms).
-     */
-    val metronomeDurationMs: Int = DEFAULT_METRONOME_DURATION_MS
+    override val metronomeDurationMs: Int = DEFAULT_METRONOME_DURATION_MS
 
-    /**
-     * Whether the start beep is enabled at the beginning of exposures.
-     */
-    var isStartBeepEnabled: Boolean
+    override var isStartBeepEnabled: Boolean
         get() = prefs.getBoolean(KEY_START_BEEP_ENABLED, true)
         set(value) = prefs.edit().putString(KEY_START_BEEP_ENABLED, value.toString()).apply()
 
-    /**
-     * Volume level for the buzzer/beeps.
-     */
-    var buzzerVolume: AudioVolume
+    override var buzzerVolume: AudioVolume
         get() = AudioVolume.fromString(prefs.getString(KEY_BUZZER_VOLUME, "MEDIUM"))
         set(value) = prefs.edit().putString(KEY_BUZZER_VOLUME, value.name).apply()
 
