@@ -1,5 +1,9 @@
 package fr.mathgl.darkroomtimer.ui
 
+import android.app.Application
+import android.content.Intent
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -16,6 +20,12 @@ import androidx.compose.ui.unit.sp
 import fr.mathgl.darkroomtimer.audio.AudioVolume
 import fr.mathgl.darkroomtimer.math.ContrastGrade
 import fr.mathgl.darkroomtimer.storage.PreferenceManager
+import fr.mathgl.darkroomtimer.storage.StorageService
+import fr.mathgl.darkroomtimer.storage.room.AppDatabase
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @Composable
 fun SettingsScreen(
@@ -165,12 +175,123 @@ fun SettingsScreen(
 
         // DONNÉES
         SettingsSectionHeader("DONNÉES")
-        Text(
-            text = "Export / Import JSON — à venir.",
-            color = Color.Gray,
-            fontSize = 12.sp,
-            modifier = Modifier.padding(vertical = 8.dp)
-        )
+        val exportImportScope = rememberCoroutineScope()
+        var showImportConfirm by remember { mutableStateOf(false) }
+        var pendingImportJson by remember { mutableStateOf("") }
+        var exportError by remember { mutableStateOf("") }
+        var importError by remember { mutableStateOf("") }
+
+        val importLauncher = rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.GetContent()
+        ) { uri ->
+            if (uri != null) {
+                exportImportScope.launch {
+                    val json = withContext(Dispatchers.IO) {
+                        runCatching {
+                            context.contentResolver.openInputStream(uri)?.bufferedReader()?.readText()
+                        }.getOrNull()
+                    } ?: ""
+                    if (json.isNotBlank()) {
+                        pendingImportJson = json
+                        showImportConfirm = true
+                    } else {
+                        importError = "Fichier invalide ou vide."
+                    }
+                }
+            }
+        }
+
+        if (exportError.isNotBlank()) {
+            Text(exportError, color = Color.Red, fontSize = 12.sp, modifier = Modifier.padding(8.dp))
+        }
+        if (importError.isNotBlank()) {
+            Text(importError, color = Color.Red, fontSize = 12.sp, modifier = Modifier.padding(8.dp))
+        }
+
+        Button(
+            onClick = {
+                exportImportScope.launch {
+                    val json = withContext(Dispatchers.IO) {
+                        runCatching {
+                            val db = AppDatabase.getDatabase(
+                                context.applicationContext as Application,
+                                CoroutineScope(Dispatchers.Default)
+                            )
+                            StorageService(prefs, db.enlargerProfileDao()).exportBackup()
+                        }.getOrNull()
+                    }
+                    if (json != null) {
+                        val intent = Intent(Intent.ACTION_SEND).apply {
+                            type = "application/json"
+                            putExtra(Intent.EXTRA_TEXT, json)
+                            putExtra(Intent.EXTRA_SUBJECT, "DarkroomTimer Backup")
+                        }
+                        context.startActivity(Intent.createChooser(intent, "Exporter"))
+                        exportError = ""
+                    } else {
+                        exportError = "Erreur lors de l'export."
+                    }
+                }
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(48.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF222222))
+        ) {
+            Text("EXPORTER LES DONNÉES", color = Color.White, fontSize = 14.sp)
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Button(
+            onClick = { importError = ""; importLauncher.launch("application/json") },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(48.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF222222))
+        ) {
+            Text("IMPORTER LES DONNÉES", color = Color.White, fontSize = 14.sp)
+        }
+
+        if (showImportConfirm) {
+            AlertDialog(
+                onDismissRequest = { showImportConfirm = false },
+                title = { Text("Importer les données ?", color = Color.White) },
+                text = {
+                    Text(
+                        "Cette opération va remplacer vos réglages actuels. Continuer ?",
+                        color = Color.White
+                    )
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            val json = pendingImportJson
+                            showImportConfirm = false
+                            exportImportScope.launch {
+                                val error = withContext(Dispatchers.IO) {
+                                    runCatching {
+                                        val db = AppDatabase.getDatabase(
+                                            context.applicationContext as Application,
+                                            CoroutineScope(Dispatchers.Default)
+                                        )
+                                        StorageService(prefs, db.enlargerProfileDao()).importBackup(json)
+                                    }.exceptionOrNull()?.message
+                                }
+                                importError = if (error != null) "Erreur : $error" else ""
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFCC2200))
+                    ) {
+                        Text("IMPORTER")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showImportConfirm = false }) { Text("ANNULER") }
+                },
+                containerColor = Color(0xFF1A1A1A)
+            )
+        }
 
         Spacer(modifier = Modifier.height(32.dp))
     }
