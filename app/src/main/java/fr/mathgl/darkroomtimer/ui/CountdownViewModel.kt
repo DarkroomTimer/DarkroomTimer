@@ -74,6 +74,16 @@ open class CountdownViewModel(
             // audio unavailable in test environment
         }
 
+        // Load defaults from preferences
+        val context = getApplication<Application>()
+        val prefs = PreferenceManager.getInstance(context)
+        timer.configuredTimeMs = prefs.defaultExposureMs
+        _uiState.update { it.copy(
+            displayTime = CountdownTimer.formatTime(timer.configuredTimeMs),
+            configuredTimeMs = timer.configuredTimeMs,
+            selectedGrade = prefs.defaultContrastGrade
+        ) }
+
         viewModelScope.launch {
             relaySystem.relayStates.collect { relayState ->
                 _uiState.update { it.copy(relayState = relayState) }
