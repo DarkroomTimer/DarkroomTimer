@@ -27,8 +27,9 @@ class CountdownViewModelTest {
     private lateinit var viewModel: TestCountdownViewModel
 
     class TestCountdownViewModel(app: Application, rs: RelaySystem) : CountdownViewModel(app, rs) {
+        val serviceIntents = mutableListOf<Pair<String, Long>>()
         override fun sendServiceIntent(action: String, remainingMs: Long) {
-            // Do nothing in tests
+            serviceIntents.add(action to remainingMs)
         }
     }
 
@@ -225,5 +226,32 @@ class CountdownViewModelTest {
         assertEquals(true, relaySystemNoPause.setEnlargerCalled)
         assertEquals(true, relaySystemNoPause.setSafelightCalled)
         assertEquals(false, relaySystemNoPause.startTimedExposureCalled)
+    }
+
+    @Test
+    fun `stop after pause should not send ACTION_STOP (service was already stopped by pause)`() = runTest {
+        // Start the timer
+        viewModel.start()
+        testDispatcher.scheduler.runCurrent()
+
+        // Pause - this stops the service
+        viewModel.pause()
+        testDispatcher.scheduler.runCurrent()
+
+        assertEquals(TimerState.PAUSED, viewModel.uiState.value.timerState)
+
+        // Clear service intents recorded during pause
+        viewModel.serviceIntents.clear()
+
+        // Stop after pause - this should NOT send ACTION_STOP
+        // because pause() already stopped the service
+        viewModel.stop()
+        testDispatcher.scheduler.runCurrent()
+
+        // After stop, timer should be STOPPED
+        assertEquals(TimerState.STOPPED, viewModel.uiState.value.timerState)
+
+        // Should NOT have sent ACTION_STOP since service was already stopped by pause()
+        assertEquals(0, viewModel.serviceIntents.size)
     }
 }

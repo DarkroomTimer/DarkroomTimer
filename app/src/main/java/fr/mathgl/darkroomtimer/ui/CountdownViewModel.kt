@@ -3,12 +3,14 @@ package fr.mathgl.darkroomtimer.ui
 import android.app.Application
 import android.content.Intent
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import fr.mathgl.darkroomtimer.math.ContrastGrade
 import fr.mathgl.darkroomtimer.system.CountdownTimer
 import fr.mathgl.darkroomtimer.system.ForegroundTimerService
 import fr.mathgl.darkroomtimer.system.RelayStates
 import fr.mathgl.darkroomtimer.system.RelaySystem
+import fr.mathgl.darkroomtimer.system.StandaloneRelaySystem
 import fr.mathgl.darkroomtimer.system.TimerState
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -66,10 +68,7 @@ open class CountdownViewModel(
             }
         }
 
-        // IMPORTANT: remove the hardcoded relayState update here, as it's now handled by the flow
-        _uiState.update { it.copy(
-            timerState = TimerState.RUNNING
-        ) }
+        _uiState.update { it.copy(timerState = TimerState.RUNNING) }
         sendServiceIntent(ForegroundTimerService.ACTION_START, timer.remainingMs())
         tickJob = viewModelScope.launch {
             while (true) {
@@ -97,9 +96,7 @@ open class CountdownViewModel(
             relaySystem.setEnlarger(false)
             relaySystem.setSafelight(false)
         }
-        _uiState.update { it.copy(
-            timerState = TimerState.PAUSED
-        ) }
+        _uiState.update { it.copy(timerState = TimerState.PAUSED) }
         sendServiceIntent(ForegroundTimerService.ACTION_STOP, 0L)
     }
 
@@ -107,18 +104,10 @@ open class CountdownViewModel(
         if (timer.state != TimerState.PAUSED) return
         timer.resume()
         viewModelScope.launch {
-            if (relaySystem.capabilities.canPause) {
-                // For timed power drivers, resuming is complex.
-                // Simple implementation: trigger ON again.
-                relaySystem.setEnlarger(true)
-            } else {
-                relaySystem.setEnlarger(true)
-                relaySystem.setSafelight(true)
-            }
+            relaySystem.setEnlarger(true)
+            relaySystem.setSafelight(true)
         }
-        _uiState.update { it.copy(
-            timerState = TimerState.RUNNING
-        ) }
+        _uiState.update { it.copy(timerState = TimerState.RUNNING) }
         sendServiceIntent(ForegroundTimerService.ACTION_START, timer.remainingMs())
         tickJob = viewModelScope.launch {
             while (true) {
@@ -140,6 +129,7 @@ open class CountdownViewModel(
 
     fun stop() {
         if (timer.state == TimerState.STOPPED) return
+        val wasPaused = timer.state == TimerState.PAUSED
         tickJob?.cancel(); tickJob = null
         timer.stop()
         viewModelScope.launch {
@@ -150,7 +140,9 @@ open class CountdownViewModel(
             displayTime = CountdownTimer.formatTime(timer.configuredTimeMs),
             timerState = TimerState.STOPPED
         ) }
-        sendServiceIntent(ForegroundTimerService.ACTION_STOP, 0L)
+        if (!wasPaused) {
+            sendServiceIntent(ForegroundTimerService.ACTION_STOP, 0L)
+        }
     }
 
     fun adjustTime(deltaMs: Long) {
@@ -180,5 +172,30 @@ open class CountdownViewModel(
     override fun onCleared() {
         super.onCleared()
         tickJob?.cancel()
+    }
+
+    companion object {
+        val Factory: ViewModelProvider.Factory = object : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : androidx.lifecycle.ViewModel> create(
+                modelClass: Class<T>
+            ): T {
+                throw IllegalStateException(
+                    "CountdownViewModel requires CreationExtras. Use factory with create(modelClass, extras) override."
+                )
+            }
+
+            override fun <T : androidx.lifecycle.ViewModel> create(
+                modelClass: Class<T>,
+                extras: androidx.lifecycle.viewmodel.CreationExtras
+            ): T {
+                val application = extras[
+                    ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY
+                ] as? Application
+                    ?: throw IllegalStateException("Application not available")
+                val relaySystem = StandaloneRelaySystem()
+                return CountdownViewModel(application, relaySystem) as T
+            }
+        }
     }
 }
