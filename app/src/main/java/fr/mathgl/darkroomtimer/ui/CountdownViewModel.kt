@@ -35,7 +35,8 @@ data class CountdownUiState(
     val configuredTimeMs: Long,
     val burnDodgeEntries: List<BurnDodgeEntry>,
     val burnDodgeVisible: Boolean,
-    val maxEntriesReached: Boolean
+    val maxEntriesReached: Boolean,
+    val showTimeEditor: Boolean = false
 )
 
 open class CountdownViewModel(
@@ -211,6 +212,25 @@ open class CountdownViewModel(
         _uiState.update { it.copy(
             displayTime = CountdownTimer.formatTime(newTime),
             configuredTimeMs = newTime
+        ) }
+    }
+
+    fun openTimeEditor() {
+        if (_uiState.value.timerState == TimerState.RUNNING) return
+        _uiState.update { it.copy(showTimeEditor = true) }
+    }
+
+    fun closeTimeEditor() {
+        _uiState.update { it.copy(showTimeEditor = false) }
+    }
+
+    fun setTimeFromInput(minutes: Int, seconds: Int, tenths: Int) {
+        val newTime = (minutes * 60_000L + seconds * 1_000L + tenths * 100L).coerceIn(100L, 999_000L)
+        timer.configuredTimeMs = newTime
+        _uiState.update { it.copy(
+            displayTime = CountdownTimer.formatTime(newTime),
+            configuredTimeMs = newTime,
+            showTimeEditor = false
         ) }
     }
 
