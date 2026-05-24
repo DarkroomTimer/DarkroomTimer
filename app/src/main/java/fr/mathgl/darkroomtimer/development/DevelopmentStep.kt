@@ -1,5 +1,6 @@
 package fr.mathgl.darkroomtimer.development
 
+import androidx.room.TypeConverter
 import androidx.room.TypeConverters
 
 enum class DevelopmentStepType {
@@ -67,9 +68,11 @@ sealed class DevelopmentStep {
  */
 class DevelopmentStepTypeConverter {
     companion object {
+        @TypeConverter
         @JvmStatic
         fun fromStepType(type: DevelopmentStepType): String = type.name
 
+        @TypeConverter
         @JvmStatic
         fun toStepType(value: String): DevelopmentStepType {
             return runCatching { DevelopmentStepType.valueOf(value) }.getOrDefault(DevelopmentStepType.BATH)
