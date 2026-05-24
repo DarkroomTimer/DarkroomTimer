@@ -261,7 +261,7 @@ private fun StepItem(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun StepEditorDialog(
+fun StepEditorDialog(
     step: DevelopmentStep?,
     onSave: (DevelopmentStep) -> Unit,
     onDismiss: () -> Unit
