@@ -36,7 +36,9 @@ data class CountdownUiState(
     val burnDodgeEntries: List<BurnDodgeEntry>,
     val burnDodgeVisible: Boolean,
     val maxEntriesReached: Boolean,
-    val showTimeEditor: Boolean = false
+    val showTimeEditor: Boolean = false,
+    val enlargerOverride: Boolean = false,
+    val safelightOverride: Boolean = false
 )
 
 open class CountdownViewModel(
@@ -110,7 +112,7 @@ open class CountdownViewModel(
         }
 
         audioSystem?.startExposure()
-        _uiState.update { it.copy(timerState = TimerState.RUNNING) }
+        _uiState.update { it.copy(timerState = TimerState.RUNNING, enlargerOverride = false, safelightOverride = false) }
         sendServiceIntent(ForegroundTimerService.ACTION_START, timer.remainingMs())
         tickJob = viewModelScope.launch {
             while (true) {
@@ -202,7 +204,9 @@ open class CountdownViewModel(
         }
         _uiState.update { it.copy(
             displayTime = CountdownTimer.formatTime(timer.configuredTimeMs),
-            timerState = TimerState.STOPPED
+            timerState = TimerState.STOPPED,
+            enlargerOverride = false,
+            safelightOverride = false
         ) }
         if (!wasPaused) {
             sendServiceIntent(ForegroundTimerService.ACTION_STOP, 0L)
@@ -240,6 +244,20 @@ open class CountdownViewModel(
 
     fun selectGrade(grade: ContrastGrade) {
         _uiState.update { it.copy(selectedGrade = grade) }
+    }
+
+    fun toggleEnlargerOverride() {
+        if (_uiState.value.timerState == TimerState.RUNNING) return
+        val newOverride = !_uiState.value.enlargerOverride
+        viewModelScope.launch { relaySystem.setEnlarger(newOverride) }
+        _uiState.update { it.copy(enlargerOverride = newOverride) }
+    }
+
+    fun toggleSafelightOverride() {
+        if (_uiState.value.timerState == TimerState.RUNNING) return
+        val newOverride = !_uiState.value.safelightOverride
+        viewModelScope.launch { relaySystem.setSafelight(newOverride) }
+        _uiState.update { it.copy(safelightOverride = newOverride) }
     }
 
     fun addBurnDodgeEntry(

@@ -78,7 +78,12 @@ fun CountdownScreen(
         // Relay indicators
         RelayIndicators(
             enlargerOn = state.relayState.enlarger == RelayState.ON,
-            safelightOn = state.relayState.safelight == RelayState.ON
+            safelightOn = state.relayState.safelight == RelayState.ON,
+            enlargerOverride = state.enlargerOverride,
+            safelightOverride = state.safelightOverride,
+            overrideEnabled = state.timerState != TimerState.RUNNING,
+            onToggleEnlarger = { viewModel.toggleEnlargerOverride() },
+            onToggleSafelight = { viewModel.toggleSafelightOverride() }
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -132,24 +137,58 @@ fun CountdownScreen(
 }
 
 @Composable
-private fun RelayIndicators(enlargerOn: Boolean, safelightOn: Boolean) {
+private fun RelayIndicators(
+    enlargerOn: Boolean,
+    safelightOn: Boolean,
+    enlargerOverride: Boolean,
+    safelightOverride: Boolean,
+    overrideEnabled: Boolean,
+    onToggleEnlarger: () -> Unit,
+    onToggleSafelight: () -> Unit
+) {
     Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
-        RelayBadge(label = "Agrandisseur", isOn = enlargerOn)
-        RelayBadge(label = "Safelight", isOn = safelightOn)
+        RelayBadge(
+            label = "Agrandisseur",
+            isOn = enlargerOn,
+            hasOverride = enlargerOverride,
+            clickEnabled = overrideEnabled,
+            onClick = onToggleEnlarger
+        )
+        RelayBadge(
+            label = "Safelight",
+            isOn = safelightOn,
+            hasOverride = safelightOverride,
+            clickEnabled = overrideEnabled,
+            onClick = onToggleSafelight
+        )
     }
 }
 
 @Composable
-private fun RelayBadge(label: String, isOn: Boolean) {
-    val color = if (isOn) Color(0xFFCC2200) else Color(0xFF444444)
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+private fun RelayBadge(
+    label: String,
+    isOn: Boolean,
+    hasOverride: Boolean,
+    clickEnabled: Boolean,
+    onClick: () -> Unit
+) {
+    val dotColor = if (isOn) Color(0xFFCC2200) else Color(0xFF444444)
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .clickable(enabled = clickEnabled, onClick = onClick)
+            .padding(8.dp)
+    ) {
         Box(
             modifier = Modifier
                 .size(16.dp)
-                .background(color, shape = RoundedCornerShape(8.dp))
+                .background(dotColor, shape = RoundedCornerShape(8.dp))
         )
         Spacer(modifier = Modifier.height(4.dp))
         Text(text = label, fontSize = 12.sp, color = Color(0xFFAAAAAA))
+        if (hasOverride) {
+            Text(text = "override", fontSize = 9.sp, color = Color(0xFFCC2200))
+        }
     }
 }
 
