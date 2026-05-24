@@ -13,6 +13,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import fr.mathgl.darkroomtimer.math.BurnDodgeType
 import fr.mathgl.darkroomtimer.system.RelayState
 import fr.mathgl.darkroomtimer.system.TimerState
 
@@ -21,6 +22,16 @@ fun CountdownScreen(
     viewModel: CountdownViewModel = viewModel(factory = CountdownViewModel.Factory)
 ) {
     val state by viewModel.uiState.collectAsState()
+    var showBurnDodgeDialog by remember { mutableStateOf(false) }
+
+    LaunchedEffect(showBurnDodgeDialog) {
+        if (!showBurnDodgeDialog) {
+            // Reset panel collapse when dialog closes
+            if (state.burnDodgeVisible) {
+                viewModel.toggleBurnDodgePanel()
+            }
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -65,7 +76,20 @@ fun CountdownScreen(
             safelightOn = state.relayState.safelight == RelayState.ON
         )
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Burn & Dodge panel (only when timer is RUNNING or PAUSED)
+        if (state.timerState == TimerState.RUNNING || state.timerState == TimerState.PAUSED) {
+            BurnDodgePanel(
+                entries = state.burnDodgeEntries,
+                maxEntriesReached = state.maxEntriesReached,
+                isExpanded = state.burnDodgeVisible,
+                onToggleExpanded = { viewModel.toggleBurnDodgePanel() },
+                onAddEntry = { showBurnDodgeDialog = true },
+                onRemoveEntry = { viewModel.removeBurnDodgeEntry(it) }
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+        }
 
         // Time adjustment (only when not RUNNING)
         if (state.timerState != TimerState.RUNNING) {
@@ -80,6 +104,16 @@ fun CountdownScreen(
             onPause = { viewModel.pause() },
             onResume = { viewModel.resume() },
             onStop = { viewModel.stop() }
+        )
+    }
+
+    if (showBurnDodgeDialog) {
+        BurnDodgeDialog(
+            onDismiss = { showBurnDodgeDialog = false },
+            onConfirm = { label, type, numerator, denominator, grade ->
+                viewModel.addBurnDodgeEntry(label, type, numerator, denominator, grade)
+                showBurnDodgeDialog = false
+            }
         )
     }
 }

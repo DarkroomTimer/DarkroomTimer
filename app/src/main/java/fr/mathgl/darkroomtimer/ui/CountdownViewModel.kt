@@ -5,7 +5,10 @@ import android.content.Intent
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import fr.mathgl.darkroomtimer.math.BurnDodgeEntry
+import fr.mathgl.darkroomtimer.math.BurnDodgeType
 import fr.mathgl.darkroomtimer.math.ContrastGrade
+import fr.mathgl.darkroomtimer.system.BurnDodgeManager
 import fr.mathgl.darkroomtimer.system.CountdownTimer
 import fr.mathgl.darkroomtimer.system.ForegroundTimerService
 import fr.mathgl.darkroomtimer.system.RelayStates
@@ -25,7 +28,10 @@ data class CountdownUiState(
     val timerState: TimerState,
     val relayState: RelayStates,
     val selectedGrade: ContrastGrade,
-    val configuredTimeMs: Long
+    val configuredTimeMs: Long,
+    val burnDodgeEntries: List<BurnDodgeEntry>,
+    val burnDodgeVisible: Boolean,
+    val maxEntriesReached: Boolean
 )
 
 open class CountdownViewModel(
@@ -34,6 +40,7 @@ open class CountdownViewModel(
 ) : AndroidViewModel(application) {
 
     private val timer = CountdownTimer()
+    private val burnDodgeManager = BurnDodgeManager()
     private var tickJob: Job? = null
 
     private val _uiState = MutableStateFlow(
@@ -42,7 +49,10 @@ open class CountdownViewModel(
             timerState = TimerState.STOPPED,
             relayState = RelayStates.INITIAL,
             selectedGrade = ContrastGrade.DEFAULT,
-            configuredTimeMs = timer.configuredTimeMs
+            configuredTimeMs = timer.configuredTimeMs,
+            burnDodgeEntries = emptyList(),
+            burnDodgeVisible = false,
+            maxEntriesReached = false
         )
     )
     val uiState: StateFlow<CountdownUiState> = _uiState.asStateFlow()
@@ -157,6 +167,38 @@ open class CountdownViewModel(
 
     fun selectGrade(grade: ContrastGrade) {
         _uiState.update { it.copy(selectedGrade = grade) }
+    }
+
+    fun addBurnDodgeEntry(
+        label: String,
+        type: BurnDodgeType,
+        numerator: Int,
+        denominator: Int,
+        contrastGrade: ContrastGrade
+    ) {
+        burnDodgeManager.addEntry(label, type, numerator, denominator, contrastGrade)
+        updateBurnDodgeState()
+    }
+
+    fun removeBurnDodgeEntry(id: Int) {
+        burnDodgeManager.removeEntry(id)
+        updateBurnDodgeState()
+    }
+
+    fun clearBurnDodgeEntries() {
+        burnDodgeManager.clear()
+        updateBurnDodgeState()
+    }
+
+    fun toggleBurnDodgePanel() {
+        _uiState.update { it.copy(burnDodgeVisible = !it.burnDodgeVisible) }
+    }
+
+    private fun updateBurnDodgeState() {
+        _uiState.update { it.copy(
+            burnDodgeEntries = burnDodgeManager.entriesList,
+            maxEntriesReached = burnDodgeManager.isFull
+        ) }
     }
 
     private fun currentState() = _uiState.value
