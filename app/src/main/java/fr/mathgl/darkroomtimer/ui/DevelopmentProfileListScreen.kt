@@ -16,6 +16,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedBright
+import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedDim
+import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedFaint
+import fr.mathgl.darkroomtimer.ui.theme.DarkroomSurface
+import fr.mathgl.darkroomtimer.ui.theme.DarkroomSurfaceElevated
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -87,10 +92,10 @@ fun DevelopmentProfileListScreen(
                 text = "Profils de D&#xe9;veloppement",
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color.White
+                color = DarkroomRedBright
             )
             TextButton(onClick = onBack) {
-                Text("&#8592; Retour", color = Color(0xFFCC2200))
+                Text("&#8592; Retour", color = DarkroomRedBright)
             }
         }
 
@@ -101,12 +106,12 @@ fun DevelopmentProfileListScreen(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
-                CircularProgressIndicator(color = Color(0xFFCC2200))
+                CircularProgressIndicator(color = DarkroomRedBright)
             }
         } else if (profiles.isEmpty()) {
             Text(
                 text = "Aucun profil cr&#xe9;&#xe9;",
-                color = Color.Gray,
+                color = DarkroomRedDim,
                 fontSize = 16.sp,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -140,7 +145,7 @@ fun DevelopmentProfileListScreen(
                 showProfileEditor = true
             },
             modifier = Modifier.fillMaxWidth().height(56.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFCC2200))
+            colors = ButtonDefaults.buttonColors(containerColor = DarkroomRedBright)
         ) {
             Text("+ Nouveau Profil", fontSize = 18.sp)
         }
@@ -177,7 +182,7 @@ fun DevelopmentProfileListScreen(
                         profileToDelete = null
                     }
                 ) {
-                    Text("SUPPRIMER", color = Color.Red)
+                    Text("SUPPRIMER", color = DarkroomRedBright)
                 }
             },
             dismissButton = {
@@ -185,17 +190,17 @@ fun DevelopmentProfileListScreen(
                     showDeleteDialog = false
                     profileToDelete = null
                 }) {
-                    Text("ANNULER", color = Color(0xFFAAAAAA))
+                    Text("ANNULER", color = DarkroomRedDim)
                 }
             },
-            title = { Text("Supprimer le profil", color = Color.White) },
+            title = { Text("Supprimer le profil", color = DarkroomRedBright) },
             text = {
                 Text(
                     text = "&#xc9;tes-vous s&#xe9;ur de vouloir supprimer \"${profileToDelete?.name}\" ?",
-                    color = Color.Gray
+                    color = DarkroomRedDim
                 )
             },
-            containerColor = Color(0xFF1A1A1A)
+            containerColor = DarkroomSurfaceElevated
         )
     }
 }
@@ -211,7 +216,7 @@ private fun ProfileItem(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF222222))
+        colors = CardDefaults.cardColors(containerColor = DarkroomSurface)
     ) {
         Row(
             modifier = Modifier
@@ -223,29 +228,29 @@ private fun ProfileItem(
             Column(modifier = Modifier.then(Modifier.fillMaxWidth())) {
                 Text(
                     text = profile.name,
-                    color = Color.White,
+                    color = DarkroomRedBright,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = profile.preview(),
-                    color = Color.Gray,
+                    color = DarkroomRedDim,
                     fontSize = 12.sp,
                     maxLines = 1
                 )
                 Text(
                     text = "${profile.stepCount()} &#xe9;tapes • ${profile.navigationMode.name}",
-                    color = Color.Gray,
+                    color = DarkroomRedDim,
                     fontSize = 11.sp
                 )
             }
             Row {
                 TextButton(onClick = onEdit) {
-                    Text("&#9998;", color = Color(0xFFCC2200), fontSize = 18.sp)
+                    Text("&#9998;", color = DarkroomRedBright, fontSize = 18.sp)
                 }
                 TextButton(onClick = onDelete) {
-                    Text("&#10005;", color = Color.Red, fontSize = 18.sp)
+                    Text("&#10005;", color = DarkroomRedBright, fontSize = 18.sp)
                 }
             }
         }
@@ -293,7 +298,7 @@ fun DevelopmentProfileEditorDialog(
                     }
                 },
                 enabled = name.isNotBlank(),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFCC2200))
+                colors = ButtonDefaults.buttonColors(containerColor = DarkroomRedBright)
             ) {
                 Text("ENREGISTRER")
             }
@@ -306,7 +311,7 @@ fun DevelopmentProfileEditorDialog(
         title = {
             Text(
                 text = if (profile != null) "&#xc9;diter le Profil" else "Nouveau Profil",
-                color = Color.White
+                color = DarkroomRedBright
             )
         },
         text = {
@@ -319,13 +324,13 @@ fun DevelopmentProfileEditorDialog(
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text("Nom du profil", color = Color.White) },
+                    label = { Text("Nom du profil", color = DarkroomRedBright) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Color(0xFFCC2200),
-                        unfocusedBorderColor = Color(0xFF444444),
-                        cursorColor = Color.White
+                        focusedBorderColor = DarkroomRedBright,
+                        unfocusedBorderColor = DarkroomRedFaint,
+                        cursorColor = DarkroomRedBright
                     )
                 )
 
@@ -334,7 +339,7 @@ fun DevelopmentProfileEditorDialog(
                 // Navigation mode selector
                 Text(
                     text = "Mode de navigation",
-                    color = Color.White,
+                    color = DarkroomRedBright,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -361,7 +366,7 @@ fun DevelopmentProfileEditorDialog(
                 // Steps list
                 Text(
                     text = "&#xe9;tapes (${steps.count()})",
-                    color = Color.White,
+                    color = DarkroomRedBright,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -370,7 +375,7 @@ fun DevelopmentProfileEditorDialog(
                 if (steps.isEmpty()) {
                     Text(
                         text = "Aucune &#xe9;tape ajout&#xe9;e",
-                        color = Color.Gray,
+                        color = DarkroomRedDim,
                         fontSize = 12.sp
                     )
                 } else {
@@ -397,13 +402,13 @@ fun DevelopmentProfileEditorDialog(
                         showStepDialog = true
                     },
                     modifier = Modifier.fillMaxWidth().height(40.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF224422))
+                    colors = ButtonDefaults.buttonColors(containerColor = DarkroomSurface)
                 ) {
                     Text("+ Ajouter &#xe9;tape", fontSize = 12.sp)
                 }
             }
         },
-        containerColor = Color(0xFF1A1A1A)
+        containerColor = DarkroomSurfaceElevated
     )
 
     // Step editor dialog
@@ -442,10 +447,10 @@ private fun NavigationModeDialogButton(
             Modifier.fillMaxWidth().height(40.dp)
         ),
         colors = ButtonDefaults.buttonColors(
-            containerColor = if (selected) Color(0xFFCC2200) else Color(0xFF333333)
+            containerColor = if (selected) DarkroomRedBright else DarkroomRedDim
         )
     ) {
-        Text(label, fontSize = 12.sp, color = if (selected) Color.White else Color.Gray)
+        Text(label, fontSize = 12.sp, color = if (selected) DarkroomRedBright else DarkroomRedDim)
     }
 }
 
@@ -460,7 +465,7 @@ private fun StepDialogItem(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onEdit),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF222222))
+        colors = CardDefaults.cardColors(containerColor = DarkroomSurface)
     ) {
         Row(
             modifier = Modifier
@@ -473,25 +478,25 @@ private fun StepDialogItem(
                 Row {
                     Text(
                         text = "${index + 1}. ",
-                        color = Color(0xFFCC2200),
+                        color = DarkroomRedBright,
                         fontWeight = FontWeight.Bold,
                         fontSize = 12.sp
                     )
                     Text(
                         text = step.name,
-                        color = Color.White,
+                        color = DarkroomRedBright,
                         fontSize = 12.sp,
                         maxLines = 1
                     )
                 }
                 Text(
                     text = "${step.durationSeconds}s • ${if (step is DevelopmentStep.BathStep) "Bain" else "Pause"}",
-                    color = Color.Gray,
+                    color = DarkroomRedDim,
                     fontSize = 10.sp
                 )
             }
             TextButton(onClick = onDelete) {
-                Text("&#10005;", color = Color.Red, fontSize = 14.sp)
+                Text("&#10005;", color = DarkroomRedBright, fontSize = 14.sp)
             }
         }
     }
