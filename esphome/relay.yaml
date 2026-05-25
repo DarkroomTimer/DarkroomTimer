@@ -21,7 +21,8 @@ api:
         ms: int
       then:
         - switch.turn_on: relay_1
-        - delay: !lambda "return ms;"
+        #- delay: !lambda "return ms;"
+        - delay: 120ms
         - switch.turn_off: relay_1
 
 ota:
