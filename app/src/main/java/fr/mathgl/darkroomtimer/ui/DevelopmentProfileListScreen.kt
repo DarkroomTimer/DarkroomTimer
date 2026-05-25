@@ -110,7 +110,7 @@ fun DevelopmentProfileListScreen(
             }
         } else if (profiles.isEmpty()) {
             Text(
-                text = "Aucun profil cr&#xe9;&#xe9;",
+                text = "Aucun profil créé",
                 color = DarkroomRedDim,
                 fontSize = 16.sp,
                 modifier = Modifier.fillMaxWidth()
@@ -365,7 +365,7 @@ fun DevelopmentProfileEditorDialog(
 
                 // Steps list
                 Text(
-                    text = "&#xe9;tapes (${steps.count()})",
+                    text = "Etapes (${steps.count()})",
                     color = DarkroomRedBright,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold
@@ -374,7 +374,7 @@ fun DevelopmentProfileEditorDialog(
 
                 if (steps.isEmpty()) {
                     Text(
-                        text = "Aucune &#xe9;tape ajout&#xe9;e",
+                        text = "Aucune étape ajoutée",
                         color = DarkroomRedDim,
                         fontSize = 12.sp
                     )
@@ -404,7 +404,7 @@ fun DevelopmentProfileEditorDialog(
                     modifier = Modifier.fillMaxWidth().height(40.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = DarkroomSurface)
                 ) {
-                    Text("+ Ajouter &#xe9;tape", fontSize = 12.sp)
+                    Text("+ Ajouter étape", fontSize = 12.sp)
                 }
             }
         },
