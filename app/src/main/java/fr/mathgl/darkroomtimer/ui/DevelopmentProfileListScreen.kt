@@ -225,7 +225,7 @@ private fun ProfileItem(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(modifier = Modifier.then(Modifier.fillMaxWidth())) {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = profile.name,
                     color = DarkroomRedBright,
@@ -474,7 +474,7 @@ private fun StepDialogItem(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(modifier = Modifier.then(Modifier.fillMaxWidth())) {
+            Column(modifier = Modifier.weight(1f)) {
                 Row {
                     Text(
                         text = "${index + 1}. ",
