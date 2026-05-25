@@ -42,7 +42,9 @@ data class CountdownUiState(
     val safelightOverride: Boolean = false,
     val relayType: String = "NULL",
     val connectionState: ConnectionState = ConnectionState.Disconnected,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    val fStopCorrectionNumerator: Int = 0,
+    val fStopCorrectionDenominator: Int = 1
 )
 
 open class CountdownViewModel(
@@ -56,6 +58,7 @@ open class CountdownViewModel(
     private lateinit var relaySystem: RelaySystem
     private var audioSystem: AudioSystem? = null
     private var tickJob: Job? = null
+    private var baseTimeMs: Long = timer.configuredTimeMs
 
     private val _uiState = MutableStateFlow(
         CountdownUiState(
@@ -91,6 +94,7 @@ open class CountdownViewModel(
             val context = getApplication<Application>()
             val prefs = PreferenceManager.getInstance(context)
             timer.configuredTimeMs = prefs.defaultExposureMs
+            baseTimeMs = timer.configuredTimeMs
             _uiState.update { it.copy(
                 displayTime = CountdownTimer.formatTime(timer.configuredTimeMs),
                 configuredTimeMs = timer.configuredTimeMs,

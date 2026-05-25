@@ -266,4 +266,14 @@ class CountdownViewModelTest {
         // UI should show 00:16.0
         assertEquals("00:16.0", viewModel.uiState.value.displayTime)
     }
+
+    @Test
+    fun `initial fStopCorrectionNumerator should be 0`() = runTest {
+        assertEquals(0, viewModel.uiState.value.fStopCorrectionNumerator)
+    }
+
+    @Test
+    fun `initial fStopCorrectionDenominator should be 1`() = runTest {
+        assertEquals(1, viewModel.uiState.value.fStopCorrectionDenominator)
+    }
 }
