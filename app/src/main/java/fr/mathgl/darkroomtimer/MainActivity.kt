@@ -202,13 +202,13 @@ private fun DevelopmentOverlay(
         }
         DevelopmentFlowState.LAUNCH -> {
             DevelopmentLaunchScreen(
+                initialProfile = selectedProfile,
                 onLaunchSession = { profile ->
                     onSelectedProfileChange(profile)
                     onDevelopmentSessionChange(DevelopmentSession(profile))
                     onDevFlowStateChange(DevelopmentFlowState.SESSION)
                 },
-                onNavigateToProfiles = { onDevFlowStateChange(DevelopmentFlowState.LIST) },
-                onBack = { onDevFlowStateChange(DevelopmentFlowState.LIST) }
+                onSelectProfile = { onDevFlowStateChange(DevelopmentFlowState.LIST) }
             )
         }
         DevelopmentFlowState.SESSION -> {
