@@ -1,11 +1,16 @@
 package fr.mathgl.darkroomtimer.development
 
 import android.app.Application
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
+import org.junit.After
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
@@ -24,8 +29,14 @@ class DevelopmentListViewModelTest {
 
     @Before
     fun setup() {
+        Dispatchers.setMain(testDispatcher)
         mockApplication = mock()
         mockDao = mock()
+    }
+
+    @After
+    fun teardown() {
+        Dispatchers.resetMain()
     }
 
     /** Helper to create a ViewModel with test scope bypassing init block issues */
@@ -163,7 +174,7 @@ class DevelopmentListViewModelTest {
         val viewModel = createViewModelWithEmptyData()
 
         viewModel.deleteProfile(profile)
-        runCurrent()
+        advanceUntilIdle()
 
         verify(mockDao).deleteProfileById(1L)
     }
@@ -174,7 +185,7 @@ class DevelopmentListViewModelTest {
         val viewModel = createViewModelWithEmptyData()
 
         viewModel.saveProfile(profile)
-        runCurrent()
+        advanceUntilIdle()
 
         verify(mockDao).updateProfile(DevelopmentProfileEntity.fromDomain(profile))
     }
