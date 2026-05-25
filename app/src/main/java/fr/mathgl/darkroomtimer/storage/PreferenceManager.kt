@@ -2,7 +2,9 @@ package fr.mathgl.darkroomtimer.storage
 
 import android.content.Context
 import android.content.SharedPreferences
+import com.google.gson.Gson
 import fr.mathgl.darkroomtimer.math.ContrastGrade
+import fr.mathgl.darkroomtimer.system.RelaySystemConfigFlat
 
 /**
  * Manager for handling basic scalar settings for the application using SharedPreferences.
@@ -108,6 +110,21 @@ class PreferenceManager private constructor(context: Context) {
         get() = prefs.getFloat(KEY_LUMINOSITY_FIXED, 0.05f)
         set(value) = prefs.edit().putFloat(KEY_LUMINOSITY_FIXED, value).apply()
 
+    // Relay System Config (stored as JSON)
+    private val gson = Gson()
+
+    var relaySystemConfig: RelaySystemConfigFlat
+        get() {
+            val json = prefs.getString(KEY_RELAY_SYSTEM_CONFIG, null)
+            return if (json != null) {
+                try { gson.fromJson(json, RelaySystemConfigFlat::class.java) }
+                catch (e: Exception) { RelaySystemConfigFlat() }
+            } else {
+                RelaySystemConfigFlat()
+            }
+        }
+        set(value) = prefs.edit().putString(KEY_RELAY_SYSTEM_CONFIG, gson.toJson(value)).apply()
+
     companion object {
         private const val PREFS_NAME = "darkroom_timer_prefs"
 
@@ -138,6 +155,8 @@ class PreferenceManager private constructor(context: Context) {
         private const val KEY_LUMINOSITY_MIN = "pref_luminosity_min"
         private const val KEY_LUMINOSITY_MAX = "pref_luminosity_max"
         private const val KEY_LUMINOSITY_FIXED = "pref_luminosity_fixed"
+
+        private const val KEY_RELAY_SYSTEM_CONFIG = "pref_relay_system_config"
 
         @Volatile
         private var INSTANCE: PreferenceManager? = null
