@@ -69,7 +69,44 @@ open class CountdownViewModel(
             .coerceIn(100L, 999_000L)
     }
 
-    fun applyFStopDelta(numerator: Int, denominator: Int) { /* implemented in Task 3 */ }
+    fun applyFStopDelta(numerator: Int, denominator: Int) {
+        if (timer.state != TimerState.STOPPED) return
+        val currentN = _uiState.value.fStopCorrectionNumerator
+        val currentD = _uiState.value.fStopCorrectionDenominator
+        val rawN = currentN * denominator + numerator * currentD
+        val rawD = currentD * denominator
+        val (simplN, simplD) = FStopMath.simplify(rawN, rawD)
+        val calc = FStopMath.adjustTime(baseTimeMs, simplN, simplD, 1)
+        if (calc !in 100L..999_000L) return
+        _uiState.update { it.copy(
+            fStopCorrectionNumerator = simplN,
+            fStopCorrectionDenominator = simplD,
+            displayTime = CountdownTimer.formatTime(calc)
+        ) }
+    }
+
+    fun resetFStopCorrection() {
+        if (timer.state != TimerState.STOPPED) return
+        timer.configuredTimeMs = baseTimeMs
+        _uiState.update { it.copy(
+            fStopCorrectionNumerator = 0,
+            fStopCorrectionDenominator = 1,
+            displayTime = CountdownTimer.formatTime(baseTimeMs)
+        ) }
+    }
+
+    fun setFStopCorrectionAsBase() {
+        if (timer.state != TimerState.STOPPED) return
+        val calc = calculatedTimeMs()
+        baseTimeMs = calc
+        timer.configuredTimeMs = calc
+        _uiState.update { it.copy(
+            configuredTimeMs = calc,
+            fStopCorrectionNumerator = 0,
+            fStopCorrectionDenominator = 1,
+            displayTime = CountdownTimer.formatTime(calc)
+        ) }
+    }
 
     private val _uiState = MutableStateFlow(
         CountdownUiState(
