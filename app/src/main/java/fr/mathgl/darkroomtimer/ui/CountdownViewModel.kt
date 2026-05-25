@@ -236,7 +236,7 @@ open class CountdownViewModel(
         val timerCompletedNaturally = timer.state == TimerState.RUNNING
         tickJob?.cancel(); tickJob = null
         timer.stop()
-        timer.configuredTimeMs = baseTimeMs                           // restore base
+        timer.configuredTimeMs = baseTimeMs                           // restore base; start() will re-apply correction
         viewModelScope.launch {
             val res1 = relaySystem.setEnlarger(false)
             val res2 = relaySystem.setSafelight(false)
@@ -248,7 +248,7 @@ open class CountdownViewModel(
             audioSystem?.stopExposure()
         }
         _uiState.update { it.copy(
-            displayTime = CountdownTimer.formatTime(calculatedTimeMs()),  // use calculated time
+            displayTime = CountdownTimer.formatTime(calculatedTimeMs()),  // base × correction = next countdown duration
             timerState = TimerState.STOPPED,
             enlargerOverride = false,
             safelightOverride = false
@@ -264,7 +264,6 @@ open class CountdownViewModel(
             val newBase = (baseTimeMs + deltaMs).coerceIn(100L, 999_000L)
             baseTimeMs = newBase
             val calc = calculatedTimeMs()
-            timer.configuredTimeMs = calc
             _uiState.update { it.copy(
                 displayTime = CountdownTimer.formatTime(calc),
                 configuredTimeMs = newBase
