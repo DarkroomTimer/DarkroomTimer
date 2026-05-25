@@ -22,6 +22,7 @@ import fr.mathgl.darkroomtimer.math.ContrastGrade
 import fr.mathgl.darkroomtimer.storage.PreferenceManager
 import fr.mathgl.darkroomtimer.storage.StorageService
 import fr.mathgl.darkroomtimer.storage.room.AppDatabase
+import fr.mathgl.darkroomtimer.system.RelaySystemConfigFlat
 import fr.mathgl.darkroomtimer.ui.theme.DarkroomBlack
 import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedBright
 import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedDim
@@ -173,13 +174,170 @@ fun SettingsScreen(
             )
         }
 
-        // BLUETOOTH
-        SettingsSectionHeader("BLUETOOTH")
+        // RELAIS
+        SettingsSectionHeader("RELAIS")
+        var relayCfg by remember { mutableStateOf(prefs.relaySystemConfig) }
+
+        // Enlarger driver
+        SettingsDropdown(
+            label = "Agrandisseur",
+            options = listOf("NULL", "DEMO", "TASMOTA", "ESPHOME_HTTP"),
+            selected = relayCfg.enlargerType,
+            onSelect = { newType ->
+                val updated = relayCfg.copy(enlargerType = newType)
+                relayCfg = updated
+                prefs.relaySystemConfig = updated
+            }
+        )
+
+        if (relayCfg.enlargerType == "TASMOTA" || relayCfg.enlargerType == "ESPHOME_HTTP") {
+            RelayTextField(
+                label = "Hôte (IP ou hostname)",
+                value = relayCfg.enlargerHost,
+                onValueChange = { v -> val u = relayCfg.copy(enlargerHost = v); relayCfg = u; prefs.relaySystemConfig = u }
+            )
+            RelayNumberField(
+                label = "Port",
+                value = relayCfg.enlargerPort,
+                onValueChange = { v -> val u = relayCfg.copy(enlargerPort = v); relayCfg = u; prefs.relaySystemConfig = u }
+            )
+        }
+        if (relayCfg.enlargerType == "TASMOTA") {
+            RelayNumberField(
+                label = "Canal (1 ou 2)",
+                value = relayCfg.enlargerChannel,
+                onValueChange = { v -> val u = relayCfg.copy(enlargerChannel = v.coerceIn(1, 2)); relayCfg = u; prefs.relaySystemConfig = u }
+            )
+            SettingsDropdown(
+                label = "Mode timing",
+                options = listOf("TIMED_POWER", "EXPLICIT_ON_OFF"),
+                selected = relayCfg.enlargerTimingMode,
+                onSelect = { v -> val u = relayCfg.copy(enlargerTimingMode = v); relayCfg = u; prefs.relaySystemConfig = u }
+            )
+            RelayTextField(
+                label = "Utilisateur (optionnel)",
+                value = relayCfg.enlargerUsername,
+                onValueChange = { v -> val u = relayCfg.copy(enlargerUsername = v); relayCfg = u; prefs.relaySystemConfig = u }
+            )
+            RelayTextField(
+                label = "Mot de passe (optionnel)",
+                value = relayCfg.enlargerPassword,
+                onValueChange = { v -> val u = relayCfg.copy(enlargerPassword = v); relayCfg = u; prefs.relaySystemConfig = u }
+            )
+        }
+        if (relayCfg.enlargerType == "ESPHOME_HTTP") {
+            RelayTextField(
+                label = "Entity ID",
+                value = relayCfg.enlargerEntityId,
+                onValueChange = { v -> val u = relayCfg.copy(enlargerEntityId = v); relayCfg = u; prefs.relaySystemConfig = u }
+            )
+        }
+
+        // Safelight (only for TASMOTA or ESPHOME_HTTP)
+        if (relayCfg.enlargerType == "TASMOTA" || relayCfg.enlargerType == "ESPHOME_HTTP") {
+            Spacer(modifier = Modifier.height(8.dp))
+            SettingsSwitch(
+                label = "Safelight activé",
+                checked = relayCfg.safelightEnabled,
+                onCheckedChange = { v -> val u = relayCfg.copy(safelightEnabled = v); relayCfg = u; prefs.relaySystemConfig = u }
+            )
+            if (relayCfg.safelightEnabled) {
+                SettingsSwitch(
+                    label = "Même appareil que l'agrandisseur",
+                    checked = relayCfg.safelightSameDevice,
+                    onCheckedChange = { v -> val u = relayCfg.copy(safelightSameDevice = v); relayCfg = u; prefs.relaySystemConfig = u }
+                )
+                if (relayCfg.safelightSameDevice) {
+                    if (relayCfg.enlargerType == "TASMOTA") {
+                        RelayNumberField(
+                            label = "Canal safelight (1 ou 2)",
+                            value = relayCfg.safelightChannel,
+                            onValueChange = { v -> val u = relayCfg.copy(safelightChannel = v.coerceIn(1, 2)); relayCfg = u; prefs.relaySystemConfig = u }
+                        )
+                    } else {
+                        RelayTextField(
+                            label = "Entity ID safelight",
+                            value = relayCfg.safelightEntityId,
+                            onValueChange = { v -> val u = relayCfg.copy(safelightEntityId = v); relayCfg = u; prefs.relaySystemConfig = u }
+                        )
+                    }
+                } else {
+                    // Independent safelight
+                    SettingsDropdown(
+                        label = "Driver safelight",
+                        options = listOf("NULL", "TASMOTA", "ESPHOME_HTTP"),
+                        selected = relayCfg.safelightType,
+                        onSelect = { v -> val u = relayCfg.copy(safelightType = v); relayCfg = u; prefs.relaySystemConfig = u }
+                    )
+                    if (relayCfg.safelightType == "TASMOTA" || relayCfg.safelightType == "ESPHOME_HTTP") {
+                        RelayTextField(
+                            label = "Hôte safelight",
+                            value = relayCfg.safelightHost,
+                            onValueChange = { v -> val u = relayCfg.copy(safelightHost = v); relayCfg = u; prefs.relaySystemConfig = u }
+                        )
+                        RelayNumberField(
+                            label = "Port safelight",
+                            value = relayCfg.safelightPort,
+                            onValueChange = { v -> val u = relayCfg.copy(safelightPort = v); relayCfg = u; prefs.relaySystemConfig = u }
+                        )
+                    }
+                    if (relayCfg.safelightType == "TASMOTA") {
+                        RelayNumberField(
+                            label = "Canal safelight",
+                            value = relayCfg.safelightChannel,
+                            onValueChange = { v -> val u = relayCfg.copy(safelightChannel = v.coerceIn(1, 2)); relayCfg = u; prefs.relaySystemConfig = u }
+                        )
+                    }
+                    if (relayCfg.safelightType == "ESPHOME_HTTP") {
+                        RelayTextField(
+                            label = "Entity ID safelight",
+                            value = relayCfg.safelightEntityId,
+                            onValueChange = { v -> val u = relayCfg.copy(safelightEntityId = v); relayCfg = u; prefs.relaySystemConfig = u }
+                        )
+                    }
+                }
+            }
+        }
+
+        // Test connection
+        var relayTestResult by remember { mutableStateOf("") }
+        val relayTestScope = rememberCoroutineScope()
+        Spacer(modifier = Modifier.height(8.dp))
+        Button(
+            onClick = {
+                relayTestResult = "Connexion en cours…"
+                relayTestScope.launch {
+                    val cfg = prefs.relaySystemConfig
+                    if (cfg.enlargerType == "NULL" || cfg.enlargerType == "DEMO") {
+                        relayTestResult = "Mode ${cfg.enlargerType} — pas de connexion réseau."
+                        return@launch
+                    }
+                    val testSystem = cfg.buildRelaySystem(kotlinx.coroutines.MainScope())
+                    val result = withContext(Dispatchers.IO) {
+                        runCatching { testSystem.connect() }.getOrNull()
+                    }
+                    relayTestResult = if (result != null) "✓ Connexion réussie." else "✗ Échec de connexion."
+                    withContext(Dispatchers.IO) { testSystem.disconnect() }
+                }
+            },
+            modifier = Modifier.fillMaxWidth().height(48.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = DarkroomSurface)
+        ) {
+            Text("TESTER LA CONNEXION", color = DarkroomRedBright, fontSize = 14.sp)
+        }
+        if (relayTestResult.isNotBlank()) {
+            Text(
+                text = relayTestResult,
+                color = if (relayTestResult.startsWith("✓")) DarkroomRedBright else Color.Red,
+                fontSize = 12.sp,
+                modifier = Modifier.padding(top = 4.dp, start = 8.dp)
+            )
+        }
         Text(
-            text = "Mode compagnon WiFi — configuration relay à venir.",
+            text = "Les changements s'appliquent au prochain démarrage de l'app.",
             color = DarkroomRedDim,
-            fontSize = 12.sp,
-            modifier = Modifier.padding(vertical = 8.dp)
+            fontSize = 11.sp,
+            modifier = Modifier.padding(top = 8.dp, start = 8.dp)
         )
 
         // DONNÉES
@@ -404,4 +562,47 @@ private fun LuminositySlider(label: String, value: Float, onValueChange: (Float)
             )
         )
     }
+}
+
+@Composable
+private fun RelayTextField(label: String, value: String, onValueChange: (String) -> Unit) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        label = { Text(label, color = Color.Gray, fontSize = 12.sp) },
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 2.dp),
+        singleLine = true,
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedBorderColor = DarkroomRedBright,
+            unfocusedBorderColor = DarkroomRedFaint,
+            focusedTextColor = DarkroomRedBright,
+            unfocusedTextColor = DarkroomRedBright,
+            cursorColor = DarkroomRedBright
+        )
+    )
+}
+
+@Composable
+private fun RelayNumberField(label: String, value: Int, onValueChange: (Int) -> Unit) {
+    OutlinedTextField(
+        value = value.toString(),
+        onValueChange = { onValueChange(it.toIntOrNull() ?: value) },
+        label = { Text(label, color = Color.Gray, fontSize = 12.sp) },
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 2.dp),
+        singleLine = true,
+        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+            keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
+        ),
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedBorderColor = DarkroomRedBright,
+            unfocusedBorderColor = DarkroomRedFaint,
+            focusedTextColor = DarkroomRedBright,
+            unfocusedTextColor = DarkroomRedBright,
+            cursorColor = DarkroomRedBright
+        )
+    )
 }
