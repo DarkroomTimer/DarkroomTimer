@@ -11,7 +11,6 @@ import fr.mathgl.darkroomtimer.math.ContrastGrade
 import fr.mathgl.darkroomtimer.math.TeststripEngine
 import fr.mathgl.darkroomtimer.storage.PreferenceManager
 import fr.mathgl.darkroomtimer.system.RelaySystem
-import fr.mathgl.darkroomtimer.system.StandaloneRelaySystem
 import fr.mathgl.darkroomtimer.system.TeststripSession
 import fr.mathgl.darkroomtimer.system.TeststripState
 import kotlinx.coroutines.Job
@@ -40,12 +39,13 @@ data class TeststripUiState(
 
 class TeststripViewModel(
     application: Application,
-    private val relaySystem: RelaySystem
+    private val relaySystemFactory: (kotlinx.coroutines.CoroutineScope) -> RelaySystem
 ) : AndroidViewModel(application) {
 
     private var exposureJob: Job? = null
     private var tickJob: Job? = null
     private var audioSystem: AudioSystem? = null
+    private lateinit var relaySystem: RelaySystem
 
     private val _uiState = MutableStateFlow(TeststripUiState(
         sessionState = TeststripState.CONFIGURED,
@@ -68,6 +68,8 @@ class TeststripViewModel(
     private val session: TeststripSession
 
     init {
+        relaySystem = relaySystemFactory(viewModelScope)
+
         // Initialize audio from preferences
         try {
             val context = getApplication<Application>()
@@ -82,6 +84,10 @@ class TeststripViewModel(
         engine = TeststripEngine(baseTimeMs = 8000, numerator = 1, denominator = 3, patchCount = 6)
         session = TeststripSession(engine = engine)
         updateUiState()
+
+        viewModelScope.launch {
+            try { relaySystem.connect() } catch (e: Exception) { /* connectionState Flow reflects error */ }
+        }
     }
 
     private fun updateUiState() {
@@ -219,6 +225,9 @@ class TeststripViewModel(
         super.onCleared()
         exposureJob?.cancel()
         tickJob?.cancel()
+        kotlinx.coroutines.runBlocking(kotlinx.coroutines.Dispatchers.IO) {
+            try { relaySystem.disconnect() } catch (e: Exception) { /* ignore */ }
+        }
         audioSystem?.release()
     }
 
@@ -241,8 +250,11 @@ class TeststripViewModel(
                     ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY
                 ] as? Application
                     ?: throw IllegalStateException("Application not available")
-                val relaySystem = StandaloneRelaySystem()
-                return TeststripViewModel(application, relaySystem) as T
+                val prefs = fr.mathgl.darkroomtimer.storage.PreferenceManager.getInstance(application)
+                return TeststripViewModel(
+                    application,
+                    prefs.relaySystemConfig::buildRelaySystem
+                ) as T
             }
         }
     }
