@@ -10,8 +10,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import fr.mathgl.darkroomtimer.ui.theme.DarkroomBlack
+import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedBright
+import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedDim
+import fr.mathgl.darkroomtimer.ui.theme.DarkroomSurfaceElevated
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -47,7 +50,7 @@ fun EnlargerProfilesScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black)
+            .background(DarkroomBlack)
             .padding(16.dp)
     ) {
         Row(
@@ -59,10 +62,10 @@ fun EnlargerProfilesScreen(
                 text = "Profils Agrandisseur",
                 fontSize = 22.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color.White
+                color = DarkroomRedBright
             )
             TextButton(onClick = onBack) {
-                Text("← Retour", color = Color(0xFFCC2200))
+                Text("← Retour", color = DarkroomRedBright)
             }
         }
 
@@ -75,7 +78,7 @@ fun EnlargerProfilesScreen(
             items(profiles, key = { it.id }) { profile ->
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1A1A))
+                    colors = CardDefaults.cardColors(containerColor = DarkroomSurfaceElevated)
                 ) {
                     Row(
                         modifier = Modifier
@@ -87,13 +90,13 @@ fun EnlargerProfilesScreen(
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 text = profile.name,
-                                color = Color.White,
+                                color = DarkroomRedBright,
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Bold
                             )
                             Text(
                                 text = "Allumage: ${profile.turnOnDelayMs}ms / Extinction: ${profile.turnOffDelayMs}ms",
-                                color = Color.Gray,
+                                color = DarkroomRedDim,
                                 fontSize = 11.sp
                             )
                         }
@@ -102,7 +105,7 @@ fun EnlargerProfilesScreen(
                                 editingProfile = profile
                                 showEditor = true
                             }) {
-                                Text("✎", color = Color(0xFFCC2200), fontSize = 18.sp)
+                                Text("✎", color = DarkroomRedBright, fontSize = 18.sp)
                             }
                             if (profile.id != 0) {
                                 TextButton(onClick = {
@@ -112,7 +115,7 @@ fun EnlargerProfilesScreen(
                                         profiles = updated
                                     }
                                 }) {
-                                    Text("✕", color = Color.Red, fontSize = 18.sp)
+                                    Text("✕", color = DarkroomRedBright, fontSize = 18.sp)
                                 }
                             }
                         }
@@ -143,7 +146,7 @@ fun EnlargerProfilesScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFCC2200)),
+            colors = ButtonDefaults.buttonColors(containerColor = DarkroomRedBright),
             enabled = profiles.size < 16
         ) {
             Text("+ Nouveau Profil", fontSize = 16.sp)
@@ -190,17 +193,17 @@ private fun EnlargerProfileEditorDialog(
         title = {
             Text(
                 if (profile.name.isEmpty()) "Nouveau Profil" else profile.name,
-                color = Color.White
+                color = DarkroomRedBright
             )
         },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 ProfileTextField("Nom", name, { name = it }, KeyboardType.Text)
-                Text("Allumage", color = Color(0xFFCC2200), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                Text("Allumage", color = DarkroomRedBright, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                 ProfileTextField("Délai ON (ms)", turnOnDelayMs, { turnOnDelayMs = it }, KeyboardType.Number)
                 ProfileTextField("Temps montée (ms)", riseTimeMs, { riseTimeMs = it }, KeyboardType.Number)
                 ProfileTextField("Montée équiv. (ms)", riseTimeEquivMs, { riseTimeEquivMs = it }, KeyboardType.Number)
-                Text("Extinction", color = Color(0xFFCC2200), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                Text("Extinction", color = DarkroomRedBright, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                 ProfileTextField("Délai OFF (ms)", turnOffDelayMs, { turnOffDelayMs = it }, KeyboardType.Number)
                 ProfileTextField("Temps descente (ms)", fallTimeMs, { fallTimeMs = it }, KeyboardType.Number)
                 ProfileTextField("Descente équiv. (ms)", fallTimeEquivMs, { fallTimeEquivMs = it }, KeyboardType.Number)
@@ -223,7 +226,7 @@ private fun EnlargerProfileEditorDialog(
                         )
                     }
                 },
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFCC2200))
+                colors = ButtonDefaults.buttonColors(containerColor = DarkroomRedBright)
             ) {
                 Text("ENREGISTRER")
             }
@@ -231,7 +234,7 @@ private fun EnlargerProfileEditorDialog(
         dismissButton = {
             TextButton(onClick = onDismiss) { Text("ANNULER") }
         },
-        containerColor = Color(0xFF1A1A1A)
+        containerColor = DarkroomSurfaceElevated
     )
 }
 
@@ -245,16 +248,16 @@ private fun ProfileTextField(
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
-        label = { Text(label, color = Color.Gray, fontSize = 12.sp) },
+        label = { Text(label, color = DarkroomRedDim, fontSize = 12.sp) },
         modifier = Modifier.fillMaxWidth(),
         singleLine = true,
         keyboardOptions = KeyboardOptions.Default.copy(keyboardType = keyboardType),
         colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = Color(0xFFCC2200),
-            unfocusedBorderColor = Color(0xFF444444),
-            focusedTextColor = Color.White,
-            unfocusedTextColor = Color.White,
-            cursorColor = Color.White
+            focusedBorderColor = DarkroomRedBright,
+            unfocusedBorderColor = DarkroomRedDim,
+            focusedTextColor = DarkroomRedBright,
+            unfocusedTextColor = DarkroomRedBright,
+            cursorColor = DarkroomRedBright
         )
     )
 }

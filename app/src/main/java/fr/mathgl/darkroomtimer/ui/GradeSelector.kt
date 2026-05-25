@@ -17,6 +17,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import fr.mathgl.darkroomtimer.math.ContrastGrade
+import fr.mathgl.darkroomtimer.ui.theme.DarkroomBlack
+import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedBright
 
 @Composable
 fun GradeSelector(
@@ -49,9 +51,9 @@ private fun GradeItem(
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
-    val bgColor = if (isSelected) Color(0xFFCC2200) else Color.Transparent
-    val textColor = if (isSelected) Color.White else Color(0xFFCC2200)
-    val borderColor = Color(0xFFCC2200)
+    val bgColor = if (isSelected) DarkroomRedBright else Color.Transparent
+    val textColor = if (isSelected) DarkroomBlack else DarkroomRedBright
+    val borderColor = DarkroomRedBright
 
     Box(
         modifier = Modifier
