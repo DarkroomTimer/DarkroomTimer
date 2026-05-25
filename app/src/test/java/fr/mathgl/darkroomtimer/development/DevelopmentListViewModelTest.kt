@@ -13,6 +13,7 @@ import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
+import fr.mathgl.darkroomtimer.development.DevelopmentProfileEntity
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class DevelopmentListViewModelTest {
@@ -154,5 +155,27 @@ class DevelopmentListViewModelTest {
 
         assertTrue(viewModel.showEditor.value)
         assertNull(viewModel.selectedProfile.value)
+    }
+
+    @Test
+    fun `deleteProfile calls dao deleteProfileById`() = runTest(testDispatcher) {
+        val profile = DevelopmentProfile(id = 1L, name = "Test", steps = emptyList())
+        val viewModel = createViewModelWithEmptyData()
+
+        viewModel.deleteProfile(profile)
+        runCurrent()
+
+        verify(mockDao).deleteProfileById(1L)
+    }
+
+    @Test
+    fun `saveProfile with existing id calls dao updateProfile`() = runTest(testDispatcher) {
+        val profile = DevelopmentProfile(id = 5L, name = "Existing", steps = emptyList())
+        val viewModel = createViewModelWithEmptyData()
+
+        viewModel.saveProfile(profile)
+        runCurrent()
+
+        verify(mockDao).updateProfile(DevelopmentProfileEntity.fromDomain(profile))
     }
 }
