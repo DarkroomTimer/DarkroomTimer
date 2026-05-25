@@ -1,5 +1,6 @@
 package fr.mathgl.darkroomtimer.ui
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -218,6 +219,7 @@ private fun TimeAdjustButton(label: String, onClick: () -> Unit) {
     OutlinedButton(
         onClick = onClick,
         colors = ButtonDefaults.outlinedButtonColors(contentColor = DarkroomRedBright),
+        border = BorderStroke(1.dp, DarkroomRedFaint),
         modifier = Modifier.height(36.dp),
         contentPadding = PaddingValues(horizontal = 8.dp)
     ) {

@@ -1,5 +1,6 @@
 package fr.mathgl.darkroomtimer.ui
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -19,6 +20,7 @@ import fr.mathgl.darkroomtimer.math.ContrastGrade
 import fr.mathgl.darkroomtimer.system.TeststripState
 import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedBright
 import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedDim
+import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedFaint
 import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedMedium
 
 @Composable
@@ -181,7 +183,8 @@ fun TeststripScreen(
             OutlinedButton(
                 onClick = { viewModel.abandon() },
                 modifier = Modifier.fillMaxWidth().height(48.dp),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = DarkroomRedDim)
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = DarkroomRedDim),
+                border = BorderStroke(1.dp, DarkroomRedFaint)
             ) {
                 Text("ABANDONNER", fontSize = 14.sp)
             }
@@ -246,14 +249,16 @@ private fun ConfigurationSection(
         OutlinedButton(
             onClick = { onBaseTimeChange((baseTimeMs - 1000).coerceIn(100L, 999_000L)) },
             modifier = Modifier.weight(1f).height(40.dp),
-            colors = ButtonDefaults.outlinedButtonColors(contentColor = DarkroomRedBright)
+            colors = ButtonDefaults.outlinedButtonColors(contentColor = DarkroomRedBright),
+            border = BorderStroke(1.dp, DarkroomRedFaint)
         ) {
             Text("-1s", fontSize = 14.sp)
         }
         OutlinedButton(
             onClick = { onBaseTimeChange((baseTimeMs + 1000).coerceIn(100L, 999_000L)) },
             modifier = Modifier.weight(1f).height(40.dp),
-            colors = ButtonDefaults.outlinedButtonColors(contentColor = DarkroomRedBright)
+            colors = ButtonDefaults.outlinedButtonColors(contentColor = DarkroomRedBright),
+            border = BorderStroke(1.dp, DarkroomRedFaint)
         ) {
             Text("+1s", fontSize = 14.sp)
         }
@@ -283,7 +288,8 @@ private fun ConfigurationSection(
                 onStopFractionChange(newN, newD)
             },
             modifier = Modifier.weight(1f).height(40.dp),
-            colors = ButtonDefaults.outlinedButtonColors(contentColor = DarkroomRedBright)
+            colors = ButtonDefaults.outlinedButtonColors(contentColor = DarkroomRedBright),
+            border = BorderStroke(1.dp, DarkroomRedFaint)
         ) {
             Text("+1/n", fontSize = 14.sp)
         }
@@ -294,7 +300,8 @@ private fun ConfigurationSection(
                 onStopFractionChange(newN, newD)
             },
             modifier = Modifier.weight(1f).height(40.dp),
-            colors = ButtonDefaults.outlinedButtonColors(contentColor = DarkroomRedBright)
+            colors = ButtonDefaults.outlinedButtonColors(contentColor = DarkroomRedBright),
+            border = BorderStroke(1.dp, DarkroomRedFaint)
         ) {
             Text("-1/n", fontSize = 14.sp)
         }
