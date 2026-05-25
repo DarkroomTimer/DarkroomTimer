@@ -14,6 +14,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import fr.mathgl.darkroomtimer.development.DevelopmentSessionState
+import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedBright
+import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedDim
+import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedFaint
+import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedMedium
 
 @Composable
 fun DevelopmentSessionScreen(
@@ -47,12 +51,12 @@ fun DevelopmentSessionScreen(
         ) {
             Text(
                 text = "Étape ${currentStepIndex + 1} / $totalSteps",
-                color = Color.White,
+                color = DarkroomRedBright,
                 fontSize = 16.sp
             )
             Text(
                 text = "$progress%",
-                color = Color(0xFFCC2200),
+                color = DarkroomRedBright,
                 fontWeight = FontWeight.Bold,
                 fontSize = 16.sp
             )
@@ -64,8 +68,8 @@ fun DevelopmentSessionScreen(
         LinearProgressIndicator(
             progress = progress / 100f,
             modifier = Modifier.fillMaxWidth().height(8.dp),
-            color = Color(0xFFCC2200),
-            trackColor = Color(0xFF333333)
+            color = DarkroomRedBright,
+            trackColor = DarkroomRedFaint
         )
 
         Spacer(modifier = Modifier.height(32.dp))
@@ -73,7 +77,7 @@ fun DevelopmentSessionScreen(
         // Nom de l'étape
         Text(
             text = stepName,
-            color = Color.White,
+            color = DarkroomRedBright,
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center
@@ -87,7 +91,7 @@ fun DevelopmentSessionScreen(
             DevelopmentSessionState.PAUSED -> {
                 Text(
                     text = formatTime(stepRemainingSeconds.toLong() * 1000),
-                    color = Color.White,
+                    color = DarkroomRedBright,
                     fontSize = 72.sp,
                     fontFamily = FontFamily.Monospace,
                     fontWeight = FontWeight.Bold
@@ -97,14 +101,14 @@ fun DevelopmentSessionScreen(
 
                 Text(
                     text = "écoulé: ${stepElapsedSeconds}s",
-                    color = Color.Gray,
+                    color = DarkroomRedDim,
                     fontSize = 14.sp
                 )
             }
             DevelopmentSessionState.COMPLETED -> {
                 Text(
                     text = "✓ COMPLÉTÉ",
-                    color = Color(0xFF44AA44),
+                    color = DarkroomRedMedium,
                     fontSize = 32.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -120,7 +124,7 @@ fun DevelopmentSessionScreen(
                 Button(
                     onClick = onStart,
                     modifier = Modifier.fillMaxWidth().height(56.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF44AA44))
+                    colors = ButtonDefaults.buttonColors(containerColor = DarkroomRedMedium)
                 ) {
                     Text("DÉMARRER", fontSize = 20.sp)
                 }
@@ -134,14 +138,14 @@ fun DevelopmentSessionScreen(
                     Button(
                         onClick = onPause,
                         modifier = Modifier.weight(1f).height(56.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF884400))
+                        colors = ButtonDefaults.buttonColors(containerColor = DarkroomRedDim)
                     ) {
                         Text("PAUSE", fontSize = 18.sp)
                     }
                     Button(
                         onClick = onCancel,
                         modifier = Modifier.weight(1f).height(56.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
+                        colors = ButtonDefaults.buttonColors(containerColor = DarkroomRedBright)
                     ) {
                         Text("QUITTER", fontSize = 14.sp)
                     }
@@ -156,21 +160,21 @@ fun DevelopmentSessionScreen(
                     Button(
                         onClick = onResume,
                         modifier = Modifier.weight(1f).height(56.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF44AA44))
+                        colors = ButtonDefaults.buttonColors(containerColor = DarkroomRedMedium)
                     ) {
                         Text("REPRENDRE", fontSize = 14.sp)
                     }
                     Button(
                         onClick = onNextStep,
                         modifier = Modifier.weight(1f).height(56.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFCC2200))
+                        colors = ButtonDefaults.buttonColors(containerColor = DarkroomRedBright)
                     ) {
                         Text("SUIVANT", fontSize = 14.sp)
                     }
                     Button(
                         onClick = onCancel,
                         modifier = Modifier.weight(1f).height(56.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
+                        colors = ButtonDefaults.buttonColors(containerColor = DarkroomRedBright)
                     ) {
                         Text("QUITTER", fontSize = 12.sp)
                     }
@@ -181,7 +185,7 @@ fun DevelopmentSessionScreen(
                 Button(
                     onClick = onCancel,
                     modifier = Modifier.fillMaxWidth().height(56.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF44AA44))
+                    colors = ButtonDefaults.buttonColors(containerColor = DarkroomRedMedium)
                 ) {
                     Text("TERMINER", fontSize = 20.sp)
                 }

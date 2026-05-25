@@ -19,6 +19,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import fr.mathgl.darkroomtimer.development.*
 import fr.mathgl.darkroomtimer.storage.room.AppDatabase
+import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedBright
+import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedDim
+import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedMedium
+import fr.mathgl.darkroomtimer.ui.theme.DarkroomSurface
+import fr.mathgl.darkroomtimer.ui.theme.DarkroomSurfaceElevated
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flowOf
@@ -71,10 +76,10 @@ fun DevelopmentLaunchScreen(
                 text = "Lancer le Développement",
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color.White
+                color = DarkroomRedBright
             )
             TextButton(onClick = onBack) {
-                Text("<- Retour", color = Color(0xFFCC2200))
+                Text("<- Retour", color = DarkroomRedBright)
             }
         }
 
@@ -83,7 +88,7 @@ fun DevelopmentLaunchScreen(
         // Mode indicator
         Text(
             text = "Sélectionnez un profil pour commencer",
-            color = Color.Gray,
+            color = DarkroomRedDim,
             fontSize = 14.sp,
             modifier = Modifier.fillMaxWidth()
         )
@@ -95,7 +100,7 @@ fun DevelopmentLaunchScreen(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
-                CircularProgressIndicator(color = Color(0xFFCC2200))
+                CircularProgressIndicator(color = DarkroomRedBright)
             }
         } else if (profiles.isEmpty()) {
             // No profiles available
@@ -110,13 +115,13 @@ fun DevelopmentLaunchScreen(
                 ) {
                     Text(
                         text = "Aucun profil disponible",
-                        color = Color.Gray,
+                        color = DarkroomRedDim,
                         fontSize = 16.sp
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Button(
                         onClick = onNavigateToProfiles,
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFCC2200))
+                        colors = ButtonDefaults.buttonColors(containerColor = DarkroomRedBright)
                     ) {
                         Text("Créer un profil", fontSize = 14.sp)
                     }
@@ -151,7 +156,7 @@ fun DevelopmentLaunchScreen(
                     .height(56.dp),
                 enabled = profiles.isNotEmpty(),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = if (profiles.isNotEmpty()) Color(0xFF44AA44) else Color(0xFF333333)
+                    containerColor = if (profiles.isNotEmpty()) DarkroomRedMedium else DarkroomRedDim
                 )
             ) {
                 Text("LANCER LA SESSION", fontSize = 16.sp)
@@ -173,44 +178,44 @@ fun DevelopmentLaunchScreen(
                             showModeConfirmation = false
                         }
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF44AA44))
+                    colors = ButtonDefaults.buttonColors(containerColor = DarkroomRedMedium)
                 ) {
-                    Text("DÉMARRER", color = Color.Black)
+                    Text("DÉMARRER", color = DarkroomRedBright)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showModeConfirmation = false }) {
-                    Text("ANNULER", color = Color.Gray)
+                    Text("ANNULER", color = DarkroomRedDim)
                 }
             },
             title = {
                 Text(
                     text = "Démarrer la session",
-                    color = Color.White
+                    color = DarkroomRedBright
                 )
             },
             text = {
                 Column {
                     Text(
                         text = "Profil: ${profiles.firstOrNull()?.name ?: ""}",
-                        color = Color.White,
+                        color = DarkroomRedBright,
                         fontSize = 14.sp
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = "Mode: ${profiles.firstOrNull()?.navigationMode?.name ?: ""}",
-                        color = Color.Gray,
+                        color = DarkroomRedDim,
                         fontSize = 12.sp
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = "${profiles.firstOrNull()?.stepCount() ?: 0} étapes",
-                        color = Color.Gray,
+                        color = DarkroomRedDim,
                         fontSize = 12.sp
                     )
                 }
             },
-            containerColor = Color(0xFF1A1A1A)
+            containerColor = DarkroomSurfaceElevated
         )
     }
 }
@@ -227,7 +232,7 @@ private fun LaunchProfileItem(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF222222))
+        colors = CardDefaults.cardColors(containerColor = DarkroomSurface)
     ) {
         Row(
             modifier = Modifier
@@ -239,26 +244,26 @@ private fun LaunchProfileItem(
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = profile.name,
-                    color = Color.White,
+                    color = DarkroomRedBright,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = profile.preview(),
-                    color = Color.Gray,
+                    color = DarkroomRedDim,
                     fontSize = 11.sp,
                     maxLines = 1
                 )
                 Row {
                     Text(
                         text = "${profile.stepCount()} étapes",
-                        color = Color(0xFF888888),
+                        color = DarkroomRedDim,
                         fontSize = 10.sp
                     )
                     Text(
                         text = "  •  ${if (profile.navigationMode == DevelopmentNavigationMode.AUTOMATIC) "Auto" else "Manuel"}",
-                        color = Color(0xFF888888),
+                        color = DarkroomRedDim,
                         fontSize = 10.sp
                     )
                 }
@@ -268,14 +273,14 @@ private fun LaunchProfileItem(
                 modifier = Modifier
                     .size(24.dp)
                     .background(
-                        Color(0xFFCC2200),
+                        DarkroomRedBright,
                         RoundedCornerShape(12.dp)
                     ),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = ">",
-                    color = Color.White,
+                    color = DarkroomRedBright,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold
                 )
