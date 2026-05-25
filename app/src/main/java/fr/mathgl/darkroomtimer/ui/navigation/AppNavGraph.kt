@@ -166,6 +166,14 @@ fun AppNavGraph() {
                                 devVM.setSelectedProfile(profile)
                                 navController.popBackStack()
                             },
+                            onEditProfile = { profile ->
+                                devVM.setEditingProfile(profile)
+                                navController.navigate(AppRoutes.DEVELOPMENT_PROFILE_EDITOR)
+                            },
+                            onNewProfile = {
+                                devVM.setEditingProfile(null)
+                                navController.navigate(AppRoutes.DEVELOPMENT_PROFILE_EDITOR)
+                            },
                             onBack = {
                                 navController.popBackStack()
                             }
