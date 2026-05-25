@@ -76,13 +76,6 @@ fun MainScreen() {
 
     var showEnlargerProfiles by rememberSaveable { mutableStateOf(false) }
 
-    LaunchedEffect(developmentSession) {
-        while (developmentSession?.isRunning == true) {
-            kotlinx.coroutines.delay(1000)
-            developmentSession?.tick()
-        }
-    }
-
     if (developmentActive) {
         DevelopmentOverlay(
             devFlowState = devFlowState,
@@ -222,14 +215,23 @@ private fun DevelopmentOverlay(
         DevelopmentFlowState.SESSION -> {
             val session = developmentSession
             if (session != null) {
+                val snapshot by session.stateFlow.collectAsState()
+
+                LaunchedEffect(snapshot.state) {
+                    while (session.isRunning) {
+                        kotlinx.coroutines.delay(1000)
+                        session.tick()
+                    }
+                }
+
                 DevelopmentSessionScreen(
-                    stepName = session.currentStep?.name ?: "Étape",
-                    stepElapsedSeconds = session.currentStepElapsedSeconds,
-                    stepRemainingSeconds = session.currentStepRemainingSeconds,
-                    progress = session.progress,
-                    state = session.state,
-                    totalSteps = session.totalSteps,
-                    currentStepIndex = if (session.currentStepIndex >= 0) session.currentStepIndex + 1 else 0,
+                    stepName = snapshot.currentStep?.name ?: "Étape",
+                    stepElapsedSeconds = snapshot.currentStep?.elapsedSeconds ?: 0L,
+                    stepRemainingSeconds = snapshot.currentStep?.let { it.remainingSeconds(it.elapsedSeconds) } ?: 0,
+                    progress = snapshot.progress,
+                    state = snapshot.state,
+                    totalSteps = snapshot.totalSteps,
+                    currentStepIndex = if (snapshot.currentStepIndex >= 0) snapshot.currentStepIndex + 1 else 0,
                     onStart = { session.start() },
                     onPause = { session.pause() },
                     onResume = { session.resume() },
