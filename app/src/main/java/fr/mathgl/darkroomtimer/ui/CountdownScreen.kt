@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import fr.mathgl.darkroomtimer.math.BurnDodgeType
+import fr.mathgl.darkroomtimer.math.FStopMath
 import fr.mathgl.darkroomtimer.system.ConnectionState
 import fr.mathgl.darkroomtimer.system.CountdownTimer
 import fr.mathgl.darkroomtimer.system.RelayState
@@ -126,6 +127,19 @@ fun CountdownScreen(
         if (state.timerState != TimerState.RUNNING) {
             TimeAdjustRow(onAdjust = { viewModel.adjustTime(it) })
             Spacer(modifier = Modifier.height(24.dp))
+        }
+
+        // F-stop correction (only when STOPPED)
+        if (state.timerState == TimerState.STOPPED) {
+            FStopCorrectionSection(
+                fStopCorrectionNumerator = state.fStopCorrectionNumerator,
+                fStopCorrectionDenominator = state.fStopCorrectionDenominator,
+                calculatedTimeDisplay = state.displayTime,
+                onApplyDelta = { n, d -> viewModel.applyFStopDelta(n, d) },
+                onReset = { viewModel.resetFStopCorrection() },
+                onSetAsBase = { viewModel.setFStopCorrectionAsBase() }
+            )
+            Spacer(modifier = Modifier.height(16.dp))
         }
 
         // Control buttons
@@ -320,6 +334,86 @@ private fun TimeSpinner(label: String, value: Int, range: IntRange, onValueChang
             Text("▼", color = DarkroomRedBright, fontSize = 16.sp)
         }
         Text(label, color = DarkroomRedDim, fontSize = 10.sp)
+    }
+}
+
+@Composable
+private fun FStopCorrectionSection(
+    fStopCorrectionNumerator: Int,
+    fStopCorrectionDenominator: Int,
+    calculatedTimeDisplay: String,
+    onApplyDelta: (Int, Int) -> Unit,
+    onReset: () -> Unit,
+    onSetAsBase: () -> Unit
+) {
+    // Section divider
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center
+    ) {
+        HorizontalDivider(modifier = Modifier.weight(1f), color = DarkroomRedFaint)
+        Text(" F-Stop ", fontSize = 11.sp, color = DarkroomRedDim)
+        HorizontalDivider(modifier = Modifier.weight(1f), color = DarkroomRedFaint)
+    }
+
+    Spacer(modifier = Modifier.height(8.dp))
+
+    // Negative delta buttons row
+    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+        FStopDeltaButton(label = "-1",  onClick = { onApplyDelta(-1, 1) })
+        FStopDeltaButton(label = "-½",  onClick = { onApplyDelta(-1, 2) })
+        FStopDeltaButton(label = "-⅓",  onClick = { onApplyDelta(-1, 3) })
+        FStopDeltaButton(label = "-⅙",  onClick = { onApplyDelta(-1, 6) })
+        FStopDeltaButton(label = "+⅙",  onClick = { onApplyDelta(1, 6) })
+        FStopDeltaButton(label = "+⅓",  onClick = { onApplyDelta(1, 3) })
+        FStopDeltaButton(label = "+½",  onClick = { onApplyDelta(1, 2) })
+        FStopDeltaButton(label = "+1",  onClick = { onApplyDelta(1, 1) })
+    }
+
+    // Correction status (shown only when a correction is active)
+    if (fStopCorrectionNumerator != 0) {
+        Spacer(modifier = Modifier.height(8.dp))
+
+        val sign = if (fStopCorrectionNumerator > 0) "+" else ""
+        val stopLabel = FStopMath.formatStop(fStopCorrectionNumerator, fStopCorrectionDenominator)
+        Text(
+            text = "Correction : $sign$stopLabel stop → $calculatedTimeDisplay",
+            fontSize = 12.sp,
+            color = DarkroomRedBright
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            OutlinedButton(
+                onClick = onReset,
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = DarkroomRedDim),
+                border = BorderStroke(1.dp, DarkroomRedFaint)
+            ) {
+                Text("Reset")
+            }
+            OutlinedButton(
+                onClick = onSetAsBase,
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = DarkroomRedDim),
+                border = BorderStroke(1.dp, DarkroomRedFaint)
+            ) {
+                Text("Set")
+            }
+        }
+    }
+}
+
+@Composable
+private fun FStopDeltaButton(label: String, onClick: () -> Unit) {
+    OutlinedButton(
+        onClick = onClick,
+        colors = ButtonDefaults.outlinedButtonColors(contentColor = DarkroomRedBright),
+        border = BorderStroke(1.dp, DarkroomRedFaint),
+        modifier = Modifier.height(36.dp),
+        contentPadding = PaddingValues(horizontal = 8.dp)
+    ) {
+        Text(text = label, fontSize = 11.sp)
     }
 }
 
