@@ -9,6 +9,7 @@ import fr.mathgl.darkroomtimer.system.MockRelaySystemNoPause
 import fr.mathgl.darkroomtimer.system.RelaySystem
 import fr.mathgl.darkroomtimer.system.RelayStates
 import fr.mathgl.darkroomtimer.system.TimerState
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,7 +27,10 @@ class CountdownViewModelTest {
     private lateinit var relaySystem: MockRelaySystem
     private lateinit var viewModel: TestCountdownViewModel
 
-    class TestCountdownViewModel(app: Application, rs: RelaySystem) : CountdownViewModel(app, rs) {
+    class TestCountdownViewModel(
+        app: Application,
+        factory: (CoroutineScope) -> RelaySystem
+    ) : CountdownViewModel(app, factory) {
         val serviceIntents = mutableListOf<Pair<String, Long>>()
         override fun sendServiceIntent(action: String, remainingMs: Long) {
             serviceIntents.add(action to remainingMs)
@@ -39,7 +43,7 @@ class CountdownViewModelTest {
         application = mock()
         relaySystem = MockRelaySystem(TestScope(testDispatcher))
 
-        viewModel = TestCountdownViewModel(application, relaySystem)
+        viewModel = TestCountdownViewModel(application) { relaySystem }
     }
 
     @After
@@ -219,7 +223,7 @@ class CountdownViewModelTest {
             controller = mockController
         )
 
-        val vm = TestCountdownViewModel(application, relaySystemNoPause)
+        val vm = TestCountdownViewModel(application) { relaySystemNoPause }
         vm.start()
         testDispatcher.scheduler.runCurrent()
 

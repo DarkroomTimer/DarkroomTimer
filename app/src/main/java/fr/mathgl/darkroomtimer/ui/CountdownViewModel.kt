@@ -18,6 +18,7 @@ import fr.mathgl.darkroomtimer.system.ForegroundTimerService
 import fr.mathgl.darkroomtimer.system.ConnectionState
 import fr.mathgl.darkroomtimer.system.RelayStates
 import fr.mathgl.darkroomtimer.system.RelaySystem
+import fr.mathgl.darkroomtimer.system.RelaySystemConfigFlat
 import fr.mathgl.darkroomtimer.system.TimerState
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -44,11 +45,12 @@ data class CountdownUiState(
 
 open class CountdownViewModel(
     application: Application,
-    private val relaySystem: RelaySystem
+    private val relaySystemFactory: (kotlinx.coroutines.CoroutineScope) -> RelaySystem
 ) : AndroidViewModel(application) {
 
     private val timer = CountdownTimer()
     private val burnDodgeManager = BurnDodgeManager()
+    private lateinit var relaySystem: RelaySystem
     private var audioSystem: AudioSystem? = null
     private var tickJob: Job? = null
 
@@ -67,6 +69,8 @@ open class CountdownViewModel(
     val uiState: StateFlow<CountdownUiState> = _uiState.asStateFlow()
 
     init {
+        relaySystem = relaySystemFactory(viewModelScope)
+
         // Initialize audio from preferences
         try {
             val context = getApplication<Application>()
@@ -296,7 +300,7 @@ open class CountdownViewModel(
     override fun onCleared() {
         super.onCleared()
         tickJob?.cancel()
-        viewModelScope.launch {
+        kotlinx.coroutines.runBlocking(kotlinx.coroutines.Dispatchers.IO) {
             try { relaySystem.disconnect() } catch (e: Exception) { /* ignore */ }
         }
         audioSystem?.release()
@@ -322,10 +326,7 @@ open class CountdownViewModel(
                 ] as? Application
                     ?: throw IllegalStateException("Application not available")
                 val prefs = fr.mathgl.darkroomtimer.storage.PreferenceManager.getInstance(application)
-                val relaySystem = prefs.relaySystemConfig.buildRelaySystem(
-                    kotlinx.coroutines.MainScope()
-                )
-                return CountdownViewModel(application, relaySystem) as T
+                return CountdownViewModel(application, prefs.relaySystemConfig::buildRelaySystem) as T
             }
         }
     }
