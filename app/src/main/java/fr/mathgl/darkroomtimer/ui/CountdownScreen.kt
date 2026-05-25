@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import fr.mathgl.darkroomtimer.math.BurnDodgeType
+import fr.mathgl.darkroomtimer.system.ConnectionState
 import fr.mathgl.darkroomtimer.system.CountdownTimer
 import fr.mathgl.darkroomtimer.system.RelayState
 import fr.mathgl.darkroomtimer.system.TimerState
@@ -29,6 +30,10 @@ fun CountdownScreen(
     viewModel: CountdownViewModel = viewModel(factory = CountdownViewModel.Factory)
 ) {
     val state by viewModel.uiState.collectAsState()
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val relayType = remember {
+        fr.mathgl.darkroomtimer.storage.PreferenceManager.getInstance(context).relaySystemConfig.enlargerType
+    }
     var showBurnDodgeDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(showBurnDodgeDialog) {
@@ -48,6 +53,11 @@ fun CountdownScreen(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Spacer(modifier = Modifier.height(32.dp))
+        ConnectionIndicator(
+            connectionState = state.connectionState,
+            relayType = relayType
+        )
+        Spacer(modifier = Modifier.height(8.dp))
 
         // Timer display
         Text(
@@ -304,6 +314,33 @@ private fun TimeSpinner(label: String, value: Int, range: IntRange, onValueChang
             Text("▼", color = DarkroomRedBright, fontSize = 16.sp)
         }
         Text(label, color = DarkroomRedDim, fontSize = 10.sp)
+    }
+}
+
+@Composable
+private fun ConnectionIndicator(connectionState: ConnectionState, relayType: String) {
+    val (dotColor, label) = when {
+        relayType == "NULL" || relayType == "DEMO" ->
+            DarkroomRedDim to relayType.lowercase()
+        connectionState is ConnectionState.Connected ->
+            Color(0xFF44AA44) to "connecté"
+        connectionState is ConnectionState.Connecting ->
+            Color(0xFFAA8800) to "connexion…"
+        connectionState is ConnectionState.Error ->
+            Color.Red to "erreur"
+        else ->
+            DarkroomRedDim to "déconnecté"
+    }
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(8.dp)
+                .background(dotColor, shape = RoundedCornerShape(4.dp))
+        )
+        Text(text = label, fontSize = 11.sp, color = dotColor)
     }
 }
 
