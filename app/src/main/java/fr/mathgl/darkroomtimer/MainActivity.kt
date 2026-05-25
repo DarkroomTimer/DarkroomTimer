@@ -71,7 +71,7 @@ fun MainScreen() {
 
     var developmentActive by rememberSaveable { mutableStateOf(false) }
     var devFlowState by rememberSaveable { mutableStateOf(DevelopmentFlowState.LAUNCH) }
-    var selectedProfile by rememberSaveable { mutableStateOf<DevelopmentProfile?>(null) }
+    var selectedProfile by remember { mutableStateOf<DevelopmentProfile?>(null) }
     var developmentSession by remember { mutableStateOf<DevelopmentSession?>(null) }
 
     var showEnlargerProfiles by rememberSaveable { mutableStateOf(false) }
@@ -238,7 +238,9 @@ private fun DevelopmentOverlay(
                     onCancel = onExit
                 )
             } else {
-                onDevFlowStateChange(DevelopmentFlowState.LAUNCH)
+                LaunchedEffect(Unit) {
+                    onDevFlowStateChange(DevelopmentFlowState.LAUNCH)
+                }
             }
         }
     }
