@@ -30,10 +30,6 @@ fun CountdownScreen(
     viewModel: CountdownViewModel = viewModel(factory = CountdownViewModel.Factory)
 ) {
     val state by viewModel.uiState.collectAsState()
-    val context = androidx.compose.ui.platform.LocalContext.current
-    val relayType = remember {
-        fr.mathgl.darkroomtimer.storage.PreferenceManager.getInstance(context).relaySystemConfig.enlargerType
-    }
     var showBurnDodgeDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(showBurnDodgeDialog) {
@@ -55,7 +51,7 @@ fun CountdownScreen(
         Spacer(modifier = Modifier.height(32.dp))
         ConnectionIndicator(
             connectionState = state.connectionState,
-            relayType = relayType
+            relayType = state.relayType
         )
         Spacer(modifier = Modifier.height(8.dp))
 

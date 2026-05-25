@@ -40,12 +40,14 @@ data class CountdownUiState(
     val showTimeEditor: Boolean = false,
     val enlargerOverride: Boolean = false,
     val safelightOverride: Boolean = false,
+    val relayType: String = "NULL",
     val connectionState: ConnectionState = ConnectionState.Disconnected
 )
 
 open class CountdownViewModel(
     application: Application,
-    private val relaySystemFactory: (kotlinx.coroutines.CoroutineScope) -> RelaySystem
+    private val relaySystemFactory: (kotlinx.coroutines.CoroutineScope) -> RelaySystem,
+    private val relayType: String = "NULL"
 ) : AndroidViewModel(application) {
 
     private val timer = CountdownTimer()
@@ -70,6 +72,7 @@ open class CountdownViewModel(
 
     init {
         relaySystem = relaySystemFactory(viewModelScope)
+        _uiState.update { it.copy(relayType = relayType) }
 
         // Initialize audio from preferences
         try {
@@ -326,7 +329,11 @@ open class CountdownViewModel(
                 ] as? Application
                     ?: throw IllegalStateException("Application not available")
                 val prefs = fr.mathgl.darkroomtimer.storage.PreferenceManager.getInstance(application)
-                return CountdownViewModel(application, prefs.relaySystemConfig::buildRelaySystem) as T
+                return CountdownViewModel(
+                    application,
+                    prefs.relaySystemConfig::buildRelaySystem,
+                    prefs.relaySystemConfig.enlargerType
+                ) as T
             }
         }
     }
