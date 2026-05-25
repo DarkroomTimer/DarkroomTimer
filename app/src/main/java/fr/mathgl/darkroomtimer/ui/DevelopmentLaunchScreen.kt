@@ -71,7 +71,7 @@ fun DevelopmentLaunchScreen(
                 color = DarkroomRedBright
             )
             TextButton(onClick = onSelectProfile) {
-                Text("← Sélectionner un profil", color = DarkroomRedBright)
+                Text("← Gérer les profils", color = DarkroomRedBright)
             }
         }
 
