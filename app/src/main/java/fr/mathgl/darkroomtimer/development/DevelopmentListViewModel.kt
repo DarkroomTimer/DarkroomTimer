@@ -23,12 +23,6 @@ class DevelopmentListViewModel(
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
-    private val _selectedProfile = MutableStateFlow<DevelopmentProfile?>(null)
-    val selectedProfile: StateFlow<DevelopmentProfile?> = _selectedProfile.asStateFlow()
-
-    private val _showEditor = MutableStateFlow(false)
-    val showEditor: StateFlow<Boolean> = _showEditor.asStateFlow()
-
     // Note: init block removed to avoid coroutine dispatch issues in tests.
     // Call loadProfiles() explicitly when needed.
 
@@ -42,28 +36,6 @@ class DevelopmentListViewModel(
                 _isLoading.value = false
             }
         }
-    }
-
-    /** S&#xe9;lecte un profil pour l&#xe9;dition ou la session */
-    fun selectProfile(profile: DevelopmentProfile) {
-        _selectedProfile.value = profile
-    }
-
-    /** D&#xe9;osele le profil s&#xe9;lectionn&#xe9; */
-    fun deselectProfile() {
-        _selectedProfile.value = null
-    }
-
-    /** Ouvre l&#xe9;diteur pour un nouveau ou existant profil */
-    fun openEditor(profile: DevelopmentProfile?) {
-        _selectedProfile.value = profile
-        _showEditor.value = true
-    }
-
-    /** Ferme l&#xe9;diteur */
-    fun closeEditor() {
-        _showEditor.value = false
-        _selectedProfile.value = null
     }
 
     /** Sauvegarde un profil (cr&#xe9;ation ou mise &#xe0;jour) */

@@ -52,58 +52,6 @@ class DevelopmentListViewModelTest {
 
         assertEquals(emptyList<String>(), viewModel.profiles.value.map { it.name })
         assertFalse(viewModel.isLoading.value)
-        assertNull(viewModel.selectedProfile.value)
-        assertFalse(viewModel.showEditor.value)
-    }
-
-    @Test
-    fun `selectProfile sets the selected profile`() = runTest(testDispatcher) {
-        val profile = DevelopmentProfile(
-            id = 1L,
-            name = "Test Profile",
-            steps = listOf(
-                DevelopmentStep.BathStep(name = "Bain 1", durationSeconds = 60)
-            )
-        )
-        val viewModel = createViewModelWithEmptyData()
-
-        viewModel.selectProfile(profile)
-
-        assertEquals(profile, viewModel.selectedProfile.value)
-    }
-
-    @Test
-    fun `deselectProfile clears the selected profile`() = runTest(testDispatcher) {
-        val profile = DevelopmentProfile(
-            id = 1L,
-            name = "Test Profile",
-            steps = emptyList()
-        )
-        val viewModel = createViewModelWithEmptyData()
-        viewModel.selectProfile(profile)
-
-        viewModel.deselectProfile()
-
-        assertNull(viewModel.selectedProfile.value)
-    }
-
-    @Test
-    fun `openEditor sets showEditor to true`() = runTest(testDispatcher) {
-        val viewModel = createViewModelWithEmptyData()
-
-        viewModel.openEditor(null)
-
-        assertTrue(viewModel.showEditor.value)
-    }
-
-    @Test
-    fun `closeEditor sets showEditor to false`() = runTest(testDispatcher) {
-        val viewModel = createViewModelWithEmptyData()
-        viewModel.openEditor(null)
-
-        viewModel.closeEditor()
-
-        assertFalse(viewModel.showEditor.value)
     }
 
     @Test
@@ -125,47 +73,6 @@ class DevelopmentListViewModelTest {
 
         assertEquals("Auto Profile", profile.name)
         assertEquals(DevelopmentNavigationMode.AUTOMATIC, profile.navigationMode)
-    }
-
-    @Test
-    fun `selectProfile followed by deselectProfile clears selection`() = runTest(testDispatcher) {
-        val profile = DevelopmentProfile(
-            id = 1L,
-            name = "Test Profile",
-            steps = emptyList()
-        )
-        val viewModel = createViewModelWithEmptyData()
-
-        viewModel.selectProfile(profile)
-        assertEquals(profile, viewModel.selectedProfile.value)
-
-        viewModel.deselectProfile()
-        assertNull(viewModel.selectedProfile.value)
-    }
-
-    @Test
-    fun `openEditor sets selected profile and showEditor flag`() = runTest(testDispatcher) {
-        val profile = DevelopmentProfile(
-            id = 1L,
-            name = "Test Profile",
-            steps = emptyList()
-        )
-        val viewModel = createViewModelWithEmptyData()
-
-        viewModel.openEditor(profile)
-
-        assertEquals(profile, viewModel.selectedProfile.value)
-        assertTrue(viewModel.showEditor.value)
-    }
-
-    @Test
-    fun `openEditor with null creates empty profile flow`() = runTest(testDispatcher) {
-        val viewModel = createViewModelWithEmptyData()
-
-        viewModel.openEditor(null)
-
-        assertTrue(viewModel.showEditor.value)
-        assertNull(viewModel.selectedProfile.value)
     }
 
     @Test
