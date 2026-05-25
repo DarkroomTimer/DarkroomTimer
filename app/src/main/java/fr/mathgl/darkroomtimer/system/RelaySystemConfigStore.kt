@@ -4,7 +4,6 @@ import fr.mathgl.darkroomtimer.system.drivers.DemoRelayController
 import fr.mathgl.darkroomtimer.system.drivers.ESPhomeHttpRelayController
 import fr.mathgl.darkroomtimer.system.drivers.NullRelayController
 import fr.mathgl.darkroomtimer.system.drivers.TasmotaRelayController
-import kotlinx.coroutines.MainScope
 
 /**
  * Flat, JSON-serializable representation of the full relay system configuration.
@@ -31,10 +30,10 @@ data class RelaySystemConfigFlat(
     val safelightUsername: String = "",
     val safelightPassword: String = ""
 ) {
-    fun buildRelaySystem(): RelaySystem {
+    fun buildRelaySystem(scope: kotlinx.coroutines.CoroutineScope): RelaySystem {
         val enlarger = buildEnlarger()
         val safelight = if (safelightEnabled) buildSafelight() else null
-        return RelaySystem(enlarger = enlarger, safelight = safelight, scope = MainScope())
+        return RelaySystem(enlarger = enlarger, safelight = safelight, scope = scope)
     }
 
     private fun buildEnlarger(): RelayController = when (enlargerType) {
@@ -60,6 +59,7 @@ data class RelaySystemConfigFlat(
         if (safelightSameDevice) {
             // Same device as enlarger: inherit host/port, but different channel
             return when (enlargerType) {
+                "DEMO" -> DemoRelayController()
                 "TASMOTA" -> TasmotaRelayController(
                     host       = enlargerHost,
                     port       = enlargerPort,
