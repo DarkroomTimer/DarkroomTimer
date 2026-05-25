@@ -11,6 +11,7 @@ import fr.mathgl.darkroomtimer.audio.ToneGeneratorAudioEngine
 import fr.mathgl.darkroomtimer.math.BurnDodgeEntry
 import fr.mathgl.darkroomtimer.math.BurnDodgeType
 import fr.mathgl.darkroomtimer.math.ContrastGrade
+import fr.mathgl.darkroomtimer.math.FStopMath
 import fr.mathgl.darkroomtimer.storage.PreferenceManager
 import fr.mathgl.darkroomtimer.system.BurnDodgeManager
 import fr.mathgl.darkroomtimer.system.CountdownTimer
@@ -59,6 +60,16 @@ open class CountdownViewModel(
     private var audioSystem: AudioSystem? = null
     private var tickJob: Job? = null
     private var baseTimeMs: Long = timer.configuredTimeMs
+
+    private fun calculatedTimeMs(): Long {
+        val state = _uiState.value
+        if (state.fStopCorrectionNumerator == 0) return baseTimeMs
+        return FStopMath
+            .adjustTime(baseTimeMs, state.fStopCorrectionNumerator, state.fStopCorrectionDenominator, 1)
+            .coerceIn(100L, 999_000L)
+    }
+
+    fun applyFStopDelta(numerator: Int, denominator: Int) { /* implemented in Task 3 */ }
 
     private val _uiState = MutableStateFlow(
         CountdownUiState(
@@ -126,6 +137,7 @@ open class CountdownViewModel(
 
     fun start() {
         if (timer.state != TimerState.STOPPED) return
+        timer.configuredTimeMs = calculatedTimeMs()       // use calculated time
         timer.start()
 
         viewModelScope.launch {
@@ -190,9 +202,13 @@ open class CountdownViewModel(
         while (true) {
             val ended = timer.tick()
             val remaining = maxOf(0L, timer.remainingMs())
+            if (ended) timer.configuredTimeMs = baseTimeMs           // restore base on natural end
             _uiState.update { it.copy(
-                displayTime = CountdownTimer.formatTime(remaining),
-                timerState = timer.state
+                displayTime = if (ended) CountdownTimer.formatTime(calculatedTimeMs())
+                              else CountdownTimer.formatTime(remaining),
+                timerState = timer.state,
+                enlargerOverride = if (ended) false else it.enlargerOverride,
+                safelightOverride = if (ended) false else it.safelightOverride
             ) }
             sendServiceIntent(
                 if (ended) ForegroundTimerService.ACTION_STOP else ForegroundTimerService.ACTION_UPDATE,
@@ -220,6 +236,7 @@ open class CountdownViewModel(
         val timerCompletedNaturally = timer.state == TimerState.RUNNING
         tickJob?.cancel(); tickJob = null
         timer.stop()
+        timer.configuredTimeMs = baseTimeMs                           // restore base
         viewModelScope.launch {
             val res1 = relaySystem.setEnlarger(false)
             val res2 = relaySystem.setSafelight(false)
@@ -231,7 +248,7 @@ open class CountdownViewModel(
             audioSystem?.stopExposure()
         }
         _uiState.update { it.copy(
-            displayTime = CountdownTimer.formatTime(timer.configuredTimeMs),
+            displayTime = CountdownTimer.formatTime(calculatedTimeMs()),  // use calculated time
             timerState = TimerState.STOPPED,
             enlargerOverride = false,
             safelightOverride = false
@@ -243,12 +260,23 @@ open class CountdownViewModel(
 
     fun adjustTime(deltaMs: Long) {
         if (timer.state == TimerState.RUNNING) return
-        val newTime = (timer.configuredTimeMs + deltaMs).coerceIn(100L, 999_000L)
-        timer.configuredTimeMs = newTime
-        _uiState.update { it.copy(
-            displayTime = CountdownTimer.formatTime(timer.remainingMs()),
-            configuredTimeMs = newTime
-        ) }
+        if (timer.state == TimerState.STOPPED) {
+            val newBase = (baseTimeMs + deltaMs).coerceIn(100L, 999_000L)
+            baseTimeMs = newBase
+            val calc = calculatedTimeMs()
+            timer.configuredTimeMs = calc
+            _uiState.update { it.copy(
+                displayTime = CountdownTimer.formatTime(calc),
+                configuredTimeMs = newBase
+            ) }
+        } else {
+            // PAUSED: fine-tune remaining time; does not affect baseTimeMs or correction
+            val newTime = (timer.configuredTimeMs + deltaMs).coerceIn(100L, 999_000L)
+            timer.configuredTimeMs = newTime
+            _uiState.update { it.copy(
+                displayTime = CountdownTimer.formatTime(timer.remainingMs())
+            ) }
+        }
     }
 
     fun openTimeEditor() {
@@ -261,11 +289,14 @@ open class CountdownViewModel(
     }
 
     fun setTimeFromInput(minutes: Int, seconds: Int, tenths: Int) {
-        val newTime = (minutes * 60_000L + seconds * 1_000L + tenths * 100L).coerceIn(100L, 999_000L)
-        timer.configuredTimeMs = newTime
+        val newBase = (minutes * 60_000L + seconds * 1_000L + tenths * 100L).coerceIn(100L, 999_000L)
+        baseTimeMs = newBase
+        timer.configuredTimeMs = newBase
         _uiState.update { it.copy(
-            displayTime = CountdownTimer.formatTime(newTime),
-            configuredTimeMs = newTime,
+            displayTime = CountdownTimer.formatTime(newBase),
+            configuredTimeMs = newBase,
+            fStopCorrectionNumerator = 0,
+            fStopCorrectionDenominator = 1,
             showTimeEditor = false
         ) }
     }

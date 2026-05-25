@@ -276,4 +276,83 @@ class CountdownViewModelTest {
     fun `initial fStopCorrectionDenominator should be 1`() = runTest {
         assertEquals(1, viewModel.uiState.value.fStopCorrectionDenominator)
     }
+
+    @Test
+    fun `start should use calculatedTimeMs when correction is active`() = runTest {
+        // Set base to 8000ms (default is 8000 in test, but be explicit)
+        val diff = 8000L - viewModel.uiState.value.configuredTimeMs
+        if (diff != 0L) viewModel.adjustTime(diff)
+        testDispatcher.scheduler.runCurrent()
+
+        // Apply +1 stop → calculatedTimeMs = 16000ms
+        viewModel.applyFStopDelta(1, 1)
+        testDispatcher.scheduler.runCurrent()
+
+        viewModel.start()
+        testDispatcher.scheduler.runCurrent()
+
+        // Advance past base time (8000ms) but before calculated time (16000ms)
+        testDispatcher.scheduler.advanceTimeBy(9000L)
+        testDispatcher.scheduler.runCurrent()
+
+        // If start() used baseTimeMs (8000ms), the timer would have ended — so STOPPED.
+        // If start() used calculatedTimeMs (16000ms), the timer is still running.
+        assertEquals(TimerState.RUNNING, viewModel.uiState.value.timerState)
+    }
+
+    @Test
+    fun `stop should display calculatedTimeMs after stopping`() = runTest {
+        val diff = 8000L - viewModel.uiState.value.configuredTimeMs
+        if (diff != 0L) viewModel.adjustTime(diff)
+        testDispatcher.scheduler.runCurrent()
+
+        // Apply +1 stop → calculatedTimeMs = 16000ms → displayTime = "00:16.0"
+        viewModel.applyFStopDelta(1, 1)
+        testDispatcher.scheduler.runCurrent()
+
+        viewModel.start()
+        testDispatcher.scheduler.runCurrent()
+        viewModel.stop()
+        testDispatcher.scheduler.runCurrent()
+
+        assertEquals("00:16.0", viewModel.uiState.value.displayTime)
+    }
+
+    @Test
+    fun `adjustTime when STOPPED should adjust base time while keeping correction`() = runTest {
+        val diff = 8000L - viewModel.uiState.value.configuredTimeMs
+        if (diff != 0L) viewModel.adjustTime(diff)
+        testDispatcher.scheduler.runCurrent()
+
+        // Apply +1/3 stop
+        viewModel.applyFStopDelta(1, 3)
+        testDispatcher.scheduler.runCurrent()
+
+        // Adjust base by +1000ms
+        viewModel.adjustTime(1000L)
+        testDispatcher.scheduler.runCurrent()
+
+        // Base should be 9000ms
+        assertEquals(9000L, viewModel.uiState.value.configuredTimeMs)
+        // Correction unchanged
+        assertEquals(1, viewModel.uiState.value.fStopCorrectionNumerator)
+        assertEquals(3, viewModel.uiState.value.fStopCorrectionDenominator)
+        // displayTime = formatTime(9000 * 2^(1/3)) = formatTime(FStopMath.adjustTime(9000, 1, 3, 1))
+        val expectedMs = fr.mathgl.darkroomtimer.math.FStopMath.adjustTime(9000L, 1, 3, 1)
+        assertEquals(CountdownTimer.formatTime(expectedMs), viewModel.uiState.value.displayTime)
+    }
+
+    @Test
+    fun `setTimeFromInput should reset fstop correction to zero`() = runTest {
+        viewModel.applyFStopDelta(1, 2)
+        testDispatcher.scheduler.runCurrent()
+
+        viewModel.setTimeFromInput(0, 10, 0)  // 10 seconds
+        testDispatcher.scheduler.runCurrent()
+
+        assertEquals(0, viewModel.uiState.value.fStopCorrectionNumerator)
+        assertEquals(1, viewModel.uiState.value.fStopCorrectionDenominator)
+        assertEquals(10_000L, viewModel.uiState.value.configuredTimeMs)
+        assertEquals(CountdownTimer.formatTime(10_000L), viewModel.uiState.value.displayTime)
+    }
 }
