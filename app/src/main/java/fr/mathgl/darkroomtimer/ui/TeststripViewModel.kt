@@ -34,7 +34,8 @@ data class TeststripUiState(
     val baseTimeMs: Long,
     val numerator: Int,
     val denominator: Int,
-    val selectedGrade: ContrastGrade
+    val selectedGrade: ContrastGrade,
+    val errorMessage: String? = null
 )
 
 class TeststripViewModel(
@@ -86,7 +87,9 @@ class TeststripViewModel(
         updateUiState()
 
         viewModelScope.launch {
-            try { relaySystem.connect() } catch (e: Exception) { /* connectionState Flow reflects error */ }
+            relaySystem.connect().onFailure { e ->
+                _uiState.update { it.copy(errorMessage = "Connection failed: ${e.message}") }
+            }
         }
     }
 
@@ -122,8 +125,11 @@ class TeststripViewModel(
         tickJob = null
         session.pause()
         viewModelScope.launch {
-            relaySystem.setEnlarger(false)
-            relaySystem.setSafelight(false)
+            val res1 = relaySystem.setEnlarger(false)
+            val res2 = relaySystem.setSafelight(false)
+            if (!res1.isSuccess || !res2.isSuccess) {
+                _uiState.update { it.copy(errorMessage = "Pause failed: Hardware did not respond") }
+            }
         }
         audioSystem?.pause()
         updateUiState()
@@ -144,8 +150,11 @@ class TeststripViewModel(
         tickJob?.cancel()
         tickJob = null
         viewModelScope.launch {
-            relaySystem.setEnlarger(false)
-            relaySystem.setSafelight(false)
+            val res1 = relaySystem.setEnlarger(false)
+            val res2 = relaySystem.setSafelight(false)
+            if (!res1.isSuccess || !res2.isSuccess) {
+                _uiState.update { it.copy(errorMessage = "CRITICAL: Failed to shut off relays!") }
+            }
         }
         audioSystem?.stopTeststripPatch()
         session.finishExposure()
@@ -177,8 +186,11 @@ class TeststripViewModel(
         exposureJob = null
         tickJob = null
         viewModelScope.launch {
-            relaySystem.setEnlarger(false)
-            relaySystem.setSafelight(false)
+            val res1 = relaySystem.setEnlarger(false)
+            val res2 = relaySystem.setSafelight(false)
+            if (!res1.isSuccess || !res2.isSuccess) {
+                _uiState.update { it.copy(errorMessage = "CRITICAL: Failed to shut off relays!") }
+            }
         }
         audioSystem?.stop()
         session.abandon()
@@ -206,7 +218,11 @@ class TeststripViewModel(
         if (session.state != TeststripState.EXPOSING) return
         val durationMs = session.currentExposureTimeMs
         viewModelScope.launch {
-            relaySystem.startTimedExposure(durationMs)
+            _uiState.update { it.copy(errorMessage = null) }
+            relaySystem.startTimedExposure(durationMs).onFailure { e ->
+                _uiState.update { it.copy(errorMessage = "Hardware Error: ${e.message}") }
+                session.pause()
+            }
         }
         exposureJob = viewModelScope.launch {
             delay(durationMs)
@@ -225,7 +241,7 @@ class TeststripViewModel(
         super.onCleared()
         exposureJob?.cancel()
         tickJob?.cancel()
-        kotlinx.coroutines.runBlocking(kotlinx.coroutines.Dispatchers.IO) {
+        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
             try { relaySystem.disconnect() } catch (e: Exception) { /* ignore */ }
         }
         audioSystem?.release()

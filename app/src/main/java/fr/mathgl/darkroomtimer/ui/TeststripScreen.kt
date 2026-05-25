@@ -70,7 +70,15 @@ fun TeststripScreen(
                     else -> DarkroomRedDim
                 }
             )
-            if (state.isSessionComplete) {
+            val errorMsg = state.errorMessage
+            if (errorMsg != null) {
+                Text(
+                    text = errorMsg,
+                    fontSize = 14.sp,
+                    color = DarkroomRedBright,
+                    fontWeight = FontWeight.Medium
+                )
+            } else if (state.isSessionComplete) {
                 Text(
                     text = "COMPLÉTÉ ✓",
                     fontSize = 14.sp,

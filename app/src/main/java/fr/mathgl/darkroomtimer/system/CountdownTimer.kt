@@ -2,7 +2,7 @@ package fr.mathgl.darkroomtimer.system
 
 enum class TimerState { STOPPED, RUNNING, PAUSED }
 
-class CountdownTimer(private val clock: () -> Long = { System.currentTimeMillis() }) {
+class CountdownTimer(private val clock: () -> Long = { android.os.SystemClock.elapsedRealtime() }) {
 
     var configuredTimeMs: Long = 8000L
         set(value) {

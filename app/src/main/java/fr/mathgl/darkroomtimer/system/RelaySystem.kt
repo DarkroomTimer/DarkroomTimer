@@ -50,7 +50,22 @@ open class RelaySystem(
             hasSafelight = safelight != null
         )
 
-    val connectionState: StateFlow<ConnectionState> = enlarger.connectionState
+    val connectionState: StateFlow<ConnectionState> = combine(
+        enlarger.connectionState,
+        safelight?.connectionState ?: flowOf(ConnectionState.Connected)
+    ) { enlargerState, safelightState ->
+        when {
+            enlargerState is ConnectionState.Error -> enlargerState
+            safelightState is ConnectionState.Error -> safelightState
+            enlargerState is ConnectionState.Connecting || safelightState is ConnectionState.Connecting -> ConnectionState.Connecting
+            enlargerState is ConnectionState.Connected && safelightState is ConnectionState.Connected -> ConnectionState.Connected
+            else -> ConnectionState.Disconnected
+        }
+    }.stateIn(
+        scope = scope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = ConnectionState.Disconnected
+    )
 
     val relayStates: StateFlow<RelayStates> = combine(
         enlarger.state,
@@ -63,9 +78,19 @@ open class RelaySystem(
         initialValue = RelayStates.INITIAL
     )
 
-    open suspend fun connect() {
-        enlarger.connect()
-        safelight?.connect()
+    open suspend fun connect(): Result<Unit> {
+        val enlargerRes = enlarger.connect()
+        val safelightRes = safelight?.connect() ?: Result.success(Unit)
+
+        return if (enlargerRes.isSuccess && safelightRes.isSuccess) {
+            Result.success(Unit)
+        } else {
+            val errorMsg = listOfNotNull(
+                enlargerRes.exceptionOrNull()?.message,
+                safelightRes.exceptionOrNull()?.message
+            ).joinToString("; ")
+            Result.failure(Exception(errorMsg.ifEmpty { "Connection failed" }))
+        }
     }
 
     open suspend fun disconnect() {

@@ -53,6 +53,16 @@ fun CountdownScreen(
             connectionState = state.connectionState,
             relayType = state.relayType
         )
+        val error = state.errorMessage
+        if (error != null) {
+            Text(
+                text = error,
+                fontSize = 14.sp,
+                color = DarkroomRedBright,
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier.padding(top = 4.dp)
+            )
+        }
         Spacer(modifier = Modifier.height(8.dp))
 
         // Timer display

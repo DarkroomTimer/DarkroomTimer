@@ -6,12 +6,18 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.net.wifi.WifiManager
+import android.net.wifi.WifiManager.WifiLock
 import android.os.IBinder
+import android.os.PowerManager
 import androidx.core.app.NotificationCompat
 import fr.mathgl.darkroomtimer.MainActivity
 import fr.mathgl.darkroomtimer.R
 
 class ForegroundTimerService : Service() {
+
+    private var wakeLock: PowerManager.WakeLock? = null
+    private var wifiLock: WifiManager.WifiLock? = null
 
     private val notificationManager by lazy {
         getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
@@ -28,6 +34,19 @@ class ForegroundTimerService : Service() {
         when (intent?.action) {
             ACTION_START -> {
                 val remaining = intent.getLongExtra(EXTRA_REMAINING_MS, 0L)
+
+                // Acquire locks to prevent CPU/WiFi sleep
+                val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
+                wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "DarkroomTimer:ExposureLock").apply { acquire() }
+
+                val wm = getSystemService(Context.WIFI_SERVICE) as WifiManager
+                val lockType = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                    WifiManager.WIFI_MODE_FULL_LOW_LATENCY
+                } else {
+                    WifiManager.WIFI_MODE_FULL
+                }
+                wifiLock = wm.createWifiLock(lockType, "DarkroomTimer:WifiLock").apply { acquire() }
+
                 startForeground(NOTIFICATION_ID, buildNotification(remaining))
             }
             ACTION_UPDATE -> {
@@ -35,11 +54,16 @@ class ForegroundTimerService : Service() {
                 notificationManager.notify(NOTIFICATION_ID, buildNotification(remaining))
             }
             ACTION_STOP -> {
+                wakeLock?.release()
+                wifiLock?.release()
+                wakeLock = null
+                wifiLock = null
+
                 stopForeground(STOP_FOREGROUND_REMOVE)
                 stopSelf()
             }
         }
-        return START_NOT_STICKY
+        return START_STICKY
     }
 
     private fun buildNotification(remainingMs: Long) =

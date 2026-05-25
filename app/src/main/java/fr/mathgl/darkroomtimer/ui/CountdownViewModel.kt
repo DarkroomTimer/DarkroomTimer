@@ -41,7 +41,8 @@ data class CountdownUiState(
     val enlargerOverride: Boolean = false,
     val safelightOverride: Boolean = false,
     val relayType: String = "NULL",
-    val connectionState: ConnectionState = ConnectionState.Disconnected
+    val connectionState: ConnectionState = ConnectionState.Disconnected,
+    val errorMessage: String? = null
 )
 
 open class CountdownViewModel(
@@ -113,7 +114,9 @@ open class CountdownViewModel(
 
         // Connect relay if not Null/Demo (network drivers need connection)
         viewModelScope.launch {
-            try { relaySystem.connect() } catch (e: Exception) { /* connectionState Flow reflects error */ }
+            relaySystem.connect().onFailure { e ->
+                _uiState.update { it.copy(errorMessage = "Connection failed: ${e.message}") }
+            }
         }
     }
 
@@ -122,11 +125,18 @@ open class CountdownViewModel(
         timer.start()
 
         viewModelScope.launch {
-            if (relaySystem.capabilities.canPause) {
+            _uiState.update { it.copy(errorMessage = null) }
+            val result = if (relaySystem.capabilities.canPause) {
                 relaySystem.startTimedExposure(timer.configuredTimeMs)
             } else {
-                relaySystem.setEnlarger(true)
-                relaySystem.setSafelight(true)
+                val res1 = relaySystem.setEnlarger(true)
+                val res2 = relaySystem.setSafelight(true)
+                if (res1.isSuccess && res2.isSuccess) Result.success(Unit) else Result.failure(Exception("Relay activation failed"))
+            }
+
+            if (result.isFailure) {
+                _uiState.update { it.copy(errorMessage = "Hardware Error: ${result.exceptionOrNull()?.message}") }
+                timer.stop()
             }
         }
 
@@ -141,8 +151,11 @@ open class CountdownViewModel(
         timer.pause()
         tickJob?.cancel(); tickJob = null
         viewModelScope.launch {
-            relaySystem.setEnlarger(false)
-            relaySystem.setSafelight(false)
+            val res1 = relaySystem.setEnlarger(false)
+            val res2 = relaySystem.setSafelight(false)
+            if (!res1.isSuccess || !res2.isSuccess) {
+                _uiState.update { it.copy(errorMessage = "Pause failed: Hardware did not respond") }
+            }
         }
         audioSystem?.pause()
         _uiState.update { it.copy(
@@ -156,8 +169,12 @@ open class CountdownViewModel(
         if (timer.state != TimerState.PAUSED) return
         timer.resume()
         viewModelScope.launch {
-            relaySystem.setEnlarger(true)
-            relaySystem.setSafelight(true)
+            val res1 = relaySystem.setEnlarger(true)
+            val res2 = relaySystem.setSafelight(true)
+            if (!res1.isSuccess || !res2.isSuccess) {
+                _uiState.update { it.copy(errorMessage = "Resume failed: Hardware did not respond") }
+                timer.pause()
+            }
         }
         audioSystem?.resume()
         _uiState.update { it.copy(timerState = TimerState.RUNNING) }
@@ -179,8 +196,11 @@ open class CountdownViewModel(
             )
             if (ended) {
                 viewModelScope.launch {
-                    relaySystem.setEnlarger(false)
-                    relaySystem.setSafelight(false)
+                    val res1 = relaySystem.setEnlarger(false)
+                    val res2 = relaySystem.setSafelight(false)
+                    if (!res1.isSuccess || !res2.isSuccess) {
+                        _uiState.update { it.copy(errorMessage = "CRITICAL: Failed to shut off relays on timer end!") }
+                    }
                 }
                 audioSystem?.stopExposure()
                 tickJob = null
@@ -197,8 +217,11 @@ open class CountdownViewModel(
         tickJob?.cancel(); tickJob = null
         timer.stop()
         viewModelScope.launch {
-            relaySystem.setEnlarger(false)
-            relaySystem.setSafelight(false)
+            val res1 = relaySystem.setEnlarger(false)
+            val res2 = relaySystem.setSafelight(false)
+            if (!res1.isSuccess || !res2.isSuccess) {
+                _uiState.update { it.copy(errorMessage = "CRITICAL: Failed to shut off relays!") }
+            }
         }
         if (timerCompletedNaturally) {
             audioSystem?.stopExposure()
@@ -306,7 +329,7 @@ open class CountdownViewModel(
     override fun onCleared() {
         super.onCleared()
         tickJob?.cancel()
-        kotlinx.coroutines.runBlocking(kotlinx.coroutines.Dispatchers.IO) {
+        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
             try { relaySystem.disconnect() } catch (e: Exception) { /* ignore */ }
         }
         audioSystem?.release()

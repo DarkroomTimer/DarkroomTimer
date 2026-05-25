@@ -89,13 +89,13 @@ fun DevelopmentProfileListScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Profils de D&#xe9;veloppement",
+                text = "Profils de Développement",
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 color = DarkroomRedBright
             )
             TextButton(onClick = onBack) {
-                Text("&#8592; Retour", color = DarkroomRedBright)
+                Text("← Retour", color = DarkroomRedBright)
             }
         }
 
