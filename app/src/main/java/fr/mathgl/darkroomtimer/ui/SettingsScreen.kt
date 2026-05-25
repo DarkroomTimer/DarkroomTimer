@@ -22,8 +22,10 @@ import fr.mathgl.darkroomtimer.math.ContrastGrade
 import fr.mathgl.darkroomtimer.storage.PreferenceManager
 import fr.mathgl.darkroomtimer.storage.StorageService
 import fr.mathgl.darkroomtimer.storage.room.AppDatabase
+import fr.mathgl.darkroomtimer.ui.theme.DarkroomBlack
 import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedBright
 import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedDim
+import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedFaint
 import fr.mathgl.darkroomtimer.ui.theme.DarkroomSurface
 import fr.mathgl.darkroomtimer.ui.theme.DarkroomSurfaceElevated
 import kotlinx.coroutines.CoroutineScope
@@ -97,7 +99,10 @@ fun SettingsScreen(
                     steps = 24,
                     colors = SliderDefaults.colors(
                         thumbColor = DarkroomRedBright,
-                        activeTrackColor = DarkroomRedBright
+                        activeTrackColor = DarkroomRedBright,
+                        inactiveTrackColor = DarkroomRedFaint,
+                        activeTickColor = DarkroomBlack,
+                        inactiveTickColor = DarkroomBlack
                     )
                 )
             }
@@ -332,7 +337,11 @@ private fun SettingsSwitch(
             onCheckedChange = onCheckedChange,
             colors = SwitchDefaults.colors(
                 checkedThumbColor = DarkroomRedBright,
-                checkedTrackColor = DarkroomRedBright
+                checkedTrackColor = DarkroomRedDim,
+                checkedBorderColor = DarkroomRedBright,
+                uncheckedThumbColor = DarkroomRedDim,
+                uncheckedTrackColor = DarkroomBlack,
+                uncheckedBorderColor = DarkroomRedFaint
             )
         )
     }
@@ -388,7 +397,10 @@ private fun LuminositySlider(label: String, value: Float, onValueChange: (Float)
             valueRange = 0f..1f,
             colors = SliderDefaults.colors(
                 thumbColor = DarkroomRedBright,
-                activeTrackColor = DarkroomRedBright
+                activeTrackColor = DarkroomRedBright,
+                inactiveTrackColor = DarkroomRedFaint,
+                activeTickColor = DarkroomBlack,
+                inactiveTickColor = DarkroomBlack
             )
         )
     }
