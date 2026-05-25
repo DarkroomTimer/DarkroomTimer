@@ -34,7 +34,7 @@ import kotlinx.coroutines.flow.flowOf
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DevelopmentProfileListScreen(
-    onNavigateToSession: (DevelopmentProfile) -> Unit,
+    onSelectProfile: (DevelopmentProfile) -> Unit,
     onBack: () -> Unit
 ) {
     val context = LocalContext.current
@@ -71,7 +71,7 @@ fun DevelopmentProfileListScreen(
     // Handle profile selection for session
     LaunchedEffect(selectedProfile) {
         if (selectedProfile != null && !showEditor) {
-            onNavigateToSession(selectedProfile!!)
+            onSelectProfile(selectedProfile!!)
             viewModel?.deselectProfile()
         }
     }

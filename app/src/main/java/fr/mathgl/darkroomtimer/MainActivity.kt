@@ -193,10 +193,9 @@ private fun DevelopmentOverlay(
     when (devFlowState) {
         DevelopmentFlowState.LIST -> {
             DevelopmentProfileListScreen(
-                onNavigateToSession = { profile ->
+                onSelectProfile = { profile ->
                     onSelectedProfileChange(profile)
-                    onDevelopmentSessionChange(DevelopmentSession(profile))
-                    onDevFlowStateChange(DevelopmentFlowState.SESSION)
+                    onDevFlowStateChange(DevelopmentFlowState.LAUNCH)
                 },
                 onBack = onExit
             )
