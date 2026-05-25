@@ -15,9 +15,9 @@ import fr.mathgl.darkroomtimer.storage.PreferenceManager
 import fr.mathgl.darkroomtimer.system.BurnDodgeManager
 import fr.mathgl.darkroomtimer.system.CountdownTimer
 import fr.mathgl.darkroomtimer.system.ForegroundTimerService
+import fr.mathgl.darkroomtimer.system.ConnectionState
 import fr.mathgl.darkroomtimer.system.RelayStates
 import fr.mathgl.darkroomtimer.system.RelaySystem
-import fr.mathgl.darkroomtimer.system.StandaloneRelaySystem
 import fr.mathgl.darkroomtimer.system.TimerState
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -38,7 +38,8 @@ data class CountdownUiState(
     val maxEntriesReached: Boolean,
     val showTimeEditor: Boolean = false,
     val enlargerOverride: Boolean = false,
-    val safelightOverride: Boolean = false
+    val safelightOverride: Boolean = false,
+    val connectionState: ConnectionState = ConnectionState.Disconnected
 )
 
 open class CountdownViewModel(
@@ -95,6 +96,17 @@ open class CountdownViewModel(
             relaySystem.relayStates.collect { relayState ->
                 _uiState.update { it.copy(relayState = relayState) }
             }
+        }
+
+        viewModelScope.launch {
+            relaySystem.connectionState.collect { connState ->
+                _uiState.update { it.copy(connectionState = connState) }
+            }
+        }
+
+        // Connect relay if not Null/Demo (network drivers need connection)
+        viewModelScope.launch {
+            try { relaySystem.connect() } catch (e: Exception) { /* connectionState Flow reflects error */ }
         }
     }
 
@@ -284,6 +296,9 @@ open class CountdownViewModel(
     override fun onCleared() {
         super.onCleared()
         tickJob?.cancel()
+        viewModelScope.launch {
+            try { relaySystem.disconnect() } catch (e: Exception) { /* ignore */ }
+        }
         audioSystem?.release()
     }
 
@@ -306,7 +321,10 @@ open class CountdownViewModel(
                     ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY
                 ] as? Application
                     ?: throw IllegalStateException("Application not available")
-                val relaySystem = StandaloneRelaySystem()
+                val prefs = fr.mathgl.darkroomtimer.storage.PreferenceManager.getInstance(application)
+                val relaySystem = prefs.relaySystemConfig.buildRelaySystem(
+                    kotlinx.coroutines.MainScope()
+                )
                 return CountdownViewModel(application, relaySystem) as T
             }
         }
