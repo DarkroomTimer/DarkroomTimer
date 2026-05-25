@@ -161,7 +161,7 @@ fun DevelopmentLaunchScreen(
                     )
                 ) {
                     Text(
-                        text = if (profile.isEmpty()) "Profil vide — ajoutez des étapes" else "LANCER LA SESSION",
+                        text = "LANCER LA SESSION",
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold
                     )
