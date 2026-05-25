@@ -134,7 +134,7 @@ fun CountdownScreen(
             FStopCorrectionSection(
                 fStopCorrectionNumerator = state.fStopCorrectionNumerator,
                 fStopCorrectionDenominator = state.fStopCorrectionDenominator,
-                calculatedTimeDisplay = state.displayTime,
+                targetTimeDisplay = state.displayTime,
                 onApplyDelta = { n, d -> viewModel.applyFStopDelta(n, d) },
                 onReset = { viewModel.resetFStopCorrection() },
                 onSetAsBase = { viewModel.setFStopCorrectionAsBase() }
@@ -341,7 +341,7 @@ private fun TimeSpinner(label: String, value: Int, range: IntRange, onValueChang
 private fun FStopCorrectionSection(
     fStopCorrectionNumerator: Int,
     fStopCorrectionDenominator: Int,
-    calculatedTimeDisplay: String,
+    targetTimeDisplay: String,
     onApplyDelta: (Int, Int) -> Unit,
     onReset: () -> Unit,
     onSetAsBase: () -> Unit
@@ -360,11 +360,17 @@ private fun FStopCorrectionSection(
     Spacer(modifier = Modifier.height(8.dp))
 
     // Negative delta buttons row
-    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         FStopDeltaButton(label = "-1",  onClick = { onApplyDelta(-1, 1) })
         FStopDeltaButton(label = "-½",  onClick = { onApplyDelta(-1, 2) })
         FStopDeltaButton(label = "-⅓",  onClick = { onApplyDelta(-1, 3) })
         FStopDeltaButton(label = "-⅙",  onClick = { onApplyDelta(-1, 6) })
+    }
+
+    Spacer(modifier = Modifier.height(8.dp))
+
+    // Positive delta buttons row
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         FStopDeltaButton(label = "+⅙",  onClick = { onApplyDelta(1, 6) })
         FStopDeltaButton(label = "+⅓",  onClick = { onApplyDelta(1, 3) })
         FStopDeltaButton(label = "+½",  onClick = { onApplyDelta(1, 2) })
@@ -378,7 +384,7 @@ private fun FStopCorrectionSection(
         val sign = if (fStopCorrectionNumerator > 0) "+" else ""
         val stopLabel = FStopMath.formatStop(fStopCorrectionNumerator, fStopCorrectionDenominator)
         Text(
-            text = "Correction : $sign$stopLabel stop → $calculatedTimeDisplay",
+            text = "Correction : $sign$stopLabel stop → $targetTimeDisplay",
             fontSize = 12.sp,
             color = DarkroomRedBright
         )
@@ -391,14 +397,14 @@ private fun FStopCorrectionSection(
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = DarkroomRedDim),
                 border = BorderStroke(1.dp, DarkroomRedFaint)
             ) {
-                Text("Reset")
+                Text("Réinit")
             }
             OutlinedButton(
                 onClick = onSetAsBase,
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = DarkroomRedDim),
                 border = BorderStroke(1.dp, DarkroomRedFaint)
             ) {
-                Text("Set")
+                Text("Fixer")
             }
         }
     }
