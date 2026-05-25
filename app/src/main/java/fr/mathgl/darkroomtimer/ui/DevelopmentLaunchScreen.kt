@@ -12,7 +12,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import fr.mathgl.darkroomtimer.development.DevelopmentListViewModel
 import fr.mathgl.darkroomtimer.development.DevelopmentProfile
 import fr.mathgl.darkroomtimer.storage.room.AppDatabase
 import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedBright
@@ -20,6 +19,7 @@ import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedDim
 import fr.mathgl.darkroomtimer.ui.theme.DarkroomSurfaceElevated
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 
 /**
  * Écran principal du mode Développement.
@@ -34,23 +34,22 @@ fun DevelopmentLaunchScreen(
 ) {
     val context = LocalContext.current
     var resolvedProfile by remember { mutableStateOf(initialProfile) }
+    var isLoading by remember { mutableStateOf(initialProfile == null) }
 
-    // If no profile was passed in, load the first one from DB as the default
     LaunchedEffect(initialProfile) {
-        if (initialProfile == null) {
+        if (initialProfile != null) {
+            resolvedProfile = initialProfile
+            isLoading = false
+        } else {
+            isLoading = true
             val db = AppDatabase.getDatabase(
                 context.applicationContext as Application,
                 CoroutineScope(Dispatchers.Default)
             )
-            val viewModel = DevelopmentListViewModel(context.applicationContext as Application, db.developmentDao())
-            viewModel.loadProfiles()
-            viewModel.profiles.collect { profiles ->
-                if (profiles.isNotEmpty()) {
-                    resolvedProfile = profiles.first()
-                }
-            }
-        } else {
-            resolvedProfile = initialProfile
+            val entities = db.developmentDao().getAllProfiles().first()
+            val profiles = entities.map { it.toDomain() }.sortedBy { it.name }
+            resolvedProfile = profiles.firstOrNull()
+            isLoading = false
         }
     }
 
@@ -60,7 +59,6 @@ fun DevelopmentLaunchScreen(
             .background(Color.Black)
             .padding(16.dp)
     ) {
-        // Header with back-to-selection button
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -79,86 +77,95 @@ fun DevelopmentLaunchScreen(
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        val profile = resolvedProfile
-        if (profile == null) {
-            // Empty state: no profiles in DB
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    CircularProgressIndicator(color = DarkroomRedBright)
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        text = "Aucun profil disponible",
-                        color = DarkroomRedDim,
-                        fontSize = 16.sp
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Button(
-                        onClick = onSelectProfile,
-                        colors = ButtonDefaults.buttonColors(containerColor = DarkroomRedBright)
-                    ) {
-                        Text("Créer un profil", fontSize = 14.sp)
-                    }
-                }
-            }
-        } else {
-            // Profile card
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = DarkroomSurfaceElevated)
-            ) {
-                Column(
+        when {
+            isLoading -> {
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(20.dp)
+                        .weight(1f),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = profile.name,
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = DarkroomRedBright
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = "${profile.stepCount()} étapes • ${profile.navigationMode.name}",
-                        fontSize = 14.sp,
-                        color = DarkroomRedDim
-                    )
-                    if (profile.isNotEmpty()) {
-                        Spacer(modifier = Modifier.height(8.dp))
+                    CircularProgressIndicator(color = DarkroomRedBright)
+                }
+            }
+            resolvedProfile == null -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
-                            text = profile.preview(),
-                            fontSize = 12.sp,
+                            text = "Aucun profil disponible",
                             color = DarkroomRedDim,
-                            maxLines = 3
+                            fontSize = 16.sp
                         )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Button(
+                            onClick = onSelectProfile,
+                            colors = ButtonDefaults.buttonColors(containerColor = DarkroomRedBright)
+                        ) {
+                            Text("Créer un profil", fontSize = 14.sp)
+                        }
                     }
                 }
             }
+            else -> {
+                val profile = resolvedProfile!!
 
-            Spacer(modifier = Modifier.weight(1f))
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = DarkroomSurfaceElevated)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(20.dp)
+                    ) {
+                        Text(
+                            text = profile.name,
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = DarkroomRedBright
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "${profile.stepCount()} étapes • ${profile.navigationMode.name}",
+                            fontSize = 14.sp,
+                            color = DarkroomRedDim
+                        )
+                        if (profile.isNotEmpty()) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = profile.preview(),
+                                fontSize = 12.sp,
+                                color = DarkroomRedDim,
+                                maxLines = 3
+                            )
+                        }
+                    }
+                }
 
-            // Launch button
-            Button(
-                onClick = { onLaunchSession(profile) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(64.dp),
-                enabled = profile.isNotEmpty(),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = DarkroomRedBright,
-                    disabledContainerColor = DarkroomRedDim
-                )
-            ) {
-                Text(
-                    text = if (profile.isEmpty()) "Profil vide — ajoutez des étapes" else "LANCER LA SESSION",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold
-                )
+                Spacer(modifier = Modifier.weight(1f))
+
+                Button(
+                    onClick = { onLaunchSession(profile) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(64.dp),
+                    enabled = profile.isNotEmpty(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = DarkroomRedBright,
+                        disabledContainerColor = DarkroomRedDim
+                    )
+                ) {
+                    Text(
+                        text = if (profile.isEmpty()) "Profil vide — ajoutez des étapes" else "LANCER LA SESSION",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
         }
 
