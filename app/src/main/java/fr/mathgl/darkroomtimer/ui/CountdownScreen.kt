@@ -9,6 +9,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedBright
+import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedDim
+import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedFaint
+import fr.mathgl.darkroomtimer.ui.theme.DarkroomSurface
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -50,7 +54,7 @@ fun CountdownScreen(
             fontSize = 80.sp,
             fontFamily = FontFamily.Monospace,
             fontWeight = FontWeight.Bold,
-            color = Color.White,
+            color = DarkroomRedBright,
             modifier = Modifier.clickable(
                 enabled = state.timerState != TimerState.RUNNING
             ) { viewModel.openTimeEditor() }
@@ -62,7 +66,7 @@ fun CountdownScreen(
         Text(
             text = "Grade ${state.selectedGrade.label}",
             fontSize = 24.sp,
-            color = Color(0xFFCC2200)
+            color = DarkroomRedBright
         )
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -172,7 +176,7 @@ private fun RelayBadge(
     clickEnabled: Boolean,
     onClick: () -> Unit
 ) {
-    val dotColor = if (isOn) Color(0xFFCC2200) else Color(0xFF444444)
+    val dotColor = if (isOn) DarkroomRedBright else DarkroomRedDim
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
@@ -185,9 +189,9 @@ private fun RelayBadge(
                 .background(dotColor, shape = RoundedCornerShape(8.dp))
         )
         Spacer(modifier = Modifier.height(4.dp))
-        Text(text = label, fontSize = 12.sp, color = Color(0xFFAAAAAA))
+        Text(text = label, fontSize = 12.sp, color = DarkroomRedDim)
         if (hasOverride) {
-            Text(text = "override", fontSize = 9.sp, color = Color(0xFFCC2200))
+            Text(text = "override", fontSize = 9.sp, color = DarkroomRedBright)
         }
     }
 }
@@ -213,7 +217,7 @@ private fun TimeAdjustRow(onAdjust: (Long) -> Unit) {
 private fun TimeAdjustButton(label: String, onClick: () -> Unit) {
     OutlinedButton(
         onClick = onClick,
-        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFCC2200)),
+        colors = ButtonDefaults.outlinedButtonColors(contentColor = DarkroomRedBright),
         modifier = Modifier.height(36.dp),
         contentPadding = PaddingValues(horizontal = 8.dp)
     ) {
@@ -238,7 +242,7 @@ private fun TimeEditorSheet(
     var seconds by remember { mutableStateOf(initSeconds) }
     var tenths  by remember { mutableStateOf(initTenths) }
 
-    ModalBottomSheet(onDismissRequest = onDismiss, containerColor = Color(0xFF111111)) {
+    ModalBottomSheet(onDismissRequest = onDismiss, containerColor = DarkroomSurface) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -246,33 +250,33 @@ private fun TimeEditorSheet(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text("Régler le temps", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+            Text("Régler le temps", color = DarkroomRedBright, fontSize = 18.sp, fontWeight = FontWeight.Bold)
 
             Row(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 TimeSpinner(label = "min", value = minutes, range = 0..16, onValueChange = { minutes = it })
-                Text(":", color = Color.White, fontSize = 32.sp)
+                Text(":", color = DarkroomRedBright, fontSize = 32.sp)
                 TimeSpinner(label = "s", value = seconds, range = 0..59, onValueChange = { seconds = it })
-                Text(".", color = Color.White, fontSize = 32.sp)
+                Text(".", color = DarkroomRedBright, fontSize = 32.sp)
                 TimeSpinner(label = "1/10", value = tenths, range = 0..9, onValueChange = { tenths = it })
             }
 
             Text(
                 text = CountdownTimer.formatTime(minutes * 60_000L + seconds * 1_000L + tenths * 100L),
-                color = Color(0xFFCC2200),
+                color = DarkroomRedBright,
                 fontSize = 48.sp,
                 fontFamily = FontFamily.Monospace
             )
 
             Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 TextButton(onClick = onDismiss) {
-                    Text("Annuler", color = Color.Gray)
+                    Text("Annuler", color = DarkroomRedDim)
                 }
                 Button(
                     onClick = { onConfirm(minutes, seconds, tenths) },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFCC2200))
+                    colors = ButtonDefaults.buttonColors(containerColor = DarkroomRedBright)
                 ) {
                     Text("Valider")
                 }
@@ -286,18 +290,18 @@ private fun TimeEditorSheet(
 private fun TimeSpinner(label: String, value: Int, range: IntRange, onValueChange: (Int) -> Unit) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         IconButton(onClick = { if (value < range.last) onValueChange(value + 1) }) {
-            Text("▲", color = Color(0xFFCC2200), fontSize = 16.sp)
+            Text("▲", color = DarkroomRedBright, fontSize = 16.sp)
         }
         Text(
             text = "%02d".format(value),
-            color = Color.White,
+            color = DarkroomRedBright,
             fontSize = 32.sp,
             fontFamily = FontFamily.Monospace
         )
         IconButton(onClick = { if (value > range.first) onValueChange(value - 1) }) {
-            Text("▼", color = Color(0xFFCC2200), fontSize = 16.sp)
+            Text("▼", color = DarkroomRedBright, fontSize = 16.sp)
         }
-        Text(label, color = Color.Gray, fontSize = 10.sp)
+        Text(label, color = DarkroomRedDim, fontSize = 10.sp)
     }
 }
 
@@ -314,7 +318,7 @@ private fun TimerControlButtons(
             TimerState.STOPPED -> {
                 Button(
                     onClick = onStart,
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFCC2200)),
+                    colors = ButtonDefaults.buttonColors(containerColor = DarkroomRedBright),
                     modifier = Modifier
                         .height(56.dp)
                         .width(160.dp)
@@ -325,7 +329,7 @@ private fun TimerControlButtons(
             TimerState.RUNNING -> {
                 Button(
                     onClick = onPause,
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF884400)),
+                    colors = ButtonDefaults.buttonColors(containerColor = DarkroomRedDim),
                     modifier = Modifier
                         .height(56.dp)
                         .width(120.dp)
@@ -336,7 +340,7 @@ private fun TimerControlButtons(
             TimerState.PAUSED -> {
                 Button(
                     onClick = onResume,
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFCC2200)),
+                    colors = ButtonDefaults.buttonColors(containerColor = DarkroomRedBright),
                     modifier = Modifier
                         .height(56.dp)
                         .width(120.dp)
@@ -345,7 +349,7 @@ private fun TimerControlButtons(
                 }
                 Button(
                     onClick = onStop,
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF444444)),
+                    colors = ButtonDefaults.buttonColors(containerColor = DarkroomRedDim),
                     modifier = Modifier
                         .height(56.dp)
                         .width(80.dp)
