@@ -16,6 +16,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.activity.compose.BackHandler
 import fr.mathgl.darkroomtimer.development.DevelopmentProfile
 import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedBright
 import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedDim
@@ -39,6 +40,8 @@ fun DevelopmentProfileEditorScreen(
 
     var showStepDialog by remember { mutableStateOf(false) }
     var editingStepIndex by remember { mutableStateOf<Int?>(null) }
+
+    BackHandler { onCancel() }
 
     Column(
         modifier = Modifier
@@ -100,11 +103,13 @@ fun DevelopmentProfileEditorScreen(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 NavigationModeButton(
+                    modifier = Modifier.weight(1f).height(48.dp),
                     selected = navigationMode == DevelopmentNavigationMode.MANUAL,
                     label = "Manuel",
                     onClick = { navigationMode = DevelopmentNavigationMode.MANUAL }
                 )
                 NavigationModeButton(
+                    modifier = Modifier.weight(1f).height(48.dp),
                     selected = navigationMode == DevelopmentNavigationMode.AUTOMATIC,
                     label = "Automatique",
                     onClick = { navigationMode = DevelopmentNavigationMode.AUTOMATIC }
@@ -133,7 +138,10 @@ fun DevelopmentProfileEditorScreen(
                     StepItem(
                         step = step,
                         index = index,
-                        onEdit = { editingStepIndex = index },
+                        onEdit = {
+                            editingStepIndex = index
+                            showStepDialog = true
+                        },
                         onDelete = { steps = steps.toMutableList().apply { removeAt(index) } }
                     )
                 }
@@ -201,13 +209,14 @@ fun DevelopmentProfileEditorScreen(
 
 @Composable
 private fun NavigationModeButton(
+    modifier: Modifier = Modifier,
     selected: Boolean,
     label: String,
     onClick: () -> Unit
 ) {
     Button(
         onClick = onClick,
-        modifier = Modifier.fillMaxWidth().height(48.dp),
+        modifier = modifier,
         colors = ButtonDefaults.buttonColors(
             containerColor = if (selected) DarkroomRedBright else DarkroomRedDim
         )
