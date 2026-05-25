@@ -247,10 +247,10 @@ private fun ProfileItem(
             }
             Row {
                 TextButton(onClick = onEdit) {
-                    Text("&#9998;", color = DarkroomRedBright, fontSize = 18.sp)
+                    Text("Edit", color = DarkroomRedBright, fontSize = 18.sp)
                 }
                 TextButton(onClick = onDelete) {
-                    Text("&#10005;", color = DarkroomRedBright, fontSize = 18.sp)
+                    Text("Delete", color = DarkroomRedBright, fontSize = 18.sp)
                 }
             }
         }
@@ -258,7 +258,7 @@ private fun ProfileItem(
 }
 
 /**
- * Dialog pour &#xe9;diter un profil de d&#xe9;veloppement.
+ * Dialog pour éditer un profil de développement.
  * Permet de cr&#xe9;er ou modifier un profil avec ses &#xe9;tapes.
  */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -310,7 +310,7 @@ fun DevelopmentProfileEditorDialog(
         },
         title = {
             Text(
-                text = if (profile != null) "&#xc9;diter le Profil" else "Nouveau Profil",
+                text = if (profile != null) "Editer le Profil" else "Nouveau Profil",
                 color = DarkroomRedBright
             )
         },
