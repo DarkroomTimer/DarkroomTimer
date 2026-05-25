@@ -1,5 +1,6 @@
 package fr.mathgl.darkroomtimer.ui.navigation
 
+import android.app.Application
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -15,11 +16,15 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -28,9 +33,12 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
+import fr.mathgl.darkroomtimer.development.DevelopmentListViewModel
+import fr.mathgl.darkroomtimer.storage.room.AppDatabase
 import fr.mathgl.darkroomtimer.ui.CountdownScreen
 import fr.mathgl.darkroomtimer.ui.DevelopmentFlowViewModel
 import fr.mathgl.darkroomtimer.ui.DevelopmentLaunchScreen
+import fr.mathgl.darkroomtimer.ui.DevelopmentProfileEditorScreen
 import fr.mathgl.darkroomtimer.ui.DevelopmentProfileListScreen
 import fr.mathgl.darkroomtimer.ui.DevelopmentSessionScreen
 import fr.mathgl.darkroomtimer.ui.EnlargerProfilesScreen
@@ -39,6 +47,8 @@ import fr.mathgl.darkroomtimer.ui.TeststripScreen
 import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedBright
 import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedDim
 import fr.mathgl.darkroomtimer.ui.theme.DarkroomSurface
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 
 @Composable
 fun AppNavGraph() {
@@ -46,6 +56,7 @@ fun AppNavGraph() {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
     val showBottomBar = currentRoute != AppRoutes.ENLARGER_PROFILES
+        && currentRoute != AppRoutes.DEVELOPMENT_PROFILE_EDITOR
 
     val navBarItems = listOf(
         Triple(AppRoutes.EXPOSITION, Icons.Default.Timer, "Exposition"),
@@ -197,6 +208,35 @@ fun AppNavGraph() {
                                 }
                             )
                         }
+                    }
+
+                    composable(AppRoutes.DEVELOPMENT_PROFILE_EDITOR) { backStackEntry ->
+                        val devGraphEntry = remember(backStackEntry) {
+                            navController.getBackStackEntry(AppRoutes.DEVELOPMENT_GRAPH)
+                        }
+                        val devVM: DevelopmentFlowViewModel = viewModel(devGraphEntry)
+                        val editingProfile by devVM.editingProfile.collectAsState()
+
+                        val context = LocalContext.current
+                        var listVM by remember { mutableStateOf<DevelopmentListViewModel?>(null) }
+                        LaunchedEffect(Unit) {
+                            val app = context.applicationContext as Application
+                            val db = AppDatabase.getDatabase(app, CoroutineScope(Dispatchers.Default))
+                            listVM = DevelopmentListViewModel(app, db.developmentDao())
+                        }
+
+                        DevelopmentProfileEditorScreen(
+                            profile = editingProfile,
+                            onSave = { profile ->
+                                listVM?.saveProfile(profile)
+                                devVM.clearEditingProfile()
+                                navController.popBackStack()
+                            },
+                            onCancel = {
+                                devVM.clearEditingProfile()
+                                navController.popBackStack()
+                            }
+                        )
                     }
                 }
             }
