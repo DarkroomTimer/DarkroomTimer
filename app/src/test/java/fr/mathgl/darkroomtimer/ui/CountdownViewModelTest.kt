@@ -26,7 +26,6 @@ class CountdownViewModelTest {
     private lateinit var application: Application
     private lateinit var relaySystem: MockRelaySystem
     private lateinit var viewModel: TestCountdownViewModel
-    private var fakeNow = 0L
 
     class TestCountdownViewModel(
         app: Application,
@@ -45,8 +44,7 @@ class CountdownViewModelTest {
         application = mock()
         relaySystem = MockRelaySystem(TestScope(testDispatcher))
 
-        // Create a timer with a fake clock
-        val timer = CountdownTimer(clock = { fakeNow })
+        val timer = CountdownTimer(clock = { testDispatcher.scheduler.currentTime })
 
         viewModel = TestCountdownViewModel(application, { relaySystem }, timer)
     }
@@ -228,7 +226,7 @@ class CountdownViewModelTest {
             controller = mockController
         )
 
-        val vm = TestCountdownViewModel(application, { relaySystemNoPause }, CountdownTimer())
+        val vm = TestCountdownViewModel(application, { relaySystemNoPause }, CountdownTimer(clock = { testDispatcher.scheduler.currentTime }))
         vm.start()
         testDispatcher.scheduler.runCurrent()
 
@@ -248,12 +246,11 @@ class CountdownViewModelTest {
         testDispatcher.scheduler.runCurrent()
 
         // Start timer
-        fakeNow = 0L
         viewModel.start()
         testDispatcher.scheduler.runCurrent()
 
-        // Wait 2 seconds
-        fakeNow = 2000L
+        // Advance scheduler by 2 seconds so the timer clock reads 2000ms elapsed
+        testDispatcher.scheduler.advanceTimeBy(2000L)
         viewModel.pause()
         testDispatcher.scheduler.runCurrent()
 
