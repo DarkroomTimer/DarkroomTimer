@@ -202,4 +202,27 @@ class CountdownTimerTest {
     fun `formatTime clamps negative values to zero`() {
         assertEquals("00:00.0", CountdownTimer.formatTime(-500L))
     }
+
+    @Test
+    fun `remaining time is consistent after pause, increment, and resume`() {
+        timer.configuredTimeMs = 8000L
+        fakeNow = 0L
+        timer.start()
+
+        fakeNow = 2000L
+        timer.pause()
+        assertEquals(6000L, timer.remainingMs())
+
+        timer.configuredTimeMs = 18000L
+        assertEquals(16000L, timer.remainingMs())
+
+        fakeNow = 5000L
+        timer.resume()
+
+        // Immediately after resume, it should be exactly 16000
+        assertEquals(16000L, timer.remainingMs())
+
+        fakeNow = 6000L
+        assertEquals(15000L, timer.remainingMs())
+    }
 }

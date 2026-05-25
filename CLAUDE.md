@@ -17,10 +17,11 @@ DarkroomTimer is an Android application designed to control darkroom enlargers, 
 - `fr.mathgl.darkroomtimer.ui`: Jetpack Compose based user interface.
 - `fr.mathgl.darkroomtimer.math`: Photography and exposure calculations (f-stop math, teststrips).
 - `fr.mathgl.darkroomtimer.storage`: Persistence layer using Room database and Gson.
-- `fr.mathgl.darkroomtimer.system`: System-level integrations, including relay drivers (Tasmota/ESPHome) and Foreground Services for timer stability.
+- `fr.mathgl.darkroomtimer.system`: System-level integrations, including hardware abstraction via `RelaySystem` and `RelayController` for various drivers (Tasmota, ESPHome, Demo, Null) and Foreground Services for timer stability.
 
 ### Key Architectural Patterns
 - **Mode Switching**: The app operates in either Standalone mode (UI only) or Companion mode (WiFi relay control).
+- **Hardware Abstraction**: Uses a `RelaySystem` coordinator and `RelayController` interface to unify control across different relay types (Tasmota, ESPHome) and mock environments (Demo, Standalone), ensuring the UI remains agnostic of the underlying hardware.
 - **Hardware Stability**: Uses Foreground Services, WakeLocks (`PARTIAL_WAKE_LOCK`), and WifiLocks to ensure timers are not interrupted by Android's power management.
 - **Domain Logic**: Complex exposure logic (Burn & Dodge, Contrast Grades) is decoupled from the UI in the `math` and `system` packages.
 

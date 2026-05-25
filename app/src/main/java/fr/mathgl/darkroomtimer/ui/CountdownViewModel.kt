@@ -47,10 +47,10 @@ data class CountdownUiState(
 open class CountdownViewModel(
     application: Application,
     private val relaySystemFactory: (kotlinx.coroutines.CoroutineScope) -> RelaySystem,
-    private val relayType: String = "NULL"
+    private val relayType: String = "NULL",
+    private val timer: CountdownTimer = CountdownTimer()
 ) : AndroidViewModel(application) {
 
-    private val timer = CountdownTimer()
     private val burnDodgeManager = BurnDodgeManager()
     private lateinit var relaySystem: RelaySystem
     private var audioSystem: AudioSystem? = null
@@ -145,7 +145,10 @@ open class CountdownViewModel(
             relaySystem.setSafelight(false)
         }
         audioSystem?.pause()
-        _uiState.update { it.copy(timerState = TimerState.PAUSED) }
+        _uiState.update { it.copy(
+            timerState = TimerState.PAUSED,
+            displayTime = CountdownTimer.formatTime(timer.remainingMs())
+        ) }
         sendServiceIntent(ForegroundTimerService.ACTION_STOP, 0L)
     }
 
@@ -164,7 +167,6 @@ open class CountdownViewModel(
 
     private fun launchTickJob(): Job = viewModelScope.launch {
         while (true) {
-            delay(50L)
             val ended = timer.tick()
             val remaining = maxOf(0L, timer.remainingMs())
             _uiState.update { it.copy(
@@ -184,6 +186,7 @@ open class CountdownViewModel(
                 tickJob = null
                 break
             }
+            delay(50L)
         }
     }
 
@@ -216,7 +219,7 @@ open class CountdownViewModel(
         val newTime = (timer.configuredTimeMs + deltaMs).coerceIn(100L, 999_000L)
         timer.configuredTimeMs = newTime
         _uiState.update { it.copy(
-            displayTime = CountdownTimer.formatTime(newTime),
+            displayTime = CountdownTimer.formatTime(timer.remainingMs()),
             configuredTimeMs = newTime
         ) }
     }
@@ -332,7 +335,8 @@ open class CountdownViewModel(
                 return CountdownViewModel(
                     application,
                     prefs.relaySystemConfig::buildRelaySystem,
-                    prefs.relaySystemConfig.enlargerType
+                    prefs.relaySystemConfig.enlargerType,
+                    CountdownTimer()
                 ) as T
             }
         }

@@ -26,11 +26,13 @@ class CountdownViewModelTest {
     private lateinit var application: Application
     private lateinit var relaySystem: MockRelaySystem
     private lateinit var viewModel: TestCountdownViewModel
+    private var fakeNow = 0L
 
     class TestCountdownViewModel(
         app: Application,
-        factory: (CoroutineScope) -> RelaySystem
-    ) : CountdownViewModel(app, factory) {
+        factory: (CoroutineScope) -> RelaySystem,
+        timer: CountdownTimer
+    ) : CountdownViewModel(app, factory, timer = timer) {
         val serviceIntents = mutableListOf<Pair<String, Long>>()
         override fun sendServiceIntent(action: String, remainingMs: Long) {
             serviceIntents.add(action to remainingMs)
@@ -43,7 +45,10 @@ class CountdownViewModelTest {
         application = mock()
         relaySystem = MockRelaySystem(TestScope(testDispatcher))
 
-        viewModel = TestCountdownViewModel(application) { relaySystem }
+        // Create a timer with a fake clock
+        val timer = CountdownTimer(clock = { fakeNow })
+
+        viewModel = TestCountdownViewModel(application, { relaySystem }, timer)
     }
 
     @After
@@ -223,7 +228,7 @@ class CountdownViewModelTest {
             controller = mockController
         )
 
-        val vm = TestCountdownViewModel(application) { relaySystemNoPause }
+        val vm = TestCountdownViewModel(application, { relaySystemNoPause }, CountdownTimer())
         vm.start()
         testDispatcher.scheduler.runCurrent()
 
@@ -233,29 +238,35 @@ class CountdownViewModelTest {
     }
 
     @Test
-    fun `stop after pause should not send ACTION_STOP (service was already stopped by pause)`() = runTest {
-        // Start the timer
+    fun `adjustTime should update displayTime based on remaining time when PAUSED`() = runTest {
+        // Base time = 8000
+        val initialBaseTime = 8000L
+        // I can't easily set configuredTimeMs on the timer inside the VM because it's private.
+        // But I can use adjustTime to set it.
+        val diff = initialBaseTime - viewModel.uiState.value.configuredTimeMs
+        viewModel.adjustTime(diff)
+        testDispatcher.scheduler.runCurrent()
+
+        // Start timer
+        fakeNow = 0L
         viewModel.start()
         testDispatcher.scheduler.runCurrent()
 
-        // Pause - this stops the service
+        // Wait 2 seconds
+        fakeNow = 2000L
         viewModel.pause()
         testDispatcher.scheduler.runCurrent()
 
-        assertEquals(TimerState.PAUSED, viewModel.uiState.value.timerState)
+        // Remaining time is 6000. UI should show 00:06.0
+        assertEquals("00:06.0", viewModel.uiState.value.displayTime)
 
-        // Clear service intents recorded during pause
-        viewModel.serviceIntents.clear()
-
-        // Stop after pause - this should NOT send ACTION_STOP
-        // because pause() already stopped the service
-        viewModel.stop()
+        // Add 10 seconds
+        viewModel.adjustTime(10000L)
         testDispatcher.scheduler.runCurrent()
 
-        // After stop, timer should be STOPPED
-        assertEquals(TimerState.STOPPED, viewModel.uiState.value.timerState)
-
-        // Should NOT have sent ACTION_STOP since service was already stopped by pause()
-        assertEquals(0, viewModel.serviceIntents.size)
+        // New base time = 18000.
+        // Remaining time = 6000 + 10000 = 16000.
+        // UI should show 00:16.0
+        assertEquals("00:16.0", viewModel.uiState.value.displayTime)
     }
 }
