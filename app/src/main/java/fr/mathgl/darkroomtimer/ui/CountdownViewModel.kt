@@ -78,6 +78,7 @@ open class CountdownViewModel(
         val (simplN, simplD) = FStopMath.simplify(rawN, rawD)
         val calc = FStopMath.adjustTime(baseTimeMs, simplN, simplD, 1)
         if (calc !in 100L..999_000L) return
+        timer.configuredTimeMs = calc
         _uiState.update { it.copy(
             fStopCorrectionNumerator = simplN,
             fStopCorrectionDenominator = simplD,

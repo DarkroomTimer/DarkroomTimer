@@ -466,4 +466,53 @@ class CountdownViewModelTest {
         assertEquals(1, viewModel.uiState.value.fStopCorrectionDenominator)
         assertEquals(CountdownTimer.formatTime(16_000L), viewModel.uiState.value.displayTime)
     }
+
+    @Test
+    fun `applyFStopDelta should do nothing when timer is PAUSED`() = runTest {
+        viewModel.start()
+        testDispatcher.scheduler.runCurrent()
+        viewModel.pause()
+        testDispatcher.scheduler.runCurrent()
+
+        viewModel.applyFStopDelta(1, 3)
+        testDispatcher.scheduler.runCurrent()
+
+        assertEquals(0, viewModel.uiState.value.fStopCorrectionNumerator)
+    }
+
+    @Test
+    fun `resetFStopCorrection should do nothing when timer is RUNNING`() = runTest {
+        viewModel.applyFStopDelta(1, 1)
+        testDispatcher.scheduler.runCurrent()
+
+        viewModel.start()
+        testDispatcher.scheduler.runCurrent()
+
+        viewModel.resetFStopCorrection()
+        testDispatcher.scheduler.runCurrent()
+
+        // Correction unchanged — still 1/1
+        assertEquals(1, viewModel.uiState.value.fStopCorrectionNumerator)
+        assertEquals(TimerState.RUNNING, viewModel.uiState.value.timerState)
+    }
+
+    @Test
+    fun `setFStopCorrectionAsBase should do nothing when timer is RUNNING`() = runTest {
+        val diff = 8000L - viewModel.uiState.value.configuredTimeMs
+        if (diff != 0L) viewModel.adjustTime(diff)
+        testDispatcher.scheduler.runCurrent()
+
+        viewModel.applyFStopDelta(1, 1)
+        testDispatcher.scheduler.runCurrent()
+
+        viewModel.start()
+        testDispatcher.scheduler.runCurrent()
+
+        viewModel.setFStopCorrectionAsBase()
+        testDispatcher.scheduler.runCurrent()
+
+        // Correction unchanged — still 1/1, base still 8000
+        assertEquals(1, viewModel.uiState.value.fStopCorrectionNumerator)
+        assertEquals(8000L, viewModel.uiState.value.configuredTimeMs)
+    }
 }
