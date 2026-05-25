@@ -17,6 +17,9 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import fr.mathgl.darkroomtimer.math.ContrastGrade
 import fr.mathgl.darkroomtimer.system.TeststripState
+import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedBright
+import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedDim
+import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedMedium
 
 @Composable
 fun TeststripScreen(
@@ -43,10 +46,10 @@ fun TeststripScreen(
                 text = "Teststrip",
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color.White
+                color = DarkroomRedBright
             )
             TextButton(onClick = onBack) {
-                Text("← Retour", color = Color(0xFFCC2200))
+                Text("← Retour", color = DarkroomRedBright)
             }
         }
 
@@ -60,9 +63,9 @@ fun TeststripScreen(
                 text = sessionStateText(state.sessionState, state.currentPatchIndex, state.patchCount),
                 fontSize = 16.sp,
                 color = when (state.sessionState) {
-                    TeststripState.EXPOSING -> Color(0xFFCC2200)
-                    TeststripState.BETWEEN_PATCHES -> Color(0xFF44AA44)
-                    else -> Color(0xFFAAAAAA)
+                    TeststripState.EXPOSING -> DarkroomRedBright
+                    TeststripState.BETWEEN_PATCHES -> DarkroomRedMedium
+                    else -> DarkroomRedDim
                 }
             )
             if (state.isSessionComplete) {
@@ -70,7 +73,7 @@ fun TeststripScreen(
                     text = "COMPLÉTÉ ✓",
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF44AA44)
+                    color = DarkroomRedMedium
                 )
             }
         }
@@ -119,7 +122,7 @@ fun TeststripScreen(
                 fontSize = 60.sp,
                 fontFamily = FontFamily.Monospace,
                 fontWeight = FontWeight.Bold,
-                color = Color.White
+                color = DarkroomRedBright
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -127,7 +130,7 @@ fun TeststripScreen(
             Text(
                 text = "Temps: ${state.remainingTimeMs / 1000.0}s",
                 fontSize = 16.sp,
-                color = Color(0xFFAAAAAA)
+                color = DarkroomRedDim
             )
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -141,7 +144,7 @@ fun TeststripScreen(
                     Button(
                         onClick = { viewModel.pause() },
                         modifier = Modifier.weight(1f).height(56.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF884400))
+                        colors = ButtonDefaults.buttonColors(containerColor = DarkroomRedDim)
                     ) {
                         Text("PAUSE", fontSize = 18.sp)
                     }
@@ -160,14 +163,14 @@ fun TeststripScreen(
                 Button(
                     onClick = { viewModel.restartCurrentPatch() },
                     modifier = Modifier.weight(1f).height(56.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFCC2200))
+                    colors = ButtonDefaults.buttonColors(containerColor = DarkroomRedBright)
                 ) {
                     Text("RECOMMENCER", fontSize = 14.sp)
                 }
                 Button(
                     onClick = { viewModel.nextPatch() },
                     modifier = Modifier.weight(1f).height(56.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF44AA44))
+                    colors = ButtonDefaults.buttonColors(containerColor = DarkroomRedMedium)
                 ) {
                     Text("SUIVANT →", fontSize = 14.sp)
                 }
@@ -178,7 +181,7 @@ fun TeststripScreen(
             OutlinedButton(
                 onClick = { viewModel.abandon() },
                 modifier = Modifier.fillMaxWidth().height(48.dp),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFAA4444))
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = DarkroomRedDim)
             ) {
                 Text("ABANDONNER", fontSize = 14.sp)
             }
@@ -191,7 +194,7 @@ fun TeststripScreen(
             Button(
                 onClick = { viewModel.startSession() },
                 modifier = Modifier.fillMaxWidth().height(56.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFCC2200))
+                colors = ButtonDefaults.buttonColors(containerColor = DarkroomRedBright)
             ) {
                 Text("DÉMARRER", fontSize = 20.sp, fontWeight = FontWeight.Bold)
             }
@@ -221,7 +224,7 @@ private fun ConfigurationSection(
         text = "Configuration",
         fontSize = 18.sp,
         fontWeight = FontWeight.Bold,
-        color = Color.White
+        color = DarkroomRedBright
     )
 
     Spacer(modifier = Modifier.height(12.dp))
@@ -232,8 +235,8 @@ private fun ConfigurationSection(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text("Base:", fontSize = 14.sp, color = Color(0xFFAAAAAA))
-        Text("${baseTimeMs / 1000.0}s", fontSize = 16.sp, color = Color.White, fontFamily = FontFamily.Monospace)
+        Text("Base:", fontSize = 14.sp, color = DarkroomRedDim)
+        Text("${baseTimeMs / 1000.0}s", fontSize = 16.sp, color = DarkroomRedBright, fontFamily = FontFamily.Monospace)
     }
 
     Row(
@@ -243,14 +246,14 @@ private fun ConfigurationSection(
         OutlinedButton(
             onClick = { onBaseTimeChange((baseTimeMs - 1000).coerceIn(100L, 999_000L)) },
             modifier = Modifier.weight(1f).height(40.dp),
-            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFCC2200))
+            colors = ButtonDefaults.outlinedButtonColors(contentColor = DarkroomRedBright)
         ) {
             Text("-1s", fontSize = 14.sp)
         }
         OutlinedButton(
             onClick = { onBaseTimeChange((baseTimeMs + 1000).coerceIn(100L, 999_000L)) },
             modifier = Modifier.weight(1f).height(40.dp),
-            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFCC2200))
+            colors = ButtonDefaults.outlinedButtonColors(contentColor = DarkroomRedBright)
         ) {
             Text("+1s", fontSize = 14.sp)
         }
@@ -264,9 +267,9 @@ private fun ConfigurationSection(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text("Incrément:", fontSize = 14.sp, color = Color(0xFFAAAAAA))
+        Text("Incrément:", fontSize = 14.sp, color = DarkroomRedDim)
         val (n, d) = simplifyFraction(numerator, denominator)
-        Text("${n}/${d} stop", fontSize = 16.sp, color = Color.White, fontFamily = FontFamily.Monospace)
+        Text("${n}/${d} stop", fontSize = 16.sp, color = DarkroomRedBright, fontFamily = FontFamily.Monospace)
     }
 
     Row(
@@ -280,7 +283,7 @@ private fun ConfigurationSection(
                 onStopFractionChange(newN, newD)
             },
             modifier = Modifier.weight(1f).height(40.dp),
-            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFCC2200))
+            colors = ButtonDefaults.outlinedButtonColors(contentColor = DarkroomRedBright)
         ) {
             Text("+1/n", fontSize = 14.sp)
         }
@@ -291,7 +294,7 @@ private fun ConfigurationSection(
                 onStopFractionChange(newN, newD)
             },
             modifier = Modifier.weight(1f).height(40.dp),
-            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFCC2200))
+            colors = ButtonDefaults.outlinedButtonColors(contentColor = DarkroomRedBright)
         ) {
             Text("-1/n", fontSize = 14.sp)
         }

@@ -14,6 +14,12 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import fr.mathgl.darkroomtimer.ui.theme.DarkroomBlack
+import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedBright
+import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedFaint
+import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedMedium
+import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedDim
+import fr.mathgl.darkroomtimer.ui.theme.DarkroomSurface
 
 @Composable
 fun PatchItem(
@@ -25,16 +31,20 @@ fun PatchItem(
     modifier: Modifier = Modifier
 ) {
     val borderColor = when {
-        isCurrent -> Color(0xFFCC2200)
-        isExposed -> Color(0xFF44AA44)
-        else -> Color(0xFF444444)
+        isCurrent -> DarkroomRedBright
+        isExposed -> DarkroomRedMedium
+        else      -> DarkroomRedFaint
     }
     val backgroundColor = when {
-        isCurrent -> Color(0x11CC2200)
-        isExposed -> Color(0x1144AA44)
-        else -> Color.Transparent
+        isCurrent -> DarkroomRedDim
+        isExposed -> DarkroomSurface
+        else      -> DarkroomBlack
     }
-    val textColor = if (isCurrent) Color.White else Color.White
+    val textColor = when {
+        isCurrent -> DarkroomRedBright
+        isExposed -> DarkroomRedMedium
+        else      -> DarkroomRedFaint
+    }
 
     Box(
         modifier = modifier
@@ -60,13 +70,13 @@ fun PatchItem(
             Text(
                 text = "(${differentialMs / 1000.0}s)",
                 fontSize = 11.sp,
-                color = Color(0xFFAAAAAA)
+                color = textColor
             )
             if (isExposed) {
                 Text(
                     text = "✓",
                     fontSize = 18.sp,
-                    color = Color(0xFF44AA44)
+                    color = DarkroomRedMedium
                 )
             }
         }
