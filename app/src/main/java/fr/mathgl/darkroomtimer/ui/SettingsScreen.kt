@@ -22,6 +22,10 @@ import fr.mathgl.darkroomtimer.math.ContrastGrade
 import fr.mathgl.darkroomtimer.storage.PreferenceManager
 import fr.mathgl.darkroomtimer.storage.StorageService
 import fr.mathgl.darkroomtimer.storage.room.AppDatabase
+import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedBright
+import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedDim
+import fr.mathgl.darkroomtimer.ui.theme.DarkroomSurface
+import fr.mathgl.darkroomtimer.ui.theme.DarkroomSurfaceElevated
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -80,7 +84,7 @@ fun SettingsScreen(
             Column(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
                 Text(
                     text = "Cadence : $metronomeCadenceMs ms",
-                    color = Color.White,
+                    color = DarkroomRedBright,
                     fontSize = 14.sp
                 )
                 Slider(
@@ -92,8 +96,8 @@ fun SettingsScreen(
                     valueRange = 500f..3000f,
                     steps = 24,
                     colors = SliderDefaults.colors(
-                        thumbColor = Color(0xFFCC2200),
-                        activeTrackColor = Color(0xFFCC2200)
+                        thumbColor = DarkroomRedBright,
+                        activeTrackColor = DarkroomRedBright
                     )
                 )
             }
@@ -116,7 +120,7 @@ fun SettingsScreen(
         SettingsSectionHeader("TESTSTRIP")
         Text(
             text = "Réglages configurables directement dans l'écran Teststrip.",
-            color = Color.Gray,
+            color = DarkroomRedDim,
             fontSize = 12.sp,
             modifier = Modifier.padding(vertical = 8.dp)
         )
@@ -132,8 +136,8 @@ fun SettingsScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("Profils agrandisseur", color = Color.White, fontSize = 16.sp)
-                Text("▶", color = Color(0xFFCC2200), fontSize = 16.sp)
+                Text("Profils agrandisseur", color = DarkroomRedBright, fontSize = 16.sp)
+                Text("▶", color = DarkroomRedBright, fontSize = 16.sp)
             }
         }
 
@@ -168,7 +172,7 @@ fun SettingsScreen(
         SettingsSectionHeader("BLUETOOTH")
         Text(
             text = "Mode compagnon WiFi — configuration relay à venir.",
-            color = Color.Gray,
+            color = DarkroomRedDim,
             fontSize = 12.sp,
             modifier = Modifier.padding(vertical = 8.dp)
         )
@@ -202,10 +206,10 @@ fun SettingsScreen(
         }
 
         if (exportError.isNotBlank()) {
-            Text(exportError, color = Color.Red, fontSize = 12.sp, modifier = Modifier.padding(8.dp))
+            Text(exportError, color = DarkroomRedBright, fontSize = 12.sp, modifier = Modifier.padding(8.dp))
         }
         if (importError.isNotBlank()) {
-            Text(importError, color = Color.Red, fontSize = 12.sp, modifier = Modifier.padding(8.dp))
+            Text(importError, color = DarkroomRedBright, fontSize = 12.sp, modifier = Modifier.padding(8.dp))
         }
 
         Button(
@@ -236,9 +240,9 @@ fun SettingsScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(48.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF222222))
+            colors = ButtonDefaults.buttonColors(containerColor = DarkroomSurface)
         ) {
-            Text("EXPORTER LES DONNÉES", color = Color.White, fontSize = 14.sp)
+            Text("EXPORTER LES DONNÉES", color = DarkroomRedBright, fontSize = 14.sp)
         }
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -248,19 +252,19 @@ fun SettingsScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(48.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF222222))
+            colors = ButtonDefaults.buttonColors(containerColor = DarkroomSurface)
         ) {
-            Text("IMPORTER LES DONNÉES", color = Color.White, fontSize = 14.sp)
+            Text("IMPORTER LES DONNÉES", color = DarkroomRedBright, fontSize = 14.sp)
         }
 
         if (showImportConfirm) {
             AlertDialog(
                 onDismissRequest = { showImportConfirm = false },
-                title = { Text("Importer les données ?", color = Color.White) },
+                title = { Text("Importer les données ?", color = DarkroomRedBright) },
                 text = {
                     Text(
                         "Cette opération va remplacer vos réglages actuels. Continuer ?",
-                        color = Color.White
+                        color = DarkroomRedBright
                     )
                 },
                 confirmButton = {
@@ -281,7 +285,7 @@ fun SettingsScreen(
                                 importError = if (error != null) "Erreur : $error" else ""
                             }
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFCC2200))
+                        colors = ButtonDefaults.buttonColors(containerColor = DarkroomRedBright)
                     ) {
                         Text("IMPORTER")
                     }
@@ -289,7 +293,7 @@ fun SettingsScreen(
                 dismissButton = {
                     TextButton(onClick = { showImportConfirm = false }) { Text("ANNULER") }
                 },
-                containerColor = Color(0xFF1A1A1A)
+                containerColor = DarkroomSurfaceElevated
             )
         }
 
@@ -301,12 +305,12 @@ fun SettingsScreen(
 private fun SettingsSectionHeader(text: String) {
     Text(
         text = text,
-        color = Color(0xFFCC2200),
+        color = DarkroomRedBright,
         fontSize = 12.sp,
         fontWeight = FontWeight.Bold,
         modifier = Modifier.padding(top = 16.dp, bottom = 4.dp)
     )
-    HorizontalDivider(color = Color(0xFF222222))
+    HorizontalDivider(color = DarkroomSurface)
 }
 
 @Composable
@@ -322,13 +326,13 @@ private fun SettingsSwitch(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(label, color = Color.White, fontSize = 16.sp)
+        Text(label, color = DarkroomRedBright, fontSize = 16.sp)
         Switch(
             checked = checked,
             onCheckedChange = onCheckedChange,
             colors = SwitchDefaults.colors(
-                checkedThumbColor = Color.White,
-                checkedTrackColor = Color(0xFFCC2200)
+                checkedThumbColor = DarkroomRedBright,
+                checkedTrackColor = DarkroomRedBright
             )
         )
     }
@@ -349,19 +353,19 @@ private fun SettingsDropdown(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(label, color = Color.White, fontSize = 16.sp)
+        Text(label, color = DarkroomRedBright, fontSize = 16.sp)
         Box {
             TextButton(onClick = { expanded = true }) {
-                Text(selected, color = Color(0xFFCC2200), fontSize = 16.sp)
+                Text(selected, color = DarkroomRedBright, fontSize = 16.sp)
             }
             DropdownMenu(
                 expanded = expanded,
                 onDismissRequest = { expanded = false },
-                modifier = Modifier.background(Color(0xFF1A1A1A))
+                modifier = Modifier.background(DarkroomSurfaceElevated)
             ) {
                 options.forEach { option ->
                     DropdownMenuItem(
-                        text = { Text(option, color = Color.White) },
+                        text = { Text(option, color = DarkroomRedBright) },
                         onClick = { onSelect(option); expanded = false }
                     )
                 }
@@ -377,14 +381,14 @@ private fun LuminositySlider(label: String, value: Float, onValueChange: (Float)
             .fillMaxWidth()
             .padding(vertical = 4.dp)
     ) {
-        Text(text = label, color = Color.White, fontSize = 14.sp)
+        Text(text = label, color = DarkroomRedBright, fontSize = 14.sp)
         Slider(
             value = value,
             onValueChange = onValueChange,
             valueRange = 0f..1f,
             colors = SliderDefaults.colors(
-                thumbColor = Color(0xFFCC2200),
-                activeTrackColor = Color(0xFFCC2200)
+                thumbColor = DarkroomRedBright,
+                activeTrackColor = DarkroomRedBright
             )
         )
     }
