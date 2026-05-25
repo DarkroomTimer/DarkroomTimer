@@ -102,4 +102,30 @@ class DevelopmentFlowViewModelTest {
         testScheduler.runCurrent()
         assertEquals(DevelopmentSessionState.ACTIVE, viewModel.sessionSnapshot.value!!.state)
     }
+
+    @Test
+    fun `editingProfile is null initially`() {
+        assertNull(viewModel.editingProfile.value)
+    }
+
+    @Test
+    fun `setEditingProfile updates editingProfile`() {
+        val p = profile()
+        viewModel.setEditingProfile(p)
+        assertEquals(p, viewModel.editingProfile.value)
+    }
+
+    @Test
+    fun `setEditingProfile with null clears editingProfile`() {
+        viewModel.setEditingProfile(profile())
+        viewModel.setEditingProfile(null)
+        assertNull(viewModel.editingProfile.value)
+    }
+
+    @Test
+    fun `clearEditingProfile resets to null`() {
+        viewModel.setEditingProfile(profile())
+        viewModel.clearEditingProfile()
+        assertNull(viewModel.editingProfile.value)
+    }
 }

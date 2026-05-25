@@ -21,10 +21,21 @@ class DevelopmentFlowViewModel : ViewModel() {
     private val _sessionSnapshot = MutableStateFlow<DevelopmentSessionStateSnapshot?>(null)
     val sessionSnapshot: StateFlow<DevelopmentSessionStateSnapshot?> = _sessionSnapshot.asStateFlow()
 
+    private val _editingProfile = MutableStateFlow<DevelopmentProfile?>(null)
+    val editingProfile: StateFlow<DevelopmentProfile?> = _editingProfile.asStateFlow()
+
     private var currentSession: DevelopmentSession? = null
 
     fun setSelectedProfile(profile: DevelopmentProfile) {
         _selectedProfile.value = profile
+    }
+
+    fun setEditingProfile(profile: DevelopmentProfile?) {
+        _editingProfile.value = profile
+    }
+
+    fun clearEditingProfile() {
+        _editingProfile.value = null
     }
 
     fun startSession(profile: DevelopmentProfile) {

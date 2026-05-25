@@ -11,4 +11,5 @@ object AppRoutes {
     const val DEVELOPMENT_LAUNCH = "development/launch"
     const val DEVELOPMENT_LIST = "development/list"
     const val DEVELOPMENT_SESSION = "development/session"
+    const val DEVELOPMENT_PROFILE_EDITOR = "development/editor"
 }
