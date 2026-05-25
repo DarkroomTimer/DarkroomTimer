@@ -216,14 +216,14 @@ private fun RelayBadge(
 @Composable
 private fun TimeAdjustRow(onAdjust: (Long) -> Unit) {
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        TimeAdjustButton(label = "+100s") { onAdjust(100_000L) }
-        TimeAdjustButton(label = "+10s")  { onAdjust(10_000L) }
-        TimeAdjustButton(label = "+1s")   { onAdjust(1_000L) }
+        TimeAdjustButton(label = "+1m")  { onAdjust(60_000L) }
+        TimeAdjustButton(label = "+10s") { onAdjust(10_000L) }
+        TimeAdjustButton(label = "+1s")  { onAdjust(1_000L) }
         TimeAdjustButton(label = "+0.1s") { onAdjust(100L) }
     }
     Spacer(modifier = Modifier.height(8.dp))
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        TimeAdjustButton(label = "-100s") { onAdjust(-100_000L) }
+        TimeAdjustButton(label = "-1m")  { onAdjust(-60_000L) }
         TimeAdjustButton(label = "-10s")  { onAdjust(-10_000L) }
         TimeAdjustButton(label = "-1s")   { onAdjust(-1_000L) }
         TimeAdjustButton(label = "-0.1s") { onAdjust(-100L) }
