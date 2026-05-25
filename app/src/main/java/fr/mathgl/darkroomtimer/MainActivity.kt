@@ -7,20 +7,17 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.GridOn
+import androidx.compose.material.icons.filled.Science
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
-import fr.mathgl.darkroomtimer.ui.theme.DarkroomBlack
 import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedBright
 import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedDim
 import fr.mathgl.darkroomtimer.ui.theme.DarkroomSurface
-import androidx.compose.ui.unit.sp
 import fr.mathgl.darkroomtimer.development.DevelopmentProfile
 import fr.mathgl.darkroomtimer.development.DevelopmentSession
 import fr.mathgl.darkroomtimer.storage.PreferenceManager
@@ -28,7 +25,7 @@ import fr.mathgl.darkroomtimer.system.LuminosityManager
 import fr.mathgl.darkroomtimer.ui.*
 import fr.mathgl.darkroomtimer.ui.theme.DarkroomTimerTheme
 
-enum class AppTab { EXPOSITION, TESTSTRIP, SETTINGS }
+enum class AppTab { EXPOSITION, TESTSTRIP, DEVELOPMENT, SETTINGS }
 enum class DevelopmentFlowState { LIST, LAUNCH, SESSION }
 
 class MainActivity : ComponentActivity() {
@@ -69,30 +66,11 @@ class MainActivity : ComponentActivity() {
 fun MainScreen() {
     var selectedTab by rememberSaveable { mutableStateOf(AppTab.EXPOSITION) }
 
-    var developmentActive by rememberSaveable { mutableStateOf(false) }
     var devFlowState by rememberSaveable { mutableStateOf(DevelopmentFlowState.LAUNCH) }
     var selectedProfile by remember { mutableStateOf<DevelopmentProfile?>(null) }
     var developmentSession by remember { mutableStateOf<DevelopmentSession?>(null) }
 
     var showEnlargerProfiles by rememberSaveable { mutableStateOf(false) }
-
-    if (developmentActive) {
-        DevelopmentOverlay(
-            devFlowState = devFlowState,
-            selectedProfile = selectedProfile,
-            developmentSession = developmentSession,
-            onDevFlowStateChange = { devFlowState = it },
-            onSelectedProfileChange = { selectedProfile = it },
-            onDevelopmentSessionChange = { developmentSession = it },
-            onExit = {
-                developmentActive = false
-                developmentSession = null
-                selectedProfile = null
-                devFlowState = DevelopmentFlowState.LAUNCH
-            }
-        )
-        return
-    }
 
     if (showEnlargerProfiles) {
         EnlargerProfilesScreen(onBack = { showEnlargerProfiles = false })
@@ -130,6 +108,19 @@ fun MainScreen() {
                     )
                 )
                 NavigationBarItem(
+                    selected = selectedTab == AppTab.DEVELOPMENT,
+                    onClick = { selectedTab = AppTab.DEVELOPMENT },
+                    icon = { Icon(Icons.Default.Science, contentDescription = "Développement") },
+                    label = { Text("Développement") },
+                    colors = NavigationBarItemDefaults.colors(
+                        selectedIconColor = DarkroomRedBright,
+                        selectedTextColor = DarkroomRedBright,
+                        indicatorColor = DarkroomSurface,
+                        unselectedIconColor = DarkroomRedDim,
+                        unselectedTextColor = DarkroomRedDim
+                    )
+                )
+                NavigationBarItem(
                     selected = selectedTab == AppTab.SETTINGS,
                     onClick = { selectedTab = AppTab.SETTINGS },
                     icon = { Icon(Icons.Default.Settings, contentDescription = "Réglages") },
@@ -151,31 +142,25 @@ fun MainScreen() {
                 .padding(innerPadding)
         ) {
             when (selectedTab) {
-                AppTab.EXPOSITION -> ExpositionTab(
-                    onOpenDevelopment = { developmentActive = true }
-                )
+                AppTab.EXPOSITION -> CountdownScreen()
                 AppTab.TESTSTRIP -> TeststripScreen(onBack = { selectedTab = AppTab.EXPOSITION })
+                AppTab.DEVELOPMENT -> DevelopmentOverlay(
+                    devFlowState = devFlowState,
+                    selectedProfile = selectedProfile,
+                    developmentSession = developmentSession,
+                    onDevFlowStateChange = { devFlowState = it },
+                    onSelectedProfileChange = { selectedProfile = it },
+                    onDevelopmentSessionChange = { developmentSession = it },
+                    onExit = {
+                        developmentSession = null
+                        selectedProfile = null
+                        devFlowState = DevelopmentFlowState.LAUNCH
+                    }
+                )
                 AppTab.SETTINGS -> SettingsScreen(
                     onNavigateToEnlargerProfiles = { showEnlargerProfiles = true }
                 )
             }
-        }
-    }
-}
-
-@Composable
-private fun ExpositionTab(onOpenDevelopment: () -> Unit) {
-    Box(modifier = Modifier.fillMaxSize()) {
-        CountdownScreen()
-        FloatingActionButton(
-            onClick = onOpenDevelopment,
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(16.dp),
-            containerColor = DarkroomSurface,
-            contentColor = DarkroomRedBright
-        ) {
-            Text("Dev", fontSize = 12.sp, color = DarkroomRedBright)
         }
     }
 }
