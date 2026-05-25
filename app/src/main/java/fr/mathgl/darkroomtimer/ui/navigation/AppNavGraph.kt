@@ -16,12 +16,10 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -47,8 +45,6 @@ import fr.mathgl.darkroomtimer.ui.TeststripScreen
 import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedBright
 import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedDim
 import fr.mathgl.darkroomtimer.ui.theme.DarkroomSurface
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 
 @Composable
 fun AppNavGraph() {
@@ -218,17 +214,17 @@ fun AppNavGraph() {
                         val editingProfile by devVM.editingProfile.collectAsState()
 
                         val context = LocalContext.current
-                        var listVM by remember { mutableStateOf<DevelopmentListViewModel?>(null) }
-                        LaunchedEffect(Unit) {
-                            val app = context.applicationContext as Application
-                            val db = AppDatabase.getDatabase(app, CoroutineScope(Dispatchers.Default))
-                            listVM = DevelopmentListViewModel(app, db.developmentDao())
+                        val app = context.applicationContext as Application
+                        val scope = rememberCoroutineScope()
+                        val listVM = remember(app) {
+                            val db = AppDatabase.getDatabase(app, scope)
+                            DevelopmentListViewModel(app, db.developmentDao())
                         }
 
                         DevelopmentProfileEditorScreen(
                             profile = editingProfile,
                             onSave = { profile ->
-                                listVM?.saveProfile(profile)
+                                listVM.saveProfile(profile)
                                 devVM.clearEditingProfile()
                                 navController.popBackStack()
                             },
