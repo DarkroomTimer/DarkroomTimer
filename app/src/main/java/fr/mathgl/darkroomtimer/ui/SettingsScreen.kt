@@ -287,6 +287,16 @@ fun SettingsScreen(
                             value = relayCfg.safelightChannel,
                             onValueChange = { v -> val u = relayCfg.copy(safelightChannel = v.coerceIn(1, 2)); relayCfg = u; prefs.relaySystemConfig = u }
                         )
+                        RelayTextField(
+                            label = "Utilisateur safelight (optionnel)",
+                            value = relayCfg.safelightUsername,
+                            onValueChange = { v -> val u = relayCfg.copy(safelightUsername = v); relayCfg = u; prefs.relaySystemConfig = u }
+                        )
+                        RelayTextField(
+                            label = "Mot de passe safelight (optionnel)",
+                            value = relayCfg.safelightPassword,
+                            onValueChange = { v -> val u = relayCfg.copy(safelightPassword = v); relayCfg = u; prefs.relaySystemConfig = u }
+                        )
                     }
                     if (relayCfg.safelightType == "ESPHOME_HTTP") {
                         RelayTextField(
@@ -312,11 +322,10 @@ fun SettingsScreen(
                         relayTestResult = "Mode ${cfg.enlargerType} — pas de connexion réseau."
                         return@launch
                     }
-                    val testSystem = cfg.buildRelaySystem(kotlinx.coroutines.MainScope())
-                    val result = withContext(Dispatchers.IO) {
-                        runCatching { testSystem.connect() }.getOrNull()
-                    }
-                    relayTestResult = if (result != null) "✓ Connexion réussie." else "✗ Échec de connexion."
+                    val testSystem = cfg.buildRelaySystem(relayTestScope)
+                    withContext(Dispatchers.IO) { testSystem.connect() }
+                    val connectionOk = testSystem.connectionState.value is fr.mathgl.darkroomtimer.system.ConnectionState.Connected
+                    relayTestResult = if (connectionOk) "✓ Connexion réussie." else "✗ Échec de connexion."
                     withContext(Dispatchers.IO) { testSystem.disconnect() }
                 }
             },
