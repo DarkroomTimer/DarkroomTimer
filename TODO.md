@@ -3,13 +3,14 @@
 ## Bugs
 
 - [ ] Un changement de driver ne devrait pas demander le redémarrage de l'application pour être appliqué
-- [ ] Connexion avec Tasmota ne fonctionne pas
+- [ ] Teststrip ne déclenche pas le relay
 
 ## Feature
 
 - [ ] Development :
-  - [ ] Supression
-  - [ ] Editer
+  - [ ] L'écran principale doit être celui du profile par défaut
+  - [ ] On doit pouvoir suprimer un profile
+  - [ ] On doit pouvoir editer un profile
   - [ ] Bouton de retour sur la selection du profile
 - [ ] CountDown
   - [ ] Bouton -100 et +100 devrait être -1m et +1m

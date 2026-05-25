@@ -1,0 +1,77 @@
+esphome:
+  name: relay
+
+esp32:
+  #board: esp32dev
+  variant: esp32
+  framework:
+    type: esp-idf
+
+# Enable logging
+logger:
+  level: INFO
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: "ci604okjzu5/Gi8f7+Gboy6x7ETL4J9JpKtHOvysMFU="
+  services:
+    - service: timedpower1
+      variables:
+        ms: int
+      then:
+        - switch.turn_on: relay_1
+        - delay: !lambda "return ms;"
+        - switch.turn_off: relay_1
+
+ota:
+  - platform: esphome
+
+button:
+  - platform: restart
+    name: "Restart"
+    id: button_restart
+
+switch:
+  - platform: gpio
+    name: "1"
+    pin: GPIO27
+    id: relay_1
+
+  - platform: gpio
+    name: "2"
+    pin: GPIO14
+    id: relay_2
+
+sensor:
+  - platform: wifi_signal
+    name: "RSSI"
+    id: sensor_rssi
+    update_interval: 90s
+    entity_category: "diagnostic"
+
+  - platform: uptime
+    name: "Uptime"
+    id: sensor_uptime
+    update_interval: 300s
+    entity_category: "diagnostic"
+
+light:
+  - platform: status_led
+    name: "LED"
+    id: led_status
+    pin:
+      number: GPIO13
+      inverted: True
+    internal: True
+
+wifi:
+  ssid: "Freebox-1B6351"
+  password: "r5tk7qxx9vqcvkxxq54kvh"
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Relay Fallback Hotspot"
+    password: "x7Mc0k76jW4U"
+
+captive_portal:
