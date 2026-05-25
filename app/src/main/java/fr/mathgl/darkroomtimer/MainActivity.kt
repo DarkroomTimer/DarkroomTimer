@@ -16,6 +16,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import fr.mathgl.darkroomtimer.ui.theme.DarkroomBlack
+import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedBright
+import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedDim
+import fr.mathgl.darkroomtimer.ui.theme.DarkroomSurface
 import androidx.compose.ui.unit.sp
 import fr.mathgl.darkroomtimer.development.DevelopmentProfile
 import fr.mathgl.darkroomtimer.development.DevelopmentSession
@@ -105,18 +109,18 @@ fun MainScreen() {
     Scaffold(
         containerColor = Color.Black,
         bottomBar = {
-            NavigationBar(containerColor = Color(0xFF0D0D0D)) {
+            NavigationBar(containerColor = DarkroomSurface) {
                 NavigationBarItem(
                     selected = selectedTab == AppTab.EXPOSITION,
                     onClick = { selectedTab = AppTab.EXPOSITION },
                     icon = { Icon(Icons.Default.Timer, contentDescription = "Exposition") },
                     label = { Text("Exposition") },
                     colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = Color(0xFFCC2200),
-                        selectedTextColor = Color(0xFFCC2200),
-                        indicatorColor = Color(0xFF1A0A0A),
-                        unselectedIconColor = Color.Gray,
-                        unselectedTextColor = Color.Gray
+                        selectedIconColor = DarkroomRedBright,
+                        selectedTextColor = DarkroomRedBright,
+                        indicatorColor = DarkroomSurface,
+                        unselectedIconColor = DarkroomRedDim,
+                        unselectedTextColor = DarkroomRedDim
                     )
                 )
                 NavigationBarItem(
@@ -125,11 +129,11 @@ fun MainScreen() {
                     icon = { Icon(Icons.Default.GridOn, contentDescription = "Teststrip") },
                     label = { Text("Teststrip") },
                     colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = Color(0xFFCC2200),
-                        selectedTextColor = Color(0xFFCC2200),
-                        indicatorColor = Color(0xFF1A0A0A),
-                        unselectedIconColor = Color.Gray,
-                        unselectedTextColor = Color.Gray
+                        selectedIconColor = DarkroomRedBright,
+                        selectedTextColor = DarkroomRedBright,
+                        indicatorColor = DarkroomSurface,
+                        unselectedIconColor = DarkroomRedDim,
+                        unselectedTextColor = DarkroomRedDim
                     )
                 )
                 NavigationBarItem(
@@ -138,11 +142,11 @@ fun MainScreen() {
                     icon = { Icon(Icons.Default.Settings, contentDescription = "Réglages") },
                     label = { Text("Réglages") },
                     colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = Color(0xFFCC2200),
-                        selectedTextColor = Color(0xFFCC2200),
-                        indicatorColor = Color(0xFF1A0A0A),
-                        unselectedIconColor = Color.Gray,
-                        unselectedTextColor = Color.Gray
+                        selectedIconColor = DarkroomRedBright,
+                        selectedTextColor = DarkroomRedBright,
+                        indicatorColor = DarkroomSurface,
+                        unselectedIconColor = DarkroomRedDim,
+                        unselectedTextColor = DarkroomRedDim
                     )
                 )
             }
@@ -175,10 +179,10 @@ private fun ExpositionTab(onOpenDevelopment: () -> Unit) {
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(16.dp),
-            containerColor = Color(0xFF222222),
-            contentColor = Color.White
+            containerColor = DarkroomSurface,
+            contentColor = DarkroomRedBright
         ) {
-            Text("Dev", fontSize = 12.sp, color = Color.White)
+            Text("Dev", fontSize = 12.sp, color = DarkroomRedBright)
         }
     }
 }
