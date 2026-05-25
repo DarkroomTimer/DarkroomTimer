@@ -70,7 +70,7 @@ fun MainScreen() {
     var selectedTab by rememberSaveable { mutableStateOf(AppTab.EXPOSITION) }
 
     var developmentActive by rememberSaveable { mutableStateOf(false) }
-    var devFlowState by rememberSaveable { mutableStateOf(DevelopmentFlowState.LIST) }
+    var devFlowState by rememberSaveable { mutableStateOf(DevelopmentFlowState.LAUNCH) }
     var selectedProfile by rememberSaveable { mutableStateOf<DevelopmentProfile?>(null) }
     var developmentSession by remember { mutableStateOf<DevelopmentSession?>(null) }
 
@@ -88,7 +88,7 @@ fun MainScreen() {
                 developmentActive = false
                 developmentSession = null
                 selectedProfile = null
-                devFlowState = DevelopmentFlowState.LIST
+                devFlowState = DevelopmentFlowState.LAUNCH
             }
         )
         return
@@ -238,7 +238,7 @@ private fun DevelopmentOverlay(
                     onCancel = onExit
                 )
             } else {
-                onDevFlowStateChange(DevelopmentFlowState.LIST)
+                onDevFlowStateChange(DevelopmentFlowState.LAUNCH)
             }
         }
     }
