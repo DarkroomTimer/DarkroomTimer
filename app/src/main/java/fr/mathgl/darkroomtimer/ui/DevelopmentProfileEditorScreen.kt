@@ -212,7 +212,7 @@ private fun NavigationModeButton(
             containerColor = if (selected) DarkroomRedBright else DarkroomRedDim
         )
     ) {
-        Text(label, fontSize = 14.sp, color = if (selected) DarkroomRedBright else DarkroomRedDim)
+        Text(label, fontSize = 14.sp, color = if (selected) Color.White else DarkroomRedDim)
     }
 }
 
