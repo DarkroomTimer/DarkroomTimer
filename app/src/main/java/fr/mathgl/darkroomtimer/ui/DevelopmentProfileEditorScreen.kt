@@ -17,6 +17,11 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import fr.mathgl.darkroomtimer.development.DevelopmentProfile
+import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedBright
+import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedDim
+import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedFaint
+import fr.mathgl.darkroomtimer.ui.theme.DarkroomSurface
+import fr.mathgl.darkroomtimer.ui.theme.DarkroomSurfaceElevated
 import fr.mathgl.darkroomtimer.development.DevelopmentNavigationMode
 import fr.mathgl.darkroomtimer.development.DevelopmentStep
 import fr.mathgl.darkroomtimer.development.DevelopmentStepType
@@ -51,10 +56,10 @@ fun DevelopmentProfileEditorScreen(
                 text = if (profile != null) "Éditer le Profil" else "Nouveau Profil",
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color.White
+                color = DarkroomRedBright
             )
             TextButton(onClick = onCancel) {
-                Text("← Retour", color = Color(0xFFCC2200))
+                Text("← Retour", color = DarkroomRedBright)
             }
         }
 
@@ -69,13 +74,13 @@ fun DevelopmentProfileEditorScreen(
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it },
-                label = { Text("Nom du profil", color = Color.White) },
+                label = { Text("Nom du profil", color = DarkroomRedBright) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Color(0xFFCC2200),
-                    unfocusedBorderColor = Color(0xFF444444),
-                    cursorColor = Color.White
+                    focusedBorderColor = DarkroomRedBright,
+                    unfocusedBorderColor = DarkroomRedFaint,
+                    cursorColor = DarkroomRedBright
                 )
             )
 
@@ -84,7 +89,7 @@ fun DevelopmentProfileEditorScreen(
             // Navigation mode selector
             Text(
                 text = "Mode de navigation",
-                color = Color.White,
+                color = DarkroomRedBright,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold
             )
@@ -111,7 +116,7 @@ fun DevelopmentProfileEditorScreen(
             // Steps list
             Text(
                 text = "Étapes",
-                color = Color.White,
+                color = DarkroomRedBright,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold
             )
@@ -120,7 +125,7 @@ fun DevelopmentProfileEditorScreen(
             if (steps.isEmpty()) {
                 Text(
                     text = "Aucune étape ajoutée",
-                    color = Color.Gray,
+                    color = DarkroomRedDim,
                     fontSize = 14.sp
                 )
             } else {
@@ -142,7 +147,7 @@ fun DevelopmentProfileEditorScreen(
                     showStepDialog = true
                 },
                 modifier = Modifier.fillMaxWidth().height(48.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF224422))
+                colors = ButtonDefaults.buttonColors(containerColor = DarkroomSurface)
             ) {
                 Text("+ Ajouter une étape", fontSize = 14.sp)
             }
@@ -167,7 +172,7 @@ fun DevelopmentProfileEditorScreen(
             },
             modifier = Modifier.fillMaxWidth().height(56.dp),
             enabled = name.isNotBlank(),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFCC2200))
+            colors = ButtonDefaults.buttonColors(containerColor = DarkroomRedBright)
         ) {
             Text("ENREGISTRER", fontSize = 18.sp)
         }
@@ -204,10 +209,10 @@ private fun NavigationModeButton(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth().height(48.dp),
         colors = ButtonDefaults.buttonColors(
-            containerColor = if (selected) Color(0xFFCC2200) else Color(0xFF333333)
+            containerColor = if (selected) DarkroomRedBright else DarkroomRedDim
         )
     ) {
-        Text(label, fontSize = 14.sp, color = if (selected) Color.White else Color.Gray)
+        Text(label, fontSize = 14.sp, color = if (selected) DarkroomRedBright else DarkroomRedDim)
     }
 }
 
@@ -222,7 +227,7 @@ private fun StepItem(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onEdit),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF222222))
+        colors = CardDefaults.cardColors(containerColor = DarkroomSurface)
     ) {
         Row(
             modifier = Modifier
@@ -235,24 +240,24 @@ private fun StepItem(
                 Row {
                     Text(
                         text = "${index + 1}. ",
-                        color = Color(0xFFCC2200),
+                        color = DarkroomRedBright,
                         fontWeight = FontWeight.Bold,
                         fontSize = 14.sp
                     )
                     Text(
                         text = step.name,
-                        color = Color.White,
+                        color = DarkroomRedBright,
                         fontSize = 14.sp
                     )
                 }
                 Text(
                     text = "${step.durationSeconds}s • ${if (step.type == DevelopmentStepType.BATH) "Bain" else "Pause"}",
-                    color = Color.Gray,
+                    color = DarkroomRedDim,
                     fontSize = 11.sp
                 )
             }
             TextButton(onClick = onDelete) {
-                Text("✕", color = Color.Red, fontSize = 16.sp)
+                Text("✕", color = DarkroomRedBright, fontSize = 16.sp)
             }
         }
     }
@@ -292,7 +297,7 @@ fun StepEditorDialog(
                     }
                     onSave(newStep)
                 },
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFCC2200))
+                colors = ButtonDefaults.buttonColors(containerColor = DarkroomRedBright)
             ) {
                 Text("ENREGISTRER")
             }
@@ -305,7 +310,7 @@ fun StepEditorDialog(
         title = {
             Text(
                 text = if (step != null) "Modifier l'étape" else "Nouvelle étape",
-                color = Color.White
+                color = DarkroomRedBright
             )
         },
         text = {
@@ -314,21 +319,21 @@ fun StepEditorDialog(
                 Row {
                     Text(
                         text = "Type: ",
-                        color = Color.White,
+                        color = DarkroomRedBright,
                         fontSize = 14.sp
                     )
                     Row {
                         TextButton(onClick = { stepType = 0 }) {
                             Text(
                                 text = "Bain",
-                                color = if (stepType == 0) Color(0xFFCC2200) else Color.Gray,
+                                color = if (stepType == 0) DarkroomRedBright else DarkroomRedDim,
                                 fontSize = 14.sp
                             )
                         }
                         TextButton(onClick = { stepType = 1 }) {
                             Text(
                                 text = "Pause",
-                                color = if (stepType == 1) Color(0xFFCC2200) else Color.Gray,
+                                color = if (stepType == 1) DarkroomRedBright else DarkroomRedDim,
                                 fontSize = 14.sp
                             )
                         }
@@ -339,13 +344,13 @@ fun StepEditorDialog(
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text("Nom", color = Color.White) },
+                    label = { Text("Nom", color = DarkroomRedBright) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Color(0xFFCC2200),
-                        unfocusedBorderColor = Color(0xFF444444),
-                        cursorColor = Color.White
+                        focusedBorderColor = DarkroomRedBright,
+                        unfocusedBorderColor = DarkroomRedFaint,
+                        cursorColor = DarkroomRedBright
                     )
                 )
 
@@ -353,14 +358,14 @@ fun StepEditorDialog(
                 OutlinedTextField(
                     value = durationSeconds,
                     onValueChange = { durationSeconds = it },
-                    label = { Text("Durée (secondes)", color = Color.White) },
+                    label = { Text("Durée (secondes)", color = DarkroomRedBright) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Color(0xFFCC2200),
-                        unfocusedBorderColor = Color(0xFF444444),
-                        cursorColor = Color.White
+                        focusedBorderColor = DarkroomRedBright,
+                        unfocusedBorderColor = DarkroomRedFaint,
+                        cursorColor = DarkroomRedBright
                     )
                 )
 
@@ -369,19 +374,19 @@ fun StepEditorDialog(
                     OutlinedTextField(
                         value = preEndAlertSeconds,
                         onValueChange = { preEndAlertSeconds = it },
-                        label = { Text("Alerte pré-fin (secondes)", color = Color.White) },
+                        label = { Text("Alerte pré-fin (secondes)", color = DarkroomRedBright) },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Color(0xFFCC2200),
-                            unfocusedBorderColor = Color(0xFF444444),
-                            cursorColor = Color.White
+                            focusedBorderColor = DarkroomRedBright,
+                            unfocusedBorderColor = DarkroomRedFaint,
+                            cursorColor = DarkroomRedBright
                         )
                     )
                 }
             }
         },
-        containerColor = Color(0xFF1A1A1A)
+        containerColor = DarkroomSurfaceElevated
     )
 }
