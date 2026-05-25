@@ -18,6 +18,11 @@ import androidx.compose.ui.unit.sp
 import fr.mathgl.darkroomtimer.math.BurnDodgeEntry
 import fr.mathgl.darkroomtimer.math.BurnDodgeType
 import fr.mathgl.darkroomtimer.system.BurnDodgeManager
+import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedBright
+import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedDim
+import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedFaint
+import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedMedium
+import fr.mathgl.darkroomtimer.ui.theme.DarkroomSurface
 
 @Composable
 fun BurnDodgePanel(
@@ -31,8 +36,8 @@ fun BurnDodgePanel(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color(0xFF1A1A1A), RoundedCornerShape(8.dp))
-            .border(1.dp, Color(0xFF333333), RoundedCornerShape(8.dp))
+            .background(DarkroomSurface, RoundedCornerShape(8.dp))
+            .border(1.dp, DarkroomRedFaint, RoundedCornerShape(8.dp))
     ) {
         // Header
         Row(
@@ -46,20 +51,20 @@ fun BurnDodgePanel(
                 text = "Burn & Dodge",
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color.White
+                color = DarkroomRedBright
             )
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 if (entries.isNotEmpty()) {
                     Text(
                         text = "${entries.size}/${BurnDodgeManager.MAX_ENTRIES}",
                         fontSize = 12.sp,
-                        color = Color(0xFF888888)
+                        color = DarkroomRedDim
                     )
                 }
                 Button(
                     onClick = onAddEntry,
                     enabled = !maxEntriesReached,
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFCC2200)),
+                    colors = ButtonDefaults.buttonColors(containerColor = DarkroomRedBright),
                     modifier = Modifier.height(32.dp)
                 ) {
                     Text("+", fontSize = 16.sp)
@@ -105,32 +110,32 @@ private fun BurnDodgeEntryItem(
                 text = if (entry.type == BurnDodgeType.BURN) "BURN" else "DODGE",
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Bold,
-                color = if (entry.type == BurnDodgeType.BURN) Color(0xFFCC2200) else Color(0xFF4488FF)
+                color = DarkroomRedBright
             )
             if (entry.label.isNotBlank()) {
                 Text(
                     text = "\"${entry.label}\"",
                     fontSize = 12.sp,
-                    color = Color(0xFFAAAAAA)
+                    color = DarkroomRedDim
                 )
             }
             Text(
                 text = entry.fractionLabel,
                 fontSize = 12.sp,
                 fontFamily = FontFamily.Monospace,
-                color = Color(0xFFCCCCCC)
+                color = DarkroomRedMedium
             )
             Text(
                 text = "Grade ${entry.contrastGrade.label}",
                 fontSize = 11.sp,
-                color = Color(0xFF666666)
+                color = DarkroomRedFaint
             )
         }
         IconButton(onClick = onRemove) {
             Icon(
                 painter = androidx.compose.ui.res.painterResource(android.R.drawable.ic_menu_delete),
                 contentDescription = "Supprimer",
-                tint = Color(0xFF666666)
+                tint = DarkroomRedDim
             )
         }
     }

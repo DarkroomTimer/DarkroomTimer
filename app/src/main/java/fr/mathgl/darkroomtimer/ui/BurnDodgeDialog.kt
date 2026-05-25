@@ -14,6 +14,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import fr.mathgl.darkroomtimer.math.BurnDodgeType
 import fr.mathgl.darkroomtimer.math.ContrastGrade
+import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedBright
+import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedDim
+import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedFaint
+import fr.mathgl.darkroomtimer.ui.theme.DarkroomSurfaceElevated
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -36,7 +40,7 @@ fun BurnDodgeDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Ajouter un ajustement", color = Color.White) },
+        title = { Text("Ajouter un ajustement", color = DarkroomRedBright) },
         text = {
             Column(
                 modifier = Modifier
@@ -44,13 +48,13 @@ fun BurnDodgeDialog(
                     .padding(vertical = 8.dp)
             ) {
                 // Type selection
-                Text("Type:", fontSize = 12.sp, color = Color(0xFFAAAAAA))
+                Text("Type:", fontSize = 12.sp, color = DarkroomRedDim)
                 Spacer(modifier = Modifier.height(4.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Button(
                         onClick = { type = BurnDodgeType.BURN },
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = if (type == BurnDodgeType.BURN) Color(0xFFCC2200) else Color(0xFF444444)
+                            containerColor = if (type == BurnDodgeType.BURN) DarkroomRedBright else DarkroomRedDim
                         ),
                         modifier = Modifier.weight(1f)
                     ) {
@@ -59,7 +63,7 @@ fun BurnDodgeDialog(
                     Button(
                         onClick = { type = BurnDodgeType.DODGE },
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = if (type == BurnDodgeType.DODGE) Color(0xFF4488FF) else Color(0xFF444444)
+                            containerColor = if (type == BurnDodgeType.DODGE) DarkroomRedBright else DarkroomRedDim
                         ),
                         modifier = Modifier.weight(1f)
                     ) {
@@ -70,7 +74,7 @@ fun BurnDodgeDialog(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 // Label input
-                Text("Zone (optionnel):", fontSize = 12.sp, color = Color(0xFFAAAAAA))
+                Text("Zone (optionnel):", fontSize = 12.sp, color = DarkroomRedDim)
                 Spacer(modifier = Modifier.height(4.dp))
                 OutlinedTextField(
                     value = label,
@@ -78,22 +82,22 @@ fun BurnDodgeDialog(
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Color(0xFFCC2200),
-                        unfocusedBorderColor = Color(0xFF666666)
+                        focusedBorderColor = DarkroomRedBright,
+                        unfocusedBorderColor = DarkroomRedFaint
                     )
                 )
 
                 Spacer(modifier = Modifier.height(12.dp))
 
                 // Fraction selection
-                Text("Fraction de stop:", fontSize = 12.sp, color = Color(0xFFAAAAAA))
+                Text("Fraction de stop:", fontSize = 12.sp, color = DarkroomRedDim)
                 Spacer(modifier = Modifier.height(4.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                     fractionLabels.forEachIndexed { idx, labelText ->
                         Button(
                             onClick = { denominator = validFractions[idx] },
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = if (validFractions[idx] == denominator) Color(0xFFCC2200) else Color(0xFF444444)
+                                containerColor = if (validFractions[idx] == denominator) DarkroomRedBright else DarkroomRedDim
                             ),
                             modifier = Modifier.weight(1f).height(36.dp)
                         ) {
@@ -105,7 +109,7 @@ fun BurnDodgeDialog(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 // Grade selection
-                Text("Grade de contraste:", fontSize = 12.sp, color = Color(0xFFAAAAAA))
+                Text("Grade de contraste:", fontSize = 12.sp, color = DarkroomRedDim)
                 Spacer(modifier = Modifier.height(4.dp))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -115,7 +119,7 @@ fun BurnDodgeDialog(
                         Button(
                             onClick = { /* Grade selection handled in parent */ },
                             enabled = false,
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF444444)),
+                            colors = ButtonDefaults.buttonColors(containerColor = DarkroomRedDim),
                             modifier = Modifier.weight(1f).height(36.dp)
                         ) {
                             Text(grade.label, fontSize = 9.sp)
@@ -125,7 +129,7 @@ fun BurnDodgeDialog(
                 Text(
                     text = "Grade actuel: ${ContrastGrade.DEFAULT.label} (fixe pour la session)",
                     fontSize = 10.sp,
-                    color = Color(0xFF666666),
+                    color = DarkroomRedFaint,
                     modifier = Modifier.padding(top = 4.dp)
                 )
 
@@ -136,7 +140,7 @@ fun BurnDodgeDialog(
                 Text(
                     text = "Ajustement: $sign$denominator stop",
                     fontSize = 12.sp,
-                    color = Color(0xFF888888),
+                    color = DarkroomRedDim,
                     fontFamily = FontFamily.Monospace,
                     fontWeight = FontWeight.Bold
                 )
@@ -145,14 +149,14 @@ fun BurnDodgeDialog(
         confirmButton = {
             Button(
                 onClick = { onConfirm(label, type, 1, denominator, ContrastGrade.DEFAULT) },
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFCC2200))
+                colors = ButtonDefaults.buttonColors(containerColor = DarkroomRedBright)
             ) {
                 Text("Valider")
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Annuler", color = Color(0xFFAAAAAA))
+                Text("Annuler", color = DarkroomRedDim)
             }
         }
     )
