@@ -241,36 +241,14 @@ private fun ConfigurationSection(
     Spacer(modifier = Modifier.height(12.dp))
 
     // Temps de base
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text("Base:", fontSize = 14.sp, color = DarkroomRedDim)
-        Text("${baseTimeMs / 1000.0}s", fontSize = 16.sp, color = DarkroomRedBright, fontFamily = FontFamily.Monospace)
-    }
-
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(4.dp)
-    ) {
-        OutlinedButton(
-            onClick = { onBaseTimeChange((baseTimeMs - 1000).coerceIn(100L, 999_000L)) },
-            modifier = Modifier.weight(1f).height(40.dp),
-            colors = ButtonDefaults.outlinedButtonColors(contentColor = DarkroomRedBright),
-            border = BorderStroke(1.dp, DarkroomRedFaint)
-        ) {
-            Text("-1s", fontSize = 14.sp)
-        }
-        OutlinedButton(
-            onClick = { onBaseTimeChange((baseTimeMs + 1000).coerceIn(100L, 999_000L)) },
-            modifier = Modifier.weight(1f).height(40.dp),
-            colors = ButtonDefaults.outlinedButtonColors(contentColor = DarkroomRedBright),
-            border = BorderStroke(1.dp, DarkroomRedFaint)
-        ) {
-            Text("+1s", fontSize = 14.sp)
-        }
-    }
+    Text("Base:", fontSize = 14.sp, color = DarkroomRedDim)
+    Spacer(modifier = Modifier.height(4.dp))
+    DigitTimePicker(
+        valueMs = baseTimeMs,
+        onValueChange = onBaseTimeChange,
+        format = DigitTimeFormat.MINUTES_SECONDS_TENTHS,
+        digitHeight = 52.dp
+    )
 
     Spacer(modifier = Modifier.height(12.dp))
 
