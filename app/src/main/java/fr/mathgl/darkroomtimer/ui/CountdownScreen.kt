@@ -13,7 +13,6 @@ import androidx.compose.ui.graphics.Color
 import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedBright
 import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedDim
 import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedFaint
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -65,12 +64,14 @@ fun CountdownScreen(
         Spacer(modifier = Modifier.height(8.dp))
 
         // Timer display
-        Text(
-            text = state.displayTime,
-            fontSize = 80.sp,
-            fontFamily = FontFamily.Monospace,
-            fontWeight = FontWeight.Bold,
-            color = DarkroomRedBright
+        DigitTimePicker(
+            valueMs = state.displayTimeMs,
+            onValueChange = { newMs ->
+                if (state.timerState == TimerState.PAUSED) viewModel.setRemainingTime(newMs)
+                else viewModel.setBaseTime(newMs)
+            },
+            enabled = state.timerState != TimerState.RUNNING,
+            format = DigitTimeFormat.MINUTES_SECONDS_TENTHS
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -116,12 +117,6 @@ fun CountdownScreen(
                 onRemoveEntry = { viewModel.removeBurnDodgeEntry(it) }
             )
             Spacer(modifier = Modifier.height(16.dp))
-        }
-
-        // Time adjustment (only when not RUNNING)
-        if (state.timerState != TimerState.RUNNING) {
-            TimeAdjustRow(onAdjust = { viewModel.adjustTime(it) })
-            Spacer(modifier = Modifier.height(24.dp))
         }
 
         // F-stop correction (only when STOPPED)
@@ -212,36 +207,6 @@ private fun RelayBadge(
         if (hasOverride) {
             Text(text = "override", fontSize = 9.sp, color = DarkroomRedBright)
         }
-    }
-}
-
-@Composable
-private fun TimeAdjustRow(onAdjust: (Long) -> Unit) {
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        TimeAdjustButton(label = "+1m")  { onAdjust(60_000L) }
-        TimeAdjustButton(label = "+10s") { onAdjust(10_000L) }
-        TimeAdjustButton(label = "+1s")  { onAdjust(1_000L) }
-        TimeAdjustButton(label = "+0.1s") { onAdjust(100L) }
-    }
-    Spacer(modifier = Modifier.height(8.dp))
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        TimeAdjustButton(label = "-1m")  { onAdjust(-60_000L) }
-        TimeAdjustButton(label = "-10s")  { onAdjust(-10_000L) }
-        TimeAdjustButton(label = "-1s")   { onAdjust(-1_000L) }
-        TimeAdjustButton(label = "-0.1s") { onAdjust(-100L) }
-    }
-}
-
-@Composable
-private fun TimeAdjustButton(label: String, onClick: () -> Unit) {
-    OutlinedButton(
-        onClick = onClick,
-        colors = ButtonDefaults.outlinedButtonColors(contentColor = DarkroomRedBright),
-        border = BorderStroke(1.dp, DarkroomRedFaint),
-        modifier = Modifier.height(36.dp),
-        contentPadding = PaddingValues(horizontal = 8.dp)
-    ) {
-        Text(text = label, fontSize = 11.sp)
     }
 }
 
