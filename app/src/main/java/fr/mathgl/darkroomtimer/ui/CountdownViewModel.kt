@@ -31,6 +31,7 @@ import kotlinx.coroutines.launch
 
 data class CountdownUiState(
     val displayTime: String,
+    val displayTimeMs: Long,
     val timerState: TimerState,
     val relayState: RelayStates,
     val selectedGrade: ContrastGrade,
@@ -38,7 +39,6 @@ data class CountdownUiState(
     val burnDodgeEntries: List<BurnDodgeEntry>,
     val burnDodgeVisible: Boolean,
     val maxEntriesReached: Boolean,
-    val showTimeEditor: Boolean = false,
     val enlargerOverride: Boolean = false,
     val safelightOverride: Boolean = false,
     val relayType: String = "NULL",
@@ -82,7 +82,8 @@ open class CountdownViewModel(
         _uiState.update { it.copy(
             fStopCorrectionNumerator = simplN,
             fStopCorrectionDenominator = simplD,
-            displayTime = CountdownTimer.formatTime(calc)
+            displayTime = CountdownTimer.formatTime(calc),
+            displayTimeMs = calc
         ) }
     }
 
@@ -92,7 +93,8 @@ open class CountdownViewModel(
         _uiState.update { it.copy(
             fStopCorrectionNumerator = 0,
             fStopCorrectionDenominator = 1,
-            displayTime = CountdownTimer.formatTime(baseTimeMs)
+            displayTime = CountdownTimer.formatTime(baseTimeMs),
+            displayTimeMs = baseTimeMs
         ) }
     }
 
@@ -105,13 +107,15 @@ open class CountdownViewModel(
             configuredTimeMs = calc,
             fStopCorrectionNumerator = 0,
             fStopCorrectionDenominator = 1,
-            displayTime = CountdownTimer.formatTime(calc)
+            displayTime = CountdownTimer.formatTime(calc),
+            displayTimeMs = calc
         ) }
     }
 
     private val _uiState = MutableStateFlow(
         CountdownUiState(
             displayTime = CountdownTimer.formatTime(timer.configuredTimeMs),
+            displayTimeMs = timer.configuredTimeMs,
             timerState = TimerState.STOPPED,
             relayState = RelayStates.INITIAL,
             selectedGrade = ContrastGrade.DEFAULT,
@@ -146,6 +150,7 @@ open class CountdownViewModel(
             baseTimeMs = timer.configuredTimeMs
             _uiState.update { it.copy(
                 displayTime = CountdownTimer.formatTime(timer.configuredTimeMs),
+                displayTimeMs = timer.configuredTimeMs,
                 configuredTimeMs = timer.configuredTimeMs,
                 selectedGrade = prefs.defaultContrastGrade
             ) }
@@ -214,7 +219,8 @@ open class CountdownViewModel(
         audioSystem?.pause()
         _uiState.update { it.copy(
             timerState = TimerState.PAUSED,
-            displayTime = CountdownTimer.formatTime(timer.remainingMs())
+            displayTime = CountdownTimer.formatTime(timer.remainingMs()),
+            displayTimeMs = timer.remainingMs()
         ) }
         sendServiceIntent(ForegroundTimerService.ACTION_STOP, 0L)
     }
@@ -244,6 +250,7 @@ open class CountdownViewModel(
             _uiState.update { it.copy(
                 displayTime = if (ended) CountdownTimer.formatTime(calculatedTimeMs())
                               else CountdownTimer.formatTime(remaining),
+                displayTimeMs = if (ended) calculatedTimeMs() else remaining,
                 timerState = timer.state,
                 enlargerOverride = if (ended) false else it.enlargerOverride,
                 safelightOverride = if (ended) false else it.safelightOverride
@@ -287,6 +294,7 @@ open class CountdownViewModel(
         }
         _uiState.update { it.copy(
             displayTime = CountdownTimer.formatTime(calculatedTimeMs()),  // base × correction = next countdown duration
+            displayTimeMs = calculatedTimeMs(),
             timerState = TimerState.STOPPED,
             enlargerOverride = false,
             safelightOverride = false
@@ -304,6 +312,7 @@ open class CountdownViewModel(
             val calc = calculatedTimeMs()
             _uiState.update { it.copy(
                 displayTime = CountdownTimer.formatTime(calc),
+                displayTimeMs = calc,
                 configuredTimeMs = newBase
             ) }
         } else {
@@ -311,31 +320,35 @@ open class CountdownViewModel(
             val newTime = (timer.configuredTimeMs + deltaMs).coerceIn(100L, 999_000L)
             timer.configuredTimeMs = newTime
             _uiState.update { it.copy(
-                displayTime = CountdownTimer.formatTime(timer.remainingMs())
+                displayTime = CountdownTimer.formatTime(timer.remainingMs()),
+                displayTimeMs = timer.remainingMs()
             ) }
         }
     }
 
-    fun openTimeEditor() {
-        if (_uiState.value.timerState == TimerState.RUNNING) return
-        _uiState.update { it.copy(showTimeEditor = true) }
-    }
-
-    fun closeTimeEditor() {
-        _uiState.update { it.copy(showTimeEditor = false) }
-    }
-
-    fun setTimeFromInput(minutes: Int, seconds: Int, tenths: Int) {
-        val newBase = (minutes * 60_000L + seconds * 1_000L + tenths * 100L).coerceIn(100L, 999_000L)
-        baseTimeMs = newBase
-        timer.configuredTimeMs = newBase
+    fun setBaseTime(ms: Long) {
+        if (timer.state != TimerState.STOPPED) return
+        val clamped = ms.coerceIn(100L, 999_000L)
+        baseTimeMs = clamped
+        timer.configuredTimeMs = clamped
         _uiState.update { it.copy(
-            displayTime = CountdownTimer.formatTime(newBase),
-            configuredTimeMs = newBase,
+            displayTime = CountdownTimer.formatTime(clamped),
+            displayTimeMs = clamped,
+            configuredTimeMs = clamped,
             fStopCorrectionNumerator = 0,
-            fStopCorrectionDenominator = 1,
-            showTimeEditor = false
-        ) }
+            fStopCorrectionDenominator = 1
+        )}
+    }
+
+    fun setRemainingTime(ms: Long) {
+        if (timer.state != TimerState.PAUSED) return
+        val clamped = ms.coerceIn(100L, 999_000L)
+        val delta = clamped - timer.remainingMs()
+        timer.configuredTimeMs = (timer.configuredTimeMs + delta).coerceIn(100L, 999_000L)
+        _uiState.update { it.copy(
+            displayTime = CountdownTimer.formatTime(timer.remainingMs()),
+            displayTimeMs = timer.remainingMs()
+        )}
     }
 
     fun selectGrade(grade: ContrastGrade) {

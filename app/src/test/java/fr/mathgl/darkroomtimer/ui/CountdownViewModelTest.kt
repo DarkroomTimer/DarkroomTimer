@@ -343,20 +343,6 @@ class CountdownViewModelTest {
     }
 
     @Test
-    fun `setTimeFromInput should reset fstop correction to zero`() = runTest {
-        viewModel.applyFStopDelta(1, 2)
-        testDispatcher.scheduler.runCurrent()
-
-        viewModel.setTimeFromInput(0, 10, 0)  // 10 seconds
-        testDispatcher.scheduler.runCurrent()
-
-        assertEquals(0, viewModel.uiState.value.fStopCorrectionNumerator)
-        assertEquals(1, viewModel.uiState.value.fStopCorrectionDenominator)
-        assertEquals(10_000L, viewModel.uiState.value.configuredTimeMs)
-        assertEquals(CountdownTimer.formatTime(10_000L), viewModel.uiState.value.displayTime)
-    }
-
-    @Test
     fun `applyFStopDelta should accumulate same-denominator fractions correctly`() = runTest {
         // +1/3 + 1/3 = 2/3 (simplified)
         viewModel.applyFStopDelta(1, 3)
@@ -552,5 +538,82 @@ class CountdownViewModelTest {
 
         assertEquals(1, viewModel.uiState.value.fStopCorrectionNumerator)
         assertEquals(8000L, viewModel.uiState.value.configuredTimeMs)
+    }
+
+    // ── displayTimeMs ────────────────────────────────────────────────────────────
+
+    @Test
+    fun `displayTimeMs matches configuredTimeMs at init`() {
+        assertEquals(viewModel.uiState.value.configuredTimeMs, viewModel.uiState.value.displayTimeMs)
+    }
+
+    // ── setBaseTime ──────────────────────────────────────────────────────────────
+
+    @Test
+    fun `setBaseTime in STOPPED updates displayTimeMs and resets fstop correction`() {
+        viewModel.applyFStopDelta(1, 2)
+        assertEquals(1, viewModel.uiState.value.fStopCorrectionNumerator)
+
+        viewModel.setBaseTime(10_000L)
+
+        val state = viewModel.uiState.value
+        assertEquals(10_000L, state.displayTimeMs)
+        assertEquals(0, state.fStopCorrectionNumerator)
+    }
+
+    @Test
+    fun `setBaseTime clamps to 100ms minimum`() {
+        viewModel.setBaseTime(50L)
+        assertEquals(100L, viewModel.uiState.value.displayTimeMs)
+    }
+
+    @Test
+    fun `setBaseTime in PAUSED is no-op`() = runTest {
+        viewModel.start()
+        viewModel.pause()
+        val before = viewModel.uiState.value.displayTimeMs
+
+        viewModel.setBaseTime(5_000L)
+
+        assertEquals(before, viewModel.uiState.value.displayTimeMs)
+    }
+
+    @Test
+    fun `setBaseTime in RUNNING is no-op`() = runTest {
+        viewModel.start()
+        val before = viewModel.uiState.value.displayTimeMs
+
+        viewModel.setBaseTime(5_000L)
+
+        assertEquals(before, viewModel.uiState.value.displayTimeMs)
+    }
+
+    // ── setRemainingTime ─────────────────────────────────────────────────────────
+
+    @Test
+    fun `setRemainingTime in PAUSED updates displayTimeMs`() = runTest {
+        viewModel.start()
+        viewModel.pause()
+
+        viewModel.setRemainingTime(3_000L)
+
+        assertEquals(3_000L, viewModel.uiState.value.displayTimeMs)
+    }
+
+    @Test
+    fun `setRemainingTime in STOPPED is no-op`() {
+        val before = viewModel.uiState.value.displayTimeMs
+        viewModel.setRemainingTime(3_000L)
+        assertEquals(before, viewModel.uiState.value.displayTimeMs)
+    }
+
+    @Test
+    fun `setRemainingTime in RUNNING is no-op`() = runTest {
+        viewModel.start()
+        val before = viewModel.uiState.value.displayTimeMs
+
+        viewModel.setRemainingTime(3_000L)
+
+        assertEquals(before, viewModel.uiState.value.displayTimeMs)
     }
 }

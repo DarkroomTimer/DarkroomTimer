@@ -13,7 +13,6 @@ import androidx.compose.ui.graphics.Color
 import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedBright
 import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedDim
 import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedFaint
-import fr.mathgl.darkroomtimer.ui.theme.DarkroomSurface
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -22,7 +21,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import fr.mathgl.darkroomtimer.math.BurnDodgeType
 import fr.mathgl.darkroomtimer.math.FStopMath
 import fr.mathgl.darkroomtimer.system.ConnectionState
-import fr.mathgl.darkroomtimer.system.CountdownTimer
 import fr.mathgl.darkroomtimer.system.RelayState
 import fr.mathgl.darkroomtimer.system.TimerState
 
@@ -72,10 +70,7 @@ fun CountdownScreen(
             fontSize = 80.sp,
             fontFamily = FontFamily.Monospace,
             fontWeight = FontWeight.Bold,
-            color = DarkroomRedBright,
-            modifier = Modifier.clickable(
-                enabled = state.timerState != TimerState.RUNNING
-            ) { viewModel.openTimeEditor() }
+            color = DarkroomRedBright
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -162,13 +157,6 @@ fun CountdownScreen(
         )
     }
 
-    if (state.showTimeEditor) {
-        TimeEditorSheet(
-            currentMs = state.configuredTimeMs,
-            onConfirm = { m, s, t -> viewModel.setTimeFromInput(m, s, t) },
-            onDismiss = { viewModel.closeTimeEditor() }
-        )
-    }
 }
 
 @Composable
@@ -254,86 +242,6 @@ private fun TimeAdjustButton(label: String, onClick: () -> Unit) {
         contentPadding = PaddingValues(horizontal = 8.dp)
     ) {
         Text(text = label, fontSize = 11.sp)
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun TimeEditorSheet(
-    currentMs: Long,
-    onConfirm: (minutes: Int, seconds: Int, tenths: Int) -> Unit,
-    onDismiss: () -> Unit
-) {
-    val totalTenths = currentMs / 100
-    val initTenths = (totalTenths % 10).toInt()
-    val totalSeconds = totalTenths / 10
-    val initSeconds = (totalSeconds % 60).toInt()
-    val initMinutes = (totalSeconds / 60).toInt()
-
-    var minutes by remember { mutableStateOf(initMinutes) }
-    var seconds by remember { mutableStateOf(initSeconds) }
-    var tenths  by remember { mutableStateOf(initTenths) }
-
-    ModalBottomSheet(onDismissRequest = onDismiss, containerColor = DarkroomSurface) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Text("Régler le temps", color = DarkroomRedBright, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                TimeSpinner(label = "min", value = minutes, range = 0..16, onValueChange = { minutes = it })
-                Text(":", color = DarkroomRedBright, fontSize = 32.sp)
-                TimeSpinner(label = "s", value = seconds, range = 0..59, onValueChange = { seconds = it })
-                Text(".", color = DarkroomRedBright, fontSize = 32.sp)
-                TimeSpinner(label = "1/10", value = tenths, range = 0..9, onValueChange = { tenths = it })
-            }
-
-            Text(
-                text = CountdownTimer.formatTime(minutes * 60_000L + seconds * 1_000L + tenths * 100L),
-                color = DarkroomRedBright,
-                fontSize = 48.sp,
-                fontFamily = FontFamily.Monospace
-            )
-
-            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                TextButton(onClick = onDismiss) {
-                    Text("Annuler", color = DarkroomRedDim)
-                }
-                Button(
-                    onClick = { onConfirm(minutes, seconds, tenths) },
-                    colors = ButtonDefaults.buttonColors(containerColor = DarkroomRedBright)
-                ) {
-                    Text("Valider")
-                }
-            }
-            Spacer(modifier = Modifier.height(16.dp))
-        }
-    }
-}
-
-@Composable
-private fun TimeSpinner(label: String, value: Int, range: IntRange, onValueChange: (Int) -> Unit) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        IconButton(onClick = { if (value < range.last) onValueChange(value + 1) }) {
-            Text("▲", color = DarkroomRedBright, fontSize = 16.sp)
-        }
-        Text(
-            text = "%02d".format(value),
-            color = DarkroomRedBright,
-            fontSize = 32.sp,
-            fontFamily = FontFamily.Monospace
-        )
-        IconButton(onClick = { if (value > range.first) onValueChange(value - 1) }) {
-            Text("▼", color = DarkroomRedBright, fontSize = 16.sp)
-        }
-        Text(label, color = DarkroomRedDim, fontSize = 10.sp)
     }
 }
 
