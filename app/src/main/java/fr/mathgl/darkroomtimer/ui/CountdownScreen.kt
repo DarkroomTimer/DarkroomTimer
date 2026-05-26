@@ -133,8 +133,11 @@ fun CountdownScreen(
         }
 
         // Control buttons
+        val startEnabled = state.relayType == "NULL" || state.relayType == "DEMO" ||
+                           state.connectionState is ConnectionState.Connected
         TimerControlButtons(
             timerState = state.timerState,
+            startEnabled = startEnabled,
             onStart = { viewModel.start() },
             onPause = { viewModel.pause() },
             onResume = { viewModel.resume() },
@@ -326,6 +329,7 @@ private fun ConnectionIndicator(connectionState: ConnectionState, relayType: Str
 @Composable
 private fun TimerControlButtons(
     timerState: TimerState,
+    startEnabled: Boolean = true,
     onStart: () -> Unit,
     onPause: () -> Unit,
     onResume: () -> Unit,
@@ -336,7 +340,11 @@ private fun TimerControlButtons(
             TimerState.STOPPED -> {
                 Button(
                     onClick = onStart,
-                    colors = ButtonDefaults.buttonColors(containerColor = DarkroomRedBright),
+                    enabled = startEnabled,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = DarkroomRedBright,
+                        disabledContainerColor = DarkroomRedDim
+                    ),
                     modifier = Modifier
                         .height(56.dp)
                         .width(160.dp)
