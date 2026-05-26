@@ -69,6 +69,13 @@ fun DigitTimePicker(
     val digits = msToDigits(valueMs, format)
     Row(verticalAlignment = Alignment.CenterVertically) {
         digits.forEachIndexed { i, digit ->
+            if (i > 0) {
+                val prevSep: Char? = when (format) {
+                    DigitTimeFormat.MINUTES_SECONDS_TENTHS -> when (i - 1) { 1 -> ':'; 3 -> '.'; else -> null }
+                    DigitTimeFormat.HOURS_MINUTES_SECONDS  -> when (i - 1) { 1 -> ':'; 3 -> ':'; else -> null }
+                }
+                if (prevSep == null) Spacer(Modifier.width(5.dp))
+            }
             SingleDigitPicker(
                 digit = digit,
                 enabled = enabled,
