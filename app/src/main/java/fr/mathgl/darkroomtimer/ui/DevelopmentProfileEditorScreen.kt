@@ -282,7 +282,7 @@ fun StepEditorDialog(
 ) {
     var stepType by remember { mutableStateOf(if (step?.type == DevelopmentStepType.BATH) 0 else 1) }
     var name by remember { mutableStateOf(step?.name ?: "") }
-    var durationSeconds by remember { mutableStateOf(step?.durationSeconds?.toString() ?: "") }
+    var durationMs by remember { mutableStateOf((step?.durationSeconds ?: 60) * 1000L) }
     var preEndAlertSeconds by remember { mutableStateOf(if (step is DevelopmentStep.BathStep) step.preEndAlertSeconds.toString() else "") }
 
     AlertDialog(
@@ -294,14 +294,14 @@ fun StepEditorDialog(
                         DevelopmentStep.BathStep(
                             id = step?.id ?: 0,
                             name = name,
-                            durationSeconds = durationSeconds.toIntOrNull() ?: 60,
+                            durationSeconds = (durationMs / 1000).toInt(),
                             preEndAlertSeconds = preEndAlertSeconds.toIntOrNull() ?: 0
                         )
                     } else {
                         DevelopmentStep.PauseStep(
                             id = step?.id ?: 0,
                             name = name,
-                            durationSeconds = durationSeconds.toIntOrNull() ?: 30
+                            durationSeconds = (durationMs / 1000).toInt()
                         )
                     }
                     onSave(newStep)
@@ -364,18 +364,13 @@ fun StepEditorDialog(
                 )
 
                 // Duration
-                OutlinedTextField(
-                    value = durationSeconds,
-                    onValueChange = { durationSeconds = it },
-                    label = { Text("Durée (secondes)", color = DarkroomRedBright) },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = DarkroomRedBright,
-                        unfocusedBorderColor = DarkroomRedFaint,
-                        cursorColor = DarkroomRedBright
-                    )
+                Text("Durée", color = DarkroomRedBright, fontSize = 14.sp)
+                Spacer(modifier = Modifier.height(4.dp))
+                DigitTimePicker(
+                    valueMs = durationMs,
+                    onValueChange = { durationMs = it },
+                    format = DigitTimeFormat.HOURS_MINUTES_SECONDS,
+                    digitHeight = 48.dp
                 )
 
                 // Pre-end alert (only for BathStep)
