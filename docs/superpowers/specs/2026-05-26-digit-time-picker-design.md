@@ -114,13 +114,17 @@ Résultat clampé à la plage du format avant d'appeler `onValueChange`.
 ### `CountdownScreen` + `CountdownViewModel`
 
 - Remplace : `Text` cliquable + `TimeEditorSheet` + `TimeAdjustRow` + `TimeSpinner`
-- Ajoute : `DigitTimePicker(valueMs = state.configuredTimeMs, onValueChange = { viewModel.setBaseTime(it) }, enabled = state.timerState != TimerState.RUNNING, format = MINUTES_SECONDS_TENTHS)`
+- Ajoute : `DigitTimePicker(valueMs = state.displayTimeMs, onValueChange, enabled = state.timerState != TimerState.RUNNING, format = MINUTES_SECONDS_TENTHS)`
+- `onValueChange` branch sur l'état dans `CountdownScreen` :
+  - STOPPED → `viewModel.setBaseTime(ms)`
+  - PAUSED  → `viewModel.setRemainingTime(ms)`
 - En état **STOPPED** : `setBaseTime(ms)` met à jour `baseTimeMs`, réinitialise la correction f-stop si active (comportement identique à l'actuel `setTimeFromInput`)
-- En état **PAUSED** : `onValueChange` appelle `adjustTime(newMs - currentMs)` — édite le temps restant sans toucher à `baseTimeMs`
+- En état **PAUSED** : `setRemainingTime(ms)` ajuste `timer.configuredTimeMs` pour que `remainingMs()` vaille `ms`, sans toucher à `baseTimeMs`
 - En état **RUNNING** : `enabled = false`
+- Ajouté à `CountdownUiState` : `displayTimeMs: Long` (ms affiché — base time en STOPPED, temps restant en PAUSED/RUNNING)
 - Supprimé de `CountdownUiState` : `showTimeEditor`
 - Supprimé du ViewModel : `openTimeEditor()`, `closeTimeEditor()`, `setTimeFromInput(m, s, t)`
-- Ajouté au ViewModel : `fun setBaseTime(ms: Long)`
+- Ajouté au ViewModel : `fun setBaseTime(ms: Long)`, `fun setRemainingTime(ms: Long)`
 
 ### `TeststripScreen`
 
@@ -157,4 +161,7 @@ Résultat clampé à la plage du format avant d'appeler `onValueChange`.
 - `setBaseTime(ms)` en état STOPPED : met à jour `baseTimeMs`, reset f-stop si actif
 - `setBaseTime(ms)` en état PAUSED → guard (no-op)
 - `setBaseTime(ms)` en état RUNNING → guard (no-op)
+- `setRemainingTime(ms)` en état PAUSED : ajuste `timer.configuredTimeMs` correctement
+- `setRemainingTime(ms)` en état STOPPED/RUNNING → guard (no-op)
+- `displayTimeMs` dans l'UiState = base time en STOPPED, temps restant en PAUSED/RUNNING
 - Suppression des tests `setTimeFromInput`
