@@ -140,4 +140,24 @@ class TeststripEngine(
         }
         return x
     }
+
+    /**
+     * Adjusts the increment value by the given delta.
+     * For f-stop mode: adjusts the numerator by delta.
+     * For seconds mode: adjusts the incrementMs by delta.
+     */
+    fun adjustIncrement(delta: Int) {
+        when (incrementType) {
+            IncrementType.F_STOP -> {
+                numerator += delta
+                // Keep numerator positive, minimum 1
+                if (numerator < 1) numerator = 1
+            }
+            IncrementType.SECONDS -> {
+                incrementMs += delta
+                // Keep increment positive, minimum 100ms
+                if (incrementMs < 100L) incrementMs = 100L
+            }
+        }
+    }
 }

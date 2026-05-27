@@ -266,6 +266,12 @@ class TeststripViewModel(
         updateUiState()
     }
 
+    fun adjustIncrement(delta: Int) {
+        if (session.state == TeststripState.EXPOSING) return
+        engine.adjustIncrement(delta)
+        updateUiState()
+    }
+
     fun selectGrade(grade: ContrastGrade) {
         _uiState.update { it.copy(selectedGrade = grade) }
     }

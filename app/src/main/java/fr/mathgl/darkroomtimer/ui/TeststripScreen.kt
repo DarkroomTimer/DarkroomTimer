@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import fr.mathgl.darkroomtimer.math.ContrastGrade
 import fr.mathgl.darkroomtimer.math.IncrementType
+import fr.mathgl.darkroomtimer.math.TeststripEngine
 import fr.mathgl.darkroomtimer.math.TeststripMode
 import fr.mathgl.darkroomtimer.system.TeststripState
 import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedBright
@@ -112,15 +113,41 @@ fun TeststripScreen(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = sessionStateText(state.sessionState, state.currentPatchIndex, state.patchCount),
-                fontSize = 16.sp,
-                color = when (state.sessionState) {
-                    TeststripState.EXPOSING -> DarkroomRedBright
-                    TeststripState.BETWEEN_PATCHES -> DarkroomRedMedium
-                    else -> DarkroomRedDim
-                }
+            val stateRows = sessionStateText(
+                state.sessionState,
+                state.currentPatchIndex,
+                state.patchCount,
+                state.mode,
+                state.incrementType,
+                state.numerator,
+                state.denominator,
+                state.incrementMs
             )
+
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                stateRows.filterIsInstance<RowContent.ModeBadge>().firstOrNull()?.let { badge ->
+                    RowContentText(badge.mode.name)
+                }
+                stateRows.filterIsInstance<RowContent.IncrementBadge>().firstOrNull()?.let { badge ->
+                    RowContentText(
+                        when (badge.incrementType) {
+                            IncrementType.F_STOP -> "${badge.numerator}/${badge.denominator} stop"
+                            IncrementType.SECONDS -> TeststripEngine.formatStopTime(badge.incrementMs)
+                        }
+                    )
+                }
+                stateRows.filterIsInstance<RowContent.Text>().firstOrNull()?.let { textRow ->
+                    Text(
+                        text = textRow.text,
+                        fontSize = 16.sp,
+                        color = when (state.sessionState) {
+                            TeststripState.EXPOSING -> DarkroomRedBright
+                            TeststripState.BETWEEN_PATCHES -> DarkroomRedMedium
+                            else -> DarkroomRedDim
+                        }
+                    )
+                }
+            }
             val errorMsg = state.errorMessage
             if (errorMsg != null) {
                 Text(
@@ -189,14 +216,30 @@ fun TeststripScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                if (state.sessionState == TeststripState.EXPOSING) {
-                    Button(
-                        onClick = { viewModel.pause() },
-                        modifier = Modifier.weight(1f).height(56.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = DarkroomRedDim)
-                    ) {
-                        Text("PAUSE", fontSize = 18.sp)
-                    }
+                Button(
+                    onClick = { viewModel.pause() },
+                    modifier = Modifier.weight(1f).height(56.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = DarkroomRedDim)
+                ) {
+                    Text("PAUSE", fontSize = 18.sp)
+                }
+            }
+        }
+
+        // Affichage pendant PAUSE
+        if (state.sessionState == TeststripState.PAUSED) {
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Button(
+                    onClick = { viewModel.resume() },
+                    modifier = Modifier.weight(1f).height(56.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = DarkroomRedBright)
+                ) {
+                    Text("REPRENDRE", fontSize = 18.sp)
                 }
             }
         }
@@ -209,6 +252,14 @@ fun TeststripScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+                OutlinedButton(
+                    onClick = { viewModel.adjustIncrement(-1) },
+                    modifier = Modifier.weight(1f).height(56.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = DarkroomRedDim),
+                    border = BorderStroke(1.dp, DarkroomRedFaint)
+                ) {
+                    Text("-", fontSize = 24.sp)
+                }
                 Button(
                     onClick = { viewModel.restartCurrentPatch() },
                     modifier = Modifier.weight(1f).height(56.dp),
@@ -223,6 +274,14 @@ fun TeststripScreen(
                 ) {
                     Text("SUIVANT →", fontSize = 14.sp)
                 }
+                OutlinedButton(
+                    onClick = { viewModel.adjustIncrement(1) },
+                    modifier = Modifier.weight(1f).height(56.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = DarkroomRedDim),
+                    border = BorderStroke(1.dp, DarkroomRedFaint)
+                ) {
+                    Text("+", fontSize = 24.sp)
+                }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -233,7 +292,7 @@ fun TeststripScreen(
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = DarkroomRedDim),
                 border = BorderStroke(1.dp, DarkroomRedFaint)
             ) {
-                Text("ABANDONNER", fontSize = 14.sp)
+                Text("Annuler", fontSize = 14.sp)
             }
         }
 
@@ -261,169 +320,49 @@ fun TeststripScreen(
 }
 
 @Composable
-private fun sessionStateText(state: TeststripState, patchIndex: Int, patchCount: Int): String {
-    return when (state) {
-        TeststripState.INIT -> "En attente"
-        TeststripState.EXPOSING -> "Patch ${patchIndex + 1} / $patchCount"
-        TeststripState.BETWEEN_PATCHES -> "Patch ${patchIndex + 1} terminé"
-        TeststripState.PAUSED -> "PAUSÉ"
-    }
-}
-
-@Composable
-private fun ConfigurationSection(
-    baseTimeMs: Long,
+private fun sessionStateText(
+    state: TeststripState,
+    patchIndex: Int,
     patchCount: Int,
     mode: TeststripMode,
     incrementType: IncrementType,
     numerator: Int,
     denominator: Int,
-    incrementMs: Long,
-    onBaseTimeChange: (Long) -> Unit,
-    onPatchCountChange: (Int) -> Unit,
-    onModeChange: (TeststripMode) -> Unit,
-    onIncrementTypeChange: (IncrementType) -> Unit,
-    onStopFractionChange: (Int, Int) -> Unit,
-    onIncrementMsChange: (Long) -> Unit
-) {
-    Text(
-        text = "Configuration",
-        fontSize = 18.sp,
-        fontWeight = FontWeight.Bold,
-        color = DarkroomRedBright
-    )
-
-    Spacer(modifier = Modifier.height(12.dp))
-
-    // Temps de base
-    Text("Base:", fontSize = 14.sp, color = DarkroomRedDim)
-    Spacer(modifier = Modifier.height(4.dp))
-    DigitTimePicker(
-        valueMs = baseTimeMs,
-        onValueChange = onBaseTimeChange,
-        format = DigitTimeFormat.MINUTES_SECONDS_TENTHS,
-        digitHeight = 52.dp
-    )
-
-    Spacer(modifier = Modifier.height(12.dp))
-
-    // Nombre de patches
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text("Nombre de patches:", fontSize = 14.sp, color = DarkroomRedDim)
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            OutlinedButton(
-                onClick = { if (patchCount > 3) onPatchCountChange(patchCount - 1) },
-                modifier = Modifier.size(36.dp),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = DarkroomRedBright),
-                border = BorderStroke(1.dp, DarkroomRedFaint),
-                contentPadding = PaddingValues(0.dp)
-            ) {
-                Text("-", fontSize = 18.sp)
-            }
-            Text(
-                text = "$patchCount",
-                modifier = Modifier.padding(horizontal = 12.dp),
-                fontSize = 16.sp,
-                color = DarkroomRedBright,
-                fontFamily = FontFamily.Monospace
-            )
-            OutlinedButton(
-                onClick = { if (patchCount < 12) onPatchCountChange(patchCount + 1) },
-                modifier = Modifier.size(36.dp),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = DarkroomRedBright),
-                border = BorderStroke(1.dp, DarkroomRedFaint),
-                contentPadding = PaddingValues(0.dp)
-            ) {
-                Text("+", fontSize = 18.sp)
-            }
-        }
-    }
-
-    Spacer(modifier = Modifier.height(12.dp))
-
-    // Mode d'exposition
-    Text("Mode:", fontSize = 14.sp, color = DarkroomRedDim)
-    Spacer(modifier = Modifier.height(4.dp))
-    SegmentedControl(
-        options = listOf(
-            TeststripMode.INCREMENTAL to "Incrémental",
-            TeststripMode.SEPARATE to "Séparé"
-        ),
-        selectedOption = mode,
-        onOptionSelected = onModeChange
-    )
-
-    Spacer(modifier = Modifier.height(12.dp))
-
-    // Type d'incrément
-    Text("Type d'incrément:", fontSize = 14.sp, color = DarkroomRedDim)
-    Spacer(modifier = Modifier.height(4.dp))
-    SegmentedControl(
-        options = listOf(
-            IncrementType.F_STOP to "f-stop",
-            IncrementType.SECONDS to "Secondes"
-        ),
-        selectedOption = incrementType,
-        onOptionSelected = onIncrementTypeChange
-    )
-
-    Spacer(modifier = Modifier.height(12.dp))
-
-    // Valeur de l'incrément
-    if (incrementType == IncrementType.F_STOP) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text("Incrément:", fontSize = 14.sp, color = DarkroomRedDim)
-            val (n, d) = simplifyFraction(numerator, denominator)
-            Text("${n}/${d} stop", fontSize = 16.sp, color = DarkroomRedBright, fontFamily = FontFamily.Monospace)
-        }
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            OutlinedButton(
-                onClick = {
-                    val (n, d) = simplifyFraction(numerator, denominator)
-                    val (newN, newD) = simplifyFraction(n + 1, d)
-                    onStopFractionChange(newN, newD)
-                },
-                modifier = Modifier.weight(1f).height(40.dp),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = DarkroomRedBright),
-                border = BorderStroke(1.dp, DarkroomRedFaint)
-            ) {
-                Text("+1/n", fontSize = 14.sp)
-            }
-            OutlinedButton(
-                onClick = {
-                    val (n, d) = simplifyFraction(numerator, denominator)
-                    val (newN, newD) = simplifyFraction(n - 1, d)
-                    onStopFractionChange(newN, newD)
-                },
-                modifier = Modifier.weight(1f).height(40.dp),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = DarkroomRedBright),
-                border = BorderStroke(1.dp, DarkroomRedFaint)
-            ) {
-                Text("-1/n", fontSize = 14.sp)
-            }
-        }
-    } else {
-        Text("Incrément:", fontSize = 14.sp, color = DarkroomRedDim)
-        Spacer(modifier = Modifier.height(4.dp))
-        DigitTimePicker(
-            valueMs = incrementMs,
-            onValueChange = onIncrementMsChange,
-            format = DigitTimeFormat.MINUTES_SECONDS_TENTHS,
-            digitHeight = 52.dp
+    incrementMs: Long
+): List<RowContent> {
+    return when (state) {
+        TeststripState.INIT -> emptyList()
+        TeststripState.EXPOSING -> listOf(
+            RowContent.ModeBadge(mode),
+            RowContent.IncrementBadge(incrementType, numerator, denominator, incrementMs),
+            RowContent.Text("Patch ${patchIndex + 1} / $patchCount")
+        )
+        TeststripState.BETWEEN_PATCHES -> listOf(
+            RowContent.ModeBadge(mode),
+            RowContent.IncrementBadge(incrementType, numerator, denominator, incrementMs),
+            RowContent.Text("Patch ${patchIndex + 1} terminé")
+        )
+        TeststripState.PAUSED -> listOf(
+            RowContent.ModeBadge(mode),
+            RowContent.IncrementBadge(incrementType, numerator, denominator, incrementMs),
+            RowContent.Text("PAUSÉ")
         )
     }
+}
+
+sealed class RowContent {
+    data class ModeBadge(val mode: TeststripMode) : RowContent()
+    data class IncrementBadge(val incrementType: IncrementType, val numerator: Int, val denominator: Int, val incrementMs: Long) : RowContent()
+    data class Text(val text: String) : RowContent()
+}
+
+@Composable
+private fun RowContentText(text: String) {
+    Text(
+        text = text,
+        fontSize = 14.sp,
+        color = DarkroomRedDim
+    )
 }
 
 private fun simplifyFraction(n: Int, d: Int): Pair<Int, Int> {
@@ -433,10 +372,16 @@ private fun simplifyFraction(n: Int, d: Int): Pair<Int, Int> {
 }
 
 private fun gcd(a: Int, b: Int): Int {
-    var x = a; var y = b
-    while (y != 0) { val temp = y; y = x % y; x = temp }
+    var x = a
+    var y = b
+    while (y != 0) {
+        val temp = y
+        y = x % y
+        x = temp
+    }
     return x
 }
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
