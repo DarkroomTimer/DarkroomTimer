@@ -60,6 +60,27 @@ fun TeststripScreen(
 ) {
     val state by viewModel.uiState.collectAsState()
 
+    // Show configuration modal when in INIT state
+    if (state.sessionState == TeststripState.INIT) {
+        ConfigurationModal(
+            baseTimeMs = state.baseTimeMs,
+            patchCount = state.patchCount,
+            mode = state.mode,
+            incrementType = state.incrementType,
+            numerator = state.numerator,
+            denominator = state.denominator,
+            incrementMs = state.incrementMs,
+            isRelayConnected = state.isRelayConnected,
+            onBaseTimeChange = { viewModel.updateBaseTime(it) },
+            onPatchCountChange = { viewModel.updatePatchCount(it) },
+            onModeChange = { viewModel.updateMode(it) },
+            onIncrementTypeChange = { viewModel.updateIncrementType(it) },
+            onStopFractionChange = { num, den -> viewModel.updateStopFraction(num, den) },
+            onIncrementMsChange = { viewModel.updateIncrementMs(it) },
+            onStartClick = { viewModel.startSession() }
+        )
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -119,26 +140,6 @@ fun TeststripScreen(
         }
 
         Spacer(modifier = Modifier.height(24.dp))
-
-        // Configuration (visible seulement en INIT ou BETWEEN_PATCHES)
-        if (state.sessionState != TeststripState.EXPOSING) {
-            ConfigurationSection(
-                baseTimeMs = state.baseTimeMs,
-                patchCount = state.patchCount,
-                mode = state.mode,
-                incrementType = state.incrementType,
-                numerator = state.numerator,
-                denominator = state.denominator,
-                incrementMs = state.incrementMs,
-                onBaseTimeChange = { viewModel.updateBaseTime(it) },
-                onPatchCountChange = { viewModel.updatePatchCount(it) },
-                onModeChange = { viewModel.updateMode(it) },
-                onIncrementTypeChange = { viewModel.updateIncrementType(it) },
-                onStopFractionChange = { num, den -> viewModel.updateStopFraction(num, den) },
-                onIncrementMsChange = { viewModel.updateIncrementMs(it) }
-            )
-            Spacer(modifier = Modifier.height(24.dp))
-        }
 
         // Liste des patches - uses weight to take remaining space
         LazyVerticalGrid(
@@ -250,7 +251,7 @@ fun TeststripScreen(
                 )
             ) {
                 Text(
-                    text = if (state.isRelayConnected) "DÉMARRER" else "EN ATTENTE RELAIS...",
+                    text = "DÉMARRER",
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -435,4 +436,206 @@ private fun gcd(a: Int, b: Int): Int {
     var x = a; var y = b
     while (y != 0) { val temp = y; y = x % y; x = temp }
     return x
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ConfigurationModal(
+    baseTimeMs: Long,
+    patchCount: Int,
+    mode: TeststripMode,
+    incrementType: IncrementType,
+    numerator: Int,
+    denominator: Int,
+    incrementMs: Long,
+    isRelayConnected: Boolean,
+    onBaseTimeChange: (Long) -> Unit,
+    onPatchCountChange: (Int) -> Unit,
+    onModeChange: (TeststripMode) -> Unit,
+    onIncrementTypeChange: (IncrementType) -> Unit,
+    onStopFractionChange: (Int, Int) -> Unit,
+    onIncrementMsChange: (Long) -> Unit,
+    onStartClick: () -> Unit
+) {
+    ModalBottomSheet(
+        onDismissRequest = { },
+        containerColor = Color.Black,
+        contentColor = DarkroomRedBright,
+        shape = MaterialTheme.shapes.large,
+        tonalElevation = 0.dp,
+        dragHandle = {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(4.dp)
+                    .background(DarkroomRedMedium),
+                contentAlignment = Alignment.Center
+            ) {
+                RectangleHandle()
+            }
+        }
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color.Black)
+                .padding(20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Text(
+                text = "Configuration",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                color = DarkroomRedBright
+            )
+
+            // Temps de base
+            Text("Temps de base:", fontSize = 14.sp, color = DarkroomRedDim)
+            DigitTimePicker(
+                valueMs = baseTimeMs,
+                onValueChange = onBaseTimeChange,
+                format = DigitTimeFormat.MINUTES_SECONDS_TENTHS,
+                digitHeight = 52.dp
+            )
+
+            // Nombre de patches
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text("Nombre de patches:", fontSize = 14.sp, color = DarkroomRedDim)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    OutlinedButton(
+                        onClick = { if (patchCount > 3) onPatchCountChange(patchCount - 1) },
+                        modifier = Modifier.size(36.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = DarkroomRedBright),
+                        border = BorderStroke(1.dp, DarkroomRedFaint),
+                        contentPadding = PaddingValues(0.dp)
+                    ) {
+                        Text("-", fontSize = 18.sp)
+                    }
+                    Text(
+                        text = "$patchCount",
+                        modifier = Modifier.padding(horizontal = 12.dp),
+                        fontSize = 16.sp,
+                        color = DarkroomRedBright,
+                        fontFamily = FontFamily.Monospace
+                    )
+                    OutlinedButton(
+                        onClick = { if (patchCount < 12) onPatchCountChange(patchCount + 1) },
+                        modifier = Modifier.size(36.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = DarkroomRedBright),
+                        border = BorderStroke(1.dp, DarkroomRedFaint),
+                        contentPadding = PaddingValues(0.dp)
+                    ) {
+                        Text("+", fontSize = 18.sp)
+                    }
+                }
+            }
+
+            // Mode d'exposition
+            Text("Mode:", fontSize = 14.sp, color = DarkroomRedDim)
+            SegmentedControl(
+                options = listOf(
+                    TeststripMode.INCREMENTAL to "Incrémental",
+                    TeststripMode.SEPARATE to "Séparé"
+                ),
+                selectedOption = mode,
+                onOptionSelected = onModeChange
+            )
+
+            // Type d'incrément
+            Text("Type d'incrément:", fontSize = 14.sp, color = DarkroomRedDim)
+            SegmentedControl(
+                options = listOf(
+                    IncrementType.F_STOP to "f-stop",
+                    IncrementType.SECONDS to "Secondes"
+                ),
+                selectedOption = incrementType,
+                onOptionSelected = onIncrementTypeChange
+            )
+
+            // Valeur de l'incrément
+            if (incrementType == IncrementType.F_STOP) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("Incrément:", fontSize = 14.sp, color = DarkroomRedDim)
+                    val (n, d) = simplifyFraction(numerator, denominator)
+                    Text("${n}/${d} stop", fontSize = 16.sp, color = DarkroomRedBright, fontFamily = FontFamily.Monospace)
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = {
+                            val (n, d) = simplifyFraction(numerator, denominator)
+                            val (newN, newD) = simplifyFraction(n + 1, d)
+                            onStopFractionChange(newN, newD)
+                        },
+                        modifier = Modifier.weight(1f).height(40.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = DarkroomRedBright),
+                        border = BorderStroke(1.dp, DarkroomRedFaint)
+                    ) {
+                        Text("+1/n", fontSize = 14.sp)
+                    }
+                    OutlinedButton(
+                        onClick = {
+                            val (n, d) = simplifyFraction(numerator, denominator)
+                            val (newN, newD) = simplifyFraction(n - 1, d)
+                            onStopFractionChange(newN, newD)
+                        },
+                        modifier = Modifier.weight(1f).height(40.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = DarkroomRedBright),
+                        border = BorderStroke(1.dp, DarkroomRedFaint)
+                    ) {
+                        Text("-1/n", fontSize = 14.sp)
+                    }
+                }
+            } else {
+                Text("Incrément:", fontSize = 14.sp, color = DarkroomRedDim)
+                DigitTimePicker(
+                    valueMs = incrementMs,
+                    onValueChange = onIncrementMsChange,
+                    format = DigitTimeFormat.MINUTES_SECONDS_TENTHS,
+                    digitHeight = 52.dp
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Démarrer button
+            Button(
+                onClick = onStartClick,
+                modifier = Modifier.fillMaxWidth().height(56.dp),
+                enabled = isRelayConnected,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = DarkroomRedBright,
+                    disabledContainerColor = DarkroomRedDim
+                )
+            ) {
+                Text(
+                    text = "DÉMARRER",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun RectangleHandle() {
+    Box(
+        modifier = Modifier
+            .width(40.dp)
+            .height(4.dp)
+            .background(DarkroomRedDim, MaterialTheme.shapes.small)
+    )
 }
