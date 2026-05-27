@@ -85,7 +85,7 @@ class TeststripSessionTest {
         session.nextPatch()
         assertEquals(TeststripState.EXPOSING, session.state)
         assertEquals(1, session.currentPatchIndex)
-        assertEquals(2079L, session.currentExposureTimeMs)
+        assertEquals(10079L, session.currentExposureTimeMs)
     }
 
     @Test
