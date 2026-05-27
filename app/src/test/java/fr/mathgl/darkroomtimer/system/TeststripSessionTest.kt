@@ -31,8 +31,8 @@ class TeststripSessionTest {
     // --- État initial ---
 
     @Test
-    fun `initial state is CONFIGURED`() {
-        assertEquals(TeststripState.CONFIGURED, session.state)
+    fun `initial state is INIT`() {
+        assertEquals(TeststripState.INIT, session.state)
         assertEquals(-1, session.currentPatchIndex)
     }
 
@@ -160,11 +160,11 @@ class TeststripSessionTest {
     // --- Abandonner la session ---
 
     @Test
-    fun `abandon transitions to CONFIGURED`() {
+    fun `abandon transitions to INIT`() {
         session.start()
         session.finishExposure()
         session.abandon()
-        assertEquals(TeststripState.CONFIGURED, session.state)
+        assertEquals(TeststripState.INIT, session.state)
         assertEquals(-1, session.currentPatchIndex)
         assertFalse(session.isSessionComplete)
     }
@@ -215,17 +215,17 @@ class TeststripSessionTest {
     }
 
     @Test(expected = IllegalStateException::class)
-    fun `finishExposure from CONFIGURED throws`() {
+    fun `finishExposure from INIT throws`() {
         session.finishExposure()
     }
 
     @Test(expected = IllegalStateException::class)
-    fun `pause from CONFIGURED throws`() {
+    fun `pause from INIT throws`() {
         session.pause()
     }
 
     @Test(expected = IllegalStateException::class)
-    fun `resume from CONFIGURED throws`() {
+    fun `resume from INIT throws`() {
         session.resume()
     }
 

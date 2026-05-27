@@ -120,7 +120,7 @@ fun TeststripScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Configuration (visible seulement en CONFIGURED ou BETWEEN_PATCHES)
+        // Configuration (visible seulement en INIT ou BETWEEN_PATCHES)
         if (state.sessionState != TeststripState.EXPOSING) {
             ConfigurationSection(
                 baseTimeMs = state.baseTimeMs,
@@ -238,8 +238,8 @@ fun TeststripScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Bouton démarrage (CONFIGURED seulement)
-        if (state.sessionState == TeststripState.CONFIGURED) {
+        // Bouton démarrage (INIT seulement)
+        if (state.sessionState == TeststripState.INIT) {
             Button(
                 onClick = { viewModel.startSession() },
                 modifier = Modifier.fillMaxWidth().height(56.dp),
@@ -262,7 +262,7 @@ fun TeststripScreen(
 @Composable
 private fun sessionStateText(state: TeststripState, patchIndex: Int, patchCount: Int): String {
     return when (state) {
-        TeststripState.CONFIGURED -> "En attente"
+        TeststripState.INIT -> "En attente"
         TeststripState.EXPOSING -> "Patch ${patchIndex + 1} / $patchCount"
         TeststripState.BETWEEN_PATCHES -> "Patch ${patchIndex + 1} terminé"
         TeststripState.PAUSED -> "PAUSÉ"

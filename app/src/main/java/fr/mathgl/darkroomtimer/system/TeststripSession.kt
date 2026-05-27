@@ -3,13 +3,13 @@ package fr.mathgl.darkroomtimer.system
 import fr.mathgl.darkroomtimer.math.TeststripEngine
 import fr.mathgl.darkroomtimer.system.TeststripState.*
 
-enum class TeststripState { CONFIGURED, EXPOSING, BETWEEN_PATCHES, PAUSED }
+enum class TeststripState { INIT, EXPOSING, BETWEEN_PATCHES, PAUSED }
 
 class TeststripSession(
     private val engine: TeststripEngine,
     private val clock: () -> Long = { System.currentTimeMillis() }
 ) {
-    var state: TeststripState = CONFIGURED
+    var state: TeststripState = INIT
         private set
 
     private var currentPatchIndexValue: Int = -1
@@ -48,7 +48,7 @@ class TeststripSession(
         }
 
     fun start() {
-        check(state == CONFIGURED || state == BETWEEN_PATCHES || state == PAUSED) {
+        check(state == INIT || state == BETWEEN_PATCHES || state == PAUSED) {
             "start() called from state $state"
         }
         if (state == PAUSED) {
@@ -59,7 +59,7 @@ class TeststripSession(
             return
         }
         currentPatchIndexValue = when (state) {
-            CONFIGURED -> 0
+            INIT -> 0
             BETWEEN_PATCHES -> currentPatchIndexValue
             else -> throw IllegalStateException("Invalid state: $state")
         }
@@ -113,7 +113,7 @@ class TeststripSession(
     }
 
     fun abandon() {
-        state = CONFIGURED
+        state = INIT
         currentPatchIndexValue = -1
         exposedPatches.clear()
     }

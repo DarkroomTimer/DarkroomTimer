@@ -56,7 +56,7 @@ class TeststripViewModel(
     private lateinit var relaySystem: RelaySystem
 
     private val _uiState = MutableStateFlow(TeststripUiState(
-        sessionState = TeststripState.CONFIGURED,
+        sessionState = TeststripState.INIT,
         currentPatchIndex = -1,
         patchCount = 6,
         patchTimesMs = emptyList(),
@@ -139,7 +139,7 @@ class TeststripViewModel(
     }
 
     fun startSession() {
-        if (session.state != TeststripState.CONFIGURED && session.state != TeststripState.BETWEEN_PATCHES) return
+        if (session.state != TeststripState.INIT && session.state != TeststripState.BETWEEN_PATCHES) return
         if (relaySystem.connectionState.value !is ConnectionState.Connected) {
             _uiState.update { it.copy(errorMessage = "Relais déconnecté") }
             return
@@ -230,13 +230,13 @@ class TeststripViewModel(
     }
 
     fun updateBaseTime(newTimeMs: Long) {
-        if (session.state != TeststripState.CONFIGURED && session.state != TeststripState.BETWEEN_PATCHES) return
+        if (session.state != TeststripState.INIT && session.state != TeststripState.BETWEEN_PATCHES) return
         engine.baseTimeMs = newTimeMs
         updateUiState()
     }
 
     fun updateStopFraction(numerator: Int, denominator: Int) {
-        if (session.state != TeststripState.CONFIGURED && session.state != TeststripState.BETWEEN_PATCHES) return
+        if (session.state != TeststripState.INIT && session.state != TeststripState.BETWEEN_PATCHES) return
         engine.numerator = numerator
         engine.denominator = denominator
         updateUiState()
