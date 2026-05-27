@@ -243,31 +243,31 @@ class TeststripViewModel(
     }
 
     fun updatePatchCount(count: Int) {
-        if (session.state == TeststripState.EXPOSING) return
+        if (session.state != TeststripState.INIT) return
         engine.patchCount = count
         updateUiState()
     }
 
     fun updateMode(mode: TeststripMode) {
-        if (session.state == TeststripState.EXPOSING) return
+        if (session.state != TeststripState.INIT) return
         engine.mode = mode
         updateUiState()
     }
 
     fun updateIncrementType(type: IncrementType) {
-        if (session.state == TeststripState.EXPOSING) return
+        if (session.state != TeststripState.INIT) return
         engine.incrementType = type
         updateUiState()
     }
 
     fun updateIncrementMs(ms: Long) {
-        if (session.state == TeststripState.EXPOSING) return
+        if (session.state != TeststripState.INIT) return
         engine.incrementMs = ms
         updateUiState()
     }
 
     fun adjustIncrement(delta: Int) {
-        if (session.state == TeststripState.EXPOSING) return
+        if (session.state != TeststripState.INIT) return
         engine.adjustIncrement(delta)
         updateUiState()
     }
