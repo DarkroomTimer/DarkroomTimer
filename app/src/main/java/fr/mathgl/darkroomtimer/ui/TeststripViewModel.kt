@@ -8,9 +8,12 @@ import fr.mathgl.darkroomtimer.audio.AudioPreferences
 import fr.mathgl.darkroomtimer.audio.AudioSystem
 import fr.mathgl.darkroomtimer.audio.ToneGeneratorAudioEngine
 import fr.mathgl.darkroomtimer.math.ContrastGrade
+import fr.mathgl.darkroomtimer.math.IncrementType
 import fr.mathgl.darkroomtimer.math.TeststripEngine
+import fr.mathgl.darkroomtimer.math.TeststripMode
 import fr.mathgl.darkroomtimer.storage.PreferenceManager
 import fr.mathgl.darkroomtimer.system.RelaySystem
+import fr.mathgl.darkroomtimer.system.ConnectionState
 import fr.mathgl.darkroomtimer.system.TeststripSession
 import fr.mathgl.darkroomtimer.system.TeststripState
 import kotlinx.coroutines.Job
@@ -35,6 +38,10 @@ data class TeststripUiState(
     val numerator: Int,
     val denominator: Int,
     val selectedGrade: ContrastGrade,
+    val mode: TeststripMode,
+    val incrementType: IncrementType,
+    val incrementMs: Long,
+    val isRelayConnected: Boolean,
     val errorMessage: String? = null
 )
 
@@ -61,7 +68,11 @@ class TeststripViewModel(
         baseTimeMs = 8000L,
         numerator = 1,
         denominator = 3,
-        selectedGrade = ContrastGrade.DEFAULT
+        selectedGrade = ContrastGrade.DEFAULT,
+        mode = TeststripMode.SEPARATE,
+        incrementType = IncrementType.F_STOP,
+        incrementMs = 0L,
+        isRelayConnected = false
     ))
     val uiState: StateFlow<TeststripUiState> = _uiState.asStateFlow()
 
@@ -82,13 +93,26 @@ class TeststripViewModel(
             // audio unavailable in test environment
         }
 
-        engine = TeststripEngine(baseTimeMs = 8000, numerator = 1, denominator = 3, patchCount = 6)
+        engine = TeststripEngine(
+            baseTimeMs = 8000,
+            numerator = 1,
+            denominator = 3,
+            patchCount = 6,
+            mode = TeststripMode.SEPARATE,
+            incrementType = IncrementType.F_STOP
+        )
         session = TeststripSession(engine = engine)
         updateUiState()
 
         viewModelScope.launch {
             relaySystem.connect().onFailure { e ->
                 _uiState.update { it.copy(errorMessage = "Connection failed: ${e.message}") }
+            }
+        }
+
+        viewModelScope.launch {
+            relaySystem.connectionState.collect {
+                updateUiState()
             }
         }
     }
@@ -106,12 +130,20 @@ class TeststripViewModel(
             patchCount = engine.patchCount,
             baseTimeMs = engine.baseTimeMs,
             numerator = engine.numerator,
-            denominator = engine.denominator
+            denominator = engine.denominator,
+            mode = engine.mode,
+            incrementType = engine.incrementType,
+            incrementMs = engine.incrementMs,
+            isRelayConnected = relaySystem.connectionState.value is ConnectionState.Connected
         ) }
     }
 
     fun startSession() {
         if (session.state != TeststripState.CONFIGURED && session.state != TeststripState.BETWEEN_PATCHES) return
+        if (relaySystem.connectionState.value !is ConnectionState.Connected) {
+            _uiState.update { it.copy(errorMessage = "Relais déconnecté") }
+            return
+        }
         session.start()
         startExposure()
         updateUiState()
@@ -207,6 +239,30 @@ class TeststripViewModel(
         if (session.state != TeststripState.CONFIGURED && session.state != TeststripState.BETWEEN_PATCHES) return
         engine.numerator = numerator
         engine.denominator = denominator
+        updateUiState()
+    }
+
+    fun updatePatchCount(count: Int) {
+        if (session.state == TeststripState.EXPOSING) return
+        engine.patchCount = count
+        updateUiState()
+    }
+
+    fun updateMode(mode: TeststripMode) {
+        if (session.state == TeststripState.EXPOSING) return
+        engine.mode = mode
+        updateUiState()
+    }
+
+    fun updateIncrementType(type: IncrementType) {
+        if (session.state == TeststripState.EXPOSING) return
+        engine.incrementType = type
+        updateUiState()
+    }
+
+    fun updateIncrementMs(ms: Long) {
+        if (session.state == TeststripState.EXPOSING) return
+        engine.incrementMs = ms
         updateUiState()
     }
 

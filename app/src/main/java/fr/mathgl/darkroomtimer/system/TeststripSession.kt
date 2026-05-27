@@ -34,7 +34,7 @@ class TeststripSession(
     val isSessionComplete: Boolean get() = state == BETWEEN_PATCHES && exposedPatches.size == engine.patchCount
 
     val currentExposureTimeMs: Long
-        get() = if (currentPatchIndex < 0) 0L else engine.differentialTimeForPatch(currentPatchIndex)
+        get() = if (currentPatchIndex < 0) 0L else engine.getRelayDuration(currentPatchIndex)
 
     val remainingTimeMs: Long
         get() {

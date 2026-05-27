@@ -1,6 +1,8 @@
 package fr.mathgl.darkroomtimer.system
 
+import fr.mathgl.darkroomtimer.math.IncrementType
 import fr.mathgl.darkroomtimer.math.TeststripEngine
+import fr.mathgl.darkroomtimer.math.TeststripMode
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
@@ -14,7 +16,14 @@ class TeststripSessionTest {
     fun setup() {
         fakeNow = 0L
         session = TeststripSession(
-            engine = TeststripEngine(baseTimeMs = 8000, numerator = 1, denominator = 3, patchCount = 6),
+            engine = TeststripEngine(
+                baseTimeMs = 8000,
+                numerator = 1,
+                denominator = 3,
+                patchCount = 6,
+                mode = TeststripMode.SEPARATE,
+                incrementType = IncrementType.F_STOP
+            ),
             clock = { fakeNow }
         )
     }

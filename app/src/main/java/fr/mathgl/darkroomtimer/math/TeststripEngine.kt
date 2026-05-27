@@ -3,29 +3,70 @@ package fr.mathgl.darkroomtimer.math
 import kotlin.math.pow
 import kotlin.math.roundToLong
 
+enum class TeststripMode { INCREMENTAL, SEPARATE }
+enum class IncrementType { F_STOP, SECONDS }
+
 /**
- * Calculates exposure times for photographic teststrip patches using f-stop math.
+ * Calculates exposure times for photographic teststrip patches.
  *
  * @param baseTimeMs Base exposure time in milliseconds (must be in [100, 999000])
- * @param numerator Numerator of the stop increment fraction
- * @param denominator Denominator of the stop increment fraction (must not be zero)
- * @param patchCount Number of patches to calculate (must be in [3, 7])
+ * @param numerator Numerator of the stop increment fraction (used if [incrementType] is F_STOP)
+ * @param denominator Denominator of the stop increment fraction (must not be zero, used if [incrementType] is F_STOP)
+ * @param patchCount Number of patches to calculate (must be in [3, 12])
+ * @param mode Whether to return absolute times (SEPARATE) or differential times (INCREMENTAL)
+ * @param incrementType The type of increment to use (F_STOP or SECONDS)
+ * @param incrementMs The increment in milliseconds (used if [incrementType] is SECONDS)
  */
 class TeststripEngine(
     var baseTimeMs: Long,
     var numerator: Int,
     var denominator: Int,
-    val patchCount: Int
+    var patchCount: Int,
+    var mode: TeststripMode,
+    var incrementType: IncrementType,
+    var incrementMs: Long = 0L
 ) {
     init {
         require(baseTimeMs in 100L..999_000L) {
             "baseTimeMs must be in [100, 999000], was $baseTimeMs"
         }
-        require(patchCount in 3..7) {
-            "patchCount must be in [3, 7], was $patchCount"
+        require(patchCount in 3..12) {
+            "patchCount must be in [3, 12], was $patchCount"
         }
         require(denominator != 0) {
             "denominator cannot be zero"
+        }
+    }
+
+    /**
+     * Calculates the absolute exposure time for a given patch index.
+     */
+    private fun calculateAbsoluteTime(index: Int): Long {
+        return when (incrementType) {
+            IncrementType.F_STOP -> {
+                val stops = (numerator.toDouble() / denominator) * index
+                (baseTimeMs * 2.0.pow(stops)).roundToLong()
+            }
+            IncrementType.SECONDS -> {
+                baseTimeMs + (incrementMs * index)
+            }
+        }
+    }
+
+    /**
+     * Returns the exposure duration for the relay for a specific patch index,
+     * based on the selected [mode].
+     */
+    fun getRelayDuration(index: Int): Long {
+        return when (mode) {
+            TeststripMode.SEPARATE -> calculateAbsoluteTime(index)
+            TeststripMode.INCREMENTAL -> {
+                if (index == 0) {
+                    calculateAbsoluteTime(0)
+                } else {
+                    calculateAbsoluteTime(index) - calculateAbsoluteTime(index - 1)
+                }
+            }
         }
     }
 
@@ -37,39 +78,32 @@ class TeststripEngine(
 
     /**
      * Returns the cumulative exposure time in milliseconds for each patch.
-     * Patch times are calculated as: baseTimeMs * 2^(stops * patchIndex)
      */
     val patchTimesMs: List<Long>
-        get() = (0 until patchCount).map { n ->
-            val stops = (numerator.toDouble() / denominator) * n
-            (baseTimeMs * 2.0.pow(stops)).roundToLong()
-        }
+        get() = (0 until patchCount).map { calculateAbsoluteTime(it) }
 
     /**
      * Returns the differential (incremental) exposure time for each patch.
-     * For patch 0: baseTimeMs
-     * For patch i>0: patchTimesMs[i] - patchTimesMs[i-1]
      */
     val differentialTimesMs: List<Long>
-        get() {
-            val times = patchTimesMs
-            return buildList(patchCount) {
-                add(times[0])
-                for (i in 1 until patchCount) {
-                    add(times[i] - times[i - 1])
-                }
-            }
+        get() = (0 until patchCount).map { getRelayDurationForIncremental(it) }
+
+    private fun getRelayDurationForIncremental(index: Int): Long {
+        return if (index == 0) {
+            calculateAbsoluteTime(0)
+        } else {
+            calculateAbsoluteTime(index) - calculateAbsoluteTime(index - 1)
         }
+    }
 
     /**
      * Returns the differential time for a specific patch index.
-     * For patch 0: baseTimeMs
-     * For patch i>0: patchTimesMs[i] - patchTimesMs[i-1]
+     * Note: this is only logically consistent if mode is INCREMENTAL.
      */
     fun differentialTimeForPatch(patchIndex: Int): Long {
-        val times = patchTimesMs
-        return if (patchIndex == 0) times[0] else times[patchIndex] - times[patchIndex - 1]
+        return getRelayDurationForIncremental(patchIndex)
     }
+
 
     /**
      * Formats a time in milliseconds to MM:SS.t format (minutes:seconds.tenths).
