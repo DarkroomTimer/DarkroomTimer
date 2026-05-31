@@ -2,7 +2,6 @@ package fr.mathgl.darkroomtimer.ui
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -17,7 +16,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import fr.mathgl.darkroomtimer.math.BurnDodgeType
 import fr.mathgl.darkroomtimer.math.FStopMath
 import fr.mathgl.darkroomtimer.system.ConnectionState
 import fr.mathgl.darkroomtimer.system.RelayState
@@ -32,7 +30,6 @@ fun CountdownScreen(
 
     LaunchedEffect(showBurnDodgeDialog) {
         if (!showBurnDodgeDialog) {
-            // Reset panel collapse when dialog closes
             if (state.burnDodgeVisible) {
                 viewModel.toggleBurnDodgePanel()
             }
@@ -63,7 +60,6 @@ fun CountdownScreen(
         }
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Timer display
         DigitTimePicker(
             valueMs = state.displayTimeMs,
             onValueChange = { newMs ->
@@ -76,37 +72,6 @@ fun CountdownScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Selected grade display
-        Text(
-            text = "Grade ${state.selectedGrade.label}",
-            fontSize = 24.sp,
-            color = DarkroomRedBright
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // Grade selector carousel
-        GradeSelector(
-            selectedGrade = state.selectedGrade,
-            onGradeSelected = { viewModel.selectGrade(it) }
-        )
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // Relay indicators
-        RelayIndicators(
-            enlargerOn = state.relayState.enlarger == RelayState.ON,
-            safelightOn = state.relayState.safelight == RelayState.ON,
-            enlargerOverride = state.enlargerOverride,
-            safelightOverride = state.safelightOverride,
-            overrideEnabled = state.timerState != TimerState.RUNNING,
-            onToggleEnlarger = { viewModel.toggleEnlargerOverride() },
-            onToggleSafelight = { viewModel.toggleSafelightOverride() }
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Burn & Dodge panel (only when timer is RUNNING or PAUSED)
         if (state.timerState == TimerState.RUNNING || state.timerState == TimerState.PAUSED) {
             BurnDodgePanel(
                 entries = state.burnDodgeEntries,
@@ -119,7 +84,6 @@ fun CountdownScreen(
             Spacer(modifier = Modifier.height(16.dp))
         }
 
-        // F-stop correction (only when STOPPED)
         if (state.timerState == TimerState.STOPPED) {
             FStopCorrectionSection(
                 fStopCorrectionNumerator = state.fStopCorrectionNumerator,
@@ -132,16 +96,24 @@ fun CountdownScreen(
             Spacer(modifier = Modifier.height(16.dp))
         }
 
-        // Control buttons
+        Spacer(modifier = Modifier.weight(1f))
+
         val startEnabled = state.relayType == "NULL" || state.relayType == "DEMO" ||
                            state.connectionState is ConnectionState.Connected
-        TimerControlButtons(
+        BottomControlBar(
             timerState = state.timerState,
             startEnabled = startEnabled,
+            enlargerOn = state.relayState.enlarger == RelayState.ON,
+            safelightOn = state.relayState.safelight == RelayState.ON,
+            enlargerOverride = state.enlargerOverride,
+            safelightOverride = state.safelightOverride,
+            overrideEnabled = state.timerState != TimerState.RUNNING,
             onStart = { viewModel.start() },
             onPause = { viewModel.pause() },
             onResume = { viewModel.resume() },
-            onStop = { viewModel.stop() }
+            onStop = { viewModel.stop() },
+            onToggleEnlarger = { viewModel.toggleEnlargerOverride() },
+            onToggleSafelight = { viewModel.toggleSafelightOverride() }
         )
     }
 
@@ -154,61 +126,135 @@ fun CountdownScreen(
             }
         )
     }
-
 }
 
 @Composable
-private fun RelayIndicators(
+private fun BottomControlBar(
+    timerState: TimerState,
+    startEnabled: Boolean,
     enlargerOn: Boolean,
     safelightOn: Boolean,
     enlargerOverride: Boolean,
     safelightOverride: Boolean,
     overrideEnabled: Boolean,
+    onStart: () -> Unit,
+    onPause: () -> Unit,
+    onResume: () -> Unit,
+    onStop: () -> Unit,
     onToggleEnlarger: () -> Unit,
     onToggleSafelight: () -> Unit
 ) {
-    Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
-        RelayBadge(
-            label = "Agrandisseur",
-            isOn = enlargerOn,
-            hasOverride = enlargerOverride,
-            clickEnabled = overrideEnabled,
-            onClick = onToggleEnlarger
-        )
-        RelayBadge(
-            label = "Safelight",
-            isOn = safelightOn,
-            hasOverride = safelightOverride,
-            clickEnabled = overrideEnabled,
-            onClick = onToggleSafelight
-        )
+    Column(modifier = Modifier.fillMaxWidth()) {
+        when (timerState) {
+            TimerState.STOPPED -> {
+                Button(
+                    onClick = onStart,
+                    enabled = startEnabled,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = DarkroomRedBright,
+                        disabledContainerColor = DarkroomRedDim
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp)
+                ) {
+                    Text("START", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                }
+            }
+            TimerState.RUNNING -> {
+                Button(
+                    onClick = onPause,
+                    colors = ButtonDefaults.buttonColors(containerColor = DarkroomRedDim),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp)
+                ) {
+                    Text("PAUSE", fontSize = 18.sp)
+                }
+            }
+            TimerState.PAUSED -> {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Button(
+                        onClick = onResume,
+                        colors = ButtonDefaults.buttonColors(containerColor = DarkroomRedBright),
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(56.dp)
+                    ) {
+                        Text("RESUME", fontSize = 18.sp)
+                    }
+                    Button(
+                        onClick = onStop,
+                        colors = ButtonDefaults.buttonColors(containerColor = DarkroomRedDim),
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(56.dp)
+                    ) {
+                        Text("STOP", fontSize = 16.sp)
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            RelayButton(
+                label = "Safelight",
+                isOn = safelightOn,
+                hasOverride = safelightOverride,
+                clickEnabled = overrideEnabled,
+                onClick = onToggleSafelight,
+                modifier = Modifier.weight(1f)
+            )
+            RelayButton(
+                label = "Agrandisseur",
+                isOn = enlargerOn,
+                hasOverride = enlargerOverride,
+                clickEnabled = overrideEnabled,
+                onClick = onToggleEnlarger,
+                modifier = Modifier.weight(1f)
+            )
+        }
     }
 }
 
 @Composable
-private fun RelayBadge(
+private fun RelayButton(
     label: String,
     isOn: Boolean,
     hasOverride: Boolean,
     clickEnabled: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    val dotColor = if (isOn) DarkroomRedBright else DarkroomRedDim
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier
-            .clickable(enabled = clickEnabled, onClick = onClick)
-            .padding(8.dp)
+    val containerColor = if (isOn) DarkroomRedBright else Color.Transparent
+    val contentColor = if (isOn) Color.Black else DarkroomRedDim
+    val borderColor = if (clickEnabled && isOn) DarkroomRedBright else DarkroomRedFaint
+    OutlinedButton(
+        onClick = onClick,
+        enabled = clickEnabled,
+        colors = ButtonDefaults.outlinedButtonColors(
+            containerColor = containerColor,
+            contentColor = contentColor,
+            disabledContainerColor = Color.Transparent,
+            disabledContentColor = DarkroomRedFaint
+        ),
+        border = BorderStroke(1.dp, borderColor),
+        modifier = modifier.height(37.dp),
+        contentPadding = PaddingValues(horizontal = 8.dp)
     ) {
-        Box(
-            modifier = Modifier
-                .size(16.dp)
-                .background(dotColor, shape = RoundedCornerShape(8.dp))
-        )
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(text = label, fontSize = 12.sp, color = DarkroomRedDim)
-        if (hasOverride) {
-            Text(text = "override", fontSize = 9.sp, color = DarkroomRedBright)
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(text = label, fontSize = 11.sp)
+            if (hasOverride) {
+                Text(text = "override", fontSize = 8.sp)
+            }
         }
     }
 }
@@ -222,7 +268,6 @@ private fun FStopCorrectionSection(
     onReset: () -> Unit,
     onSetAsBase: () -> Unit
 ) {
-    // Section divider
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
@@ -235,25 +280,37 @@ private fun FStopCorrectionSection(
 
     Spacer(modifier = Modifier.height(8.dp))
 
-    // Negative delta buttons row
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        FStopDeltaButton(label = "-1",  onClick = { onApplyDelta(-1, 1) })
-        FStopDeltaButton(label = "-½",  onClick = { onApplyDelta(-1, 2) })
-        FStopDeltaButton(label = "-⅓",  onClick = { onApplyDelta(-1, 3) })
-        FStopDeltaButton(label = "-⅙",  onClick = { onApplyDelta(-1, 6) })
+    val deltas = listOf(
+        1  to "1",
+        2  to "½",
+        3  to "⅓",
+        4  to "¼",
+        6  to "⅙",
+        12 to "1/12",
+    )
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        deltas.forEach { (denom, label) ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                FStopDeltaButton(
+                    label = "-$label",
+                    onClick = { onApplyDelta(-1, denom) },
+                    modifier = Modifier.weight(1f)
+                )
+                FStopDeltaButton(
+                    label = "+$label",
+                    onClick = { onApplyDelta(1, denom) },
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        }
     }
 
-    Spacer(modifier = Modifier.height(8.dp))
-
-    // Positive delta buttons row
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        FStopDeltaButton(label = "+⅙",  onClick = { onApplyDelta(1, 6) })
-        FStopDeltaButton(label = "+⅓",  onClick = { onApplyDelta(1, 3) })
-        FStopDeltaButton(label = "+½",  onClick = { onApplyDelta(1, 2) })
-        FStopDeltaButton(label = "+1",  onClick = { onApplyDelta(1, 1) })
-    }
-
-    // Correction status (shown only when a correction is active)
     if (fStopCorrectionNumerator != 0) {
         Spacer(modifier = Modifier.height(8.dp))
 
@@ -287,12 +344,12 @@ private fun FStopCorrectionSection(
 }
 
 @Composable
-private fun FStopDeltaButton(label: String, onClick: () -> Unit) {
+private fun FStopDeltaButton(label: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
     OutlinedButton(
         onClick = onClick,
         colors = ButtonDefaults.outlinedButtonColors(contentColor = DarkroomRedBright),
         border = BorderStroke(1.dp, DarkroomRedFaint),
-        modifier = Modifier.height(36.dp),
+        modifier = modifier.height(36.dp),
         contentPadding = PaddingValues(horizontal = 8.dp)
     ) {
         Text(text = label, fontSize = 11.sp)
@@ -323,66 +380,5 @@ private fun ConnectionIndicator(connectionState: ConnectionState, relayType: Str
                 .background(dotColor, shape = RoundedCornerShape(4.dp))
         )
         Text(text = label, fontSize = 11.sp, color = dotColor)
-    }
-}
-
-@Composable
-private fun TimerControlButtons(
-    timerState: TimerState,
-    startEnabled: Boolean = true,
-    onStart: () -> Unit,
-    onPause: () -> Unit,
-    onResume: () -> Unit,
-    onStop: () -> Unit
-) {
-    Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-        when (timerState) {
-            TimerState.STOPPED -> {
-                Button(
-                    onClick = onStart,
-                    enabled = startEnabled,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = DarkroomRedBright,
-                        disabledContainerColor = DarkroomRedDim
-                    ),
-                    modifier = Modifier
-                        .height(56.dp)
-                        .width(160.dp)
-                ) {
-                    Text("START", fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                }
-            }
-            TimerState.RUNNING -> {
-                Button(
-                    onClick = onPause,
-                    colors = ButtonDefaults.buttonColors(containerColor = DarkroomRedDim),
-                    modifier = Modifier
-                        .height(56.dp)
-                        .width(120.dp)
-                ) {
-                    Text("PAUSE", fontSize = 18.sp)
-                }
-            }
-            TimerState.PAUSED -> {
-                Button(
-                    onClick = onResume,
-                    colors = ButtonDefaults.buttonColors(containerColor = DarkroomRedBright),
-                    modifier = Modifier
-                        .height(56.dp)
-                        .width(120.dp)
-                ) {
-                    Text("RESUME", fontSize = 18.sp)
-                }
-                Button(
-                    onClick = onStop,
-                    colors = ButtonDefaults.buttonColors(containerColor = DarkroomRedDim),
-                    modifier = Modifier
-                        .height(56.dp)
-                        .width(80.dp)
-                ) {
-                    Text("STOP", fontSize = 16.sp)
-                }
-            }
-        }
     }
 }
