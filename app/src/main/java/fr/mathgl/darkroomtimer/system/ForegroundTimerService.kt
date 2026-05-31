@@ -2,6 +2,7 @@ package fr.mathgl.darkroomtimer.system
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.os.Build
 import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
@@ -37,7 +38,7 @@ class ForegroundTimerService : Service() {
 
                 // Acquire locks to prevent CPU/WiFi sleep
                 val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
-                wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "DarkroomTimer:ExposureLock").apply { acquire() }
+                wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "DarkroomTimer:ExposureLock").apply { acquire(3_600_000L) }
 
                 val wm = getSystemService(Context.WIFI_SERVICE) as WifiManager
                 val lockType = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
@@ -54,10 +55,13 @@ class ForegroundTimerService : Service() {
                 notificationManager.notify(NOTIFICATION_ID, buildNotification(remaining))
             }
             ACTION_STOP -> {
-                wakeLock?.release()
-                wifiLock?.release()
-                wakeLock = null
-                wifiLock = null
+                try {
+                    wakeLock?.release()
+                    wifiLock?.release()
+                } finally {
+                    wakeLock = null
+                    wifiLock = null
+                }
 
                 stopForeground(STOP_FOREGROUND_REMOVE)
                 stopSelf()
@@ -83,12 +87,14 @@ class ForegroundTimerService : Service() {
             .build()
 
     private fun createNotificationChannel() {
-        val channel = NotificationChannel(
-            CHANNEL_ID,
-            "Timer exposition",
-            NotificationManager.IMPORTANCE_LOW
-        )
-        notificationManager.createNotificationChannel(channel)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                CHANNEL_ID,
+                "Timer exposition",
+                NotificationManager.IMPORTANCE_LOW
+            )
+            notificationManager.createNotificationChannel(channel)
+        }
     }
 
     companion object {

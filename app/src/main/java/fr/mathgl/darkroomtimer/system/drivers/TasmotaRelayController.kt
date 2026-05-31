@@ -29,7 +29,7 @@ class TasmotaRelayController(
 
         if (username != null && password != null) {
             val credentials = "$username:$password"
-            val encodedCredentials = java.util.Base64.getEncoder().encodeToString(credentials.toByteArray())
+            val encodedCredentials = android.util.Base64.encodeToString(credentials.toByteArray(), android.util.Base64.NO_WRAP)
             requestBuilder.addHeader("Authorization", "Basic $encodedCredentials")
         }
 

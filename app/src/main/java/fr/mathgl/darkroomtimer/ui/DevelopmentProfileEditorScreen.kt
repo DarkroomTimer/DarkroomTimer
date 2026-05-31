@@ -36,7 +36,7 @@ fun DevelopmentProfileEditorScreen(
 ) {
     var name by remember { mutableStateOf(profile?.name ?: "") }
     var navigationMode by remember { mutableStateOf(profile?.navigationMode ?: DevelopmentNavigationMode.MANUAL) }
-    var steps by remember { mutableStateOf<MutableList<DevelopmentStep>>(profile?.steps?.toMutableList() ?: mutableListOf()) }
+    val steps = remember { mutableStateListOf<DevelopmentStep>().also { it.addAll(profile?.steps ?: emptyList()) } }
 
     var showStepDialog by remember { mutableStateOf(false) }
     var editingStepIndex by remember { mutableStateOf<Int?>(null) }
@@ -142,7 +142,7 @@ fun DevelopmentProfileEditorScreen(
                             editingStepIndex = index
                             showStepDialog = true
                         },
-                        onDelete = { steps = steps.toMutableList().apply { removeAt(index) } }
+                        onDelete = { steps.removeAt(index) }
                     )
                 }
             }
@@ -194,11 +194,9 @@ fun DevelopmentProfileEditorScreen(
             onSave = { newStep ->
                 val idx = editingStepIndex
                 if (idx != null) {
-                    steps = steps.toMutableList().apply {
-                        this[idx] = newStep
-                    }
+                    steps[idx] = newStep
                 } else {
-                    steps = steps.toMutableList().apply { add(newStep) }
+                    steps.add(newStep)
                 }
                 showStepDialog = false
             },
@@ -280,9 +278,9 @@ fun StepEditorDialog(
     onSave: (DevelopmentStep) -> Unit,
     onDismiss: () -> Unit
 ) {
-    var stepType by remember { mutableStateOf(if (step?.type == DevelopmentStepType.BATH) 0 else 1) }
+    var stepType by remember { mutableIntStateOf(if (step?.type == DevelopmentStepType.BATH) 0 else 1) }
     var name by remember { mutableStateOf(step?.name ?: "") }
-    var durationMs by remember { mutableStateOf((step?.durationSeconds ?: 60) * 1000L) }
+    var durationMs by remember { mutableLongStateOf((step?.durationSeconds ?: 60) * 1000L) }
     var preEndAlertSeconds by remember { mutableStateOf(if (step is DevelopmentStep.BathStep) step.preEndAlertSeconds.toString() else "") }
 
     AlertDialog(

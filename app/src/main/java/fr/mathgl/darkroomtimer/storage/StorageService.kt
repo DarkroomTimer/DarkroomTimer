@@ -6,9 +6,10 @@ import fr.mathgl.darkroomtimer.storage.room.EnlargerProfileEntity
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonSyntaxException
-import java.time.Instant
-import java.time.ZoneOffset
-import java.time.format.DateTimeFormatter
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import java.util.TimeZone
 
 /**
  * StorageService acts as a facade coordinating between PreferenceManager and EnlargerProfileDao.
@@ -48,9 +49,9 @@ class StorageService(
         )
 
         val profiles = profileDao.getAll()
-        val timestamp = DateTimeFormatter.ISO_INSTANT
-            .withZone(ZoneOffset.UTC)
-            .format(Instant.now())
+        val timestamp = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US)
+            .apply { timeZone = TimeZone.getTimeZone("UTC") }
+            .format(Date())
 
         val backupData = BackupData(
             version = currentVersion,

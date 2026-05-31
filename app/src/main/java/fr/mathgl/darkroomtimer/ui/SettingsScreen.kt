@@ -44,12 +44,12 @@ fun SettingsScreen(
     var buzzerVolume by remember { mutableStateOf(AudioVolume.fromString(prefs.buzzerVolume)) }
     var startBeepEnabled by remember { mutableStateOf(prefs.startBeepEnabled) }
     var metronomeEnabled by remember { mutableStateOf(prefs.metronomeEnabled) }
-    var metronomeCadenceMs by remember { mutableStateOf(prefs.metronomeCadenceMs) }
+    var metronomeCadenceMs by remember { mutableIntStateOf(prefs.metronomeCadenceMs) }
     var defaultGrade by remember { mutableStateOf(prefs.defaultContrastGrade) }
     var luminosityMode by remember { mutableStateOf(prefs.luminosityMode) }
-    var luminosityMin by remember { mutableStateOf(prefs.luminosityMin) }
-    var luminosityMax by remember { mutableStateOf(prefs.luminosityMax) }
-    var luminosityFixed by remember { mutableStateOf(prefs.luminosityFixed) }
+    var luminosityMin by remember { mutableFloatStateOf(prefs.luminosityMin) }
+    var luminosityMax by remember { mutableFloatStateOf(prefs.luminosityMax) }
+    var luminosityFixed by remember { mutableFloatStateOf(prefs.luminosityFixed) }
 
     Column(
         modifier = Modifier

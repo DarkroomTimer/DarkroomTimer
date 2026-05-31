@@ -1,6 +1,7 @@
 package fr.mathgl.darkroomtimer.audio
 
 import android.content.SharedPreferences
+import androidx.core.content.edit
 
 /**
  * Interface for audio-related settings, enabling testability.
@@ -21,11 +22,11 @@ class AudioPreferences(private val prefs: SharedPreferences) : AudioSettingsProv
 
     override var isMetronomeEnabled: Boolean
         get() = prefs.getBoolean(KEY_METRONOME_ENABLED, false)
-        set(value) = prefs.edit().putString(KEY_METRONOME_ENABLED, value.toString()).apply()
+        set(value) = prefs.edit {putBoolean(KEY_METRONOME_ENABLED, value)}
 
     override var metronomeCadenceMs: Int
         get() = prefs.getInt(KEY_METRONOME_CADENCE_MS, DEFAULT_METRONOME_CADENCE_MS)
-        set(value) = prefs.edit().putInt(KEY_METRONOME_CADENCE_MS, value).apply()
+        set(value) = prefs.edit {putInt(KEY_METRONOME_CADENCE_MS, value)}
 
     override val metronomeFrequencyHz: Int = DEFAULT_METRONOME_FREQUENCY_HZ
 
@@ -33,11 +34,11 @@ class AudioPreferences(private val prefs: SharedPreferences) : AudioSettingsProv
 
     override var isStartBeepEnabled: Boolean
         get() = prefs.getBoolean(KEY_START_BEEP_ENABLED, true)
-        set(value) = prefs.edit().putString(KEY_START_BEEP_ENABLED, value.toString()).apply()
+        set(value) = prefs.edit {putBoolean(KEY_START_BEEP_ENABLED, value)}
 
     override var buzzerVolume: AudioVolume
         get() = AudioVolume.fromString(prefs.getString(KEY_BUZZER_VOLUME, "MEDIUM"))
-        set(value) = prefs.edit().putString(KEY_BUZZER_VOLUME, value.name).apply()
+        set(value) = prefs.edit {putString(KEY_BUZZER_VOLUME, value.name)}
 
     companion object {
         private const val KEY_METRONOME_ENABLED = "pref_metronome_enabled"

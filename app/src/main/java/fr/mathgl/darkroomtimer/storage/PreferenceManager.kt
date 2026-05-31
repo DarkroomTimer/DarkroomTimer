@@ -2,6 +2,7 @@ package fr.mathgl.darkroomtimer.storage
 
 import android.content.Context
 import android.content.SharedPreferences
+import androidx.core.content.edit
 import com.google.gson.Gson
 import fr.mathgl.darkroomtimer.math.ContrastGrade
 import fr.mathgl.darkroomtimer.system.RelaySystemConfigFlat
@@ -15,28 +16,28 @@ class PreferenceManager private constructor(context: Context) {
     // General Settings
     var metronomeEnabled: Boolean
         get() = prefs.getBoolean(KEY_METRONOME_ENABLED, false)
-        set(value) = prefs.edit().putBoolean(KEY_METRONOME_ENABLED, value).apply()
+        set(value) = prefs.edit {putBoolean(KEY_METRONOME_ENABLED, value)}
 
     var metronomeCadenceMs: Int
         get() = prefs.getInt(KEY_METRONOME_CADENCE_MS, 1000)
-        set(value) = prefs.edit().putInt(KEY_METRONOME_CADENCE_MS, value).apply()
+        set(value) = prefs.edit {putInt(KEY_METRONOME_CADENCE_MS, value)}
 
     var buzzerVolume: String
         get() = prefs.getString(KEY_BUZZER_VOLUME, "MEDIUM") ?: "MEDIUM"
-        set(value) = prefs.edit().putString(KEY_BUZZER_VOLUME, value).apply()
+        set(value) = prefs.edit {putString(KEY_BUZZER_VOLUME, value)}
 
     var startBeepEnabled: Boolean
         get() = prefs.getBoolean(KEY_START_BEEP_ENABLED, true)
-        set(value) = prefs.edit().putBoolean(KEY_START_BEEP_ENABLED, value).apply()
+        set(value) = prefs.edit {putBoolean(KEY_START_BEEP_ENABLED, value)}
 
     // Exposure Settings
     var defaultExposureMs: Long
         get() = prefs.getLong(KEY_DEFAULT_EXPOSURE_MS, 8000L)
-        set(value) = prefs.edit().putLong(KEY_DEFAULT_EXPOSURE_MS, value).apply()
+        set(value) = prefs.edit {putLong(KEY_DEFAULT_EXPOSURE_MS, value)}
 
     var defaultContrastGradeIndex: Int
         get() = prefs.getInt(KEY_DEFAULT_CONTRAST_GRADE_INDEX, 5)
-        set(value) = prefs.edit().putInt(KEY_DEFAULT_CONTRAST_GRADE_INDEX, value).apply()
+        set(value) = prefs.edit {putInt(KEY_DEFAULT_CONTRAST_GRADE_INDEX, value)}
 
     var defaultContrastGrade: ContrastGrade
         get() = ContrastGrade.fromIndex(defaultContrastGradeIndex)
@@ -44,71 +45,71 @@ class PreferenceManager private constructor(context: Context) {
 
     var defaultStopNumerator: Int
         get() = prefs.getInt(KEY_DEFAULT_STOP_NUMERATOR, 1)
-        set(value) = prefs.edit().putInt(KEY_DEFAULT_STOP_NUMERATOR, value).apply()
+        set(value) = prefs.edit {putInt(KEY_DEFAULT_STOP_NUMERATOR, value)}
 
     var defaultStopDenominator: Int
         get() = prefs.getInt(KEY_DEFAULT_STOP_DENOMINATOR, 3)
-        set(value) = prefs.edit().putInt(KEY_DEFAULT_STOP_DENOMINATOR, value).apply()
+        set(value) = prefs.edit {putInt(KEY_DEFAULT_STOP_DENOMINATOR, value)}
 
     var defaultTimerMs: Long
         get() = prefs.getLong(KEY_DEFAULT_TIMER_MS, 120000L)
-        set(value) = prefs.edit().putLong(KEY_DEFAULT_TIMER_MS, value).apply()
+        set(value) = prefs.edit {putLong(KEY_DEFAULT_TIMER_MS, value)}
 
     // Teststrip Settings
     var teststripMode: String
         get() = prefs.getString(KEY_TESTSTRIP_MODE, "INCREMENTAL") ?: "INCREMENTAL"
-        set(value) = prefs.edit().putString(KEY_TESTSTRIP_MODE, value).apply()
+        set(value) = prefs.edit {putString(KEY_TESTSTRIP_MODE, value)}
 
     var teststripPatchCount: Int
         get() = prefs.getInt(KEY_TESTSTRIP_PATCH_COUNT, 6)
-        set(value) = prefs.edit().putInt(KEY_TESTSTRIP_PATCH_COUNT, value).apply()
+        set(value) = prefs.edit {putInt(KEY_TESTSTRIP_PATCH_COUNT, value)}
 
     var teststripBaseMs: Long
         get() = prefs.getLong(KEY_TESTSTRIP_BASE_MS, 8000L)
-        set(value) = prefs.edit().putLong(KEY_TESTSTRIP_BASE_MS, value).apply()
+        set(value) = prefs.edit {putLong(KEY_TESTSTRIP_BASE_MS, value)}
 
     var teststripStopNumerator: Int
         get() = prefs.getInt(KEY_TESTSTRIP_STOP_NUMERATOR, 1)
-        set(value) = prefs.edit().putInt(KEY_TESTSTRIP_STOP_NUMERATOR, value).apply()
+        set(value) = prefs.edit {putInt(KEY_TESTSTRIP_STOP_NUMERATOR, value)}
 
     var teststripStopDenominator: Int
         get() = prefs.getInt(KEY_TESTSTRIP_STOP_DENOMINATOR, 3)
-        set(value) = prefs.edit().putInt(KEY_TESTSTRIP_STOP_DENOMINATOR, value).apply()
+        set(value) = prefs.edit {putInt(KEY_TESTSTRIP_STOP_DENOMINATOR, value)}
 
     // Bluetooth Settings
     var bluetoothEnabled: Boolean
         get() = prefs.getBoolean(KEY_BLUETOOTH_ENABLED, false)
-        set(value) = prefs.edit().putBoolean(KEY_BLUETOOTH_ENABLED, value).apply()
+        set(value) = prefs.edit {putBoolean(KEY_BLUETOOTH_ENABLED, value)}
 
     var bluetoothDeviceAddress: String
         get() = prefs.getString(KEY_BLUETOOTH_DEVICE_ADDRESS, "") ?: ""
-        set(value) = prefs.edit().putString(KEY_BLUETOOTH_DEVICE_ADDRESS, value).apply()
+        set(value) = prefs.edit {putString(KEY_BLUETOOTH_DEVICE_ADDRESS, value)}
 
     var bluetoothDeviceName: String
         get() = prefs.getString(KEY_BLUETOOTH_DEVICE_NAME, "") ?: ""
-        set(value) = prefs.edit().putString(KEY_BLUETOOTH_DEVICE_NAME, value).apply()
+        set(value) = prefs.edit {putString(KEY_BLUETOOTH_DEVICE_NAME, value)}
 
     // Active Profile
     var enlargerProfileId: Int
         get() = prefs.getInt(KEY_ENLARGER_PROFILE_ID, 0)
-        set(value) = prefs.edit().putInt(KEY_ENLARGER_PROFILE_ID, value).apply()
+        set(value) = prefs.edit {putInt(KEY_ENLARGER_PROFILE_ID, value)}
 
     // Luminosity Settings
     var luminosityMode: String
         get() = prefs.getString(KEY_LUMINOSITY_MODE, "ADAPTIVE") ?: "ADAPTIVE"
-        set(value) = prefs.edit().putString(KEY_LUMINOSITY_MODE, value).apply()
+        set(value) = prefs.edit {putString(KEY_LUMINOSITY_MODE, value)}
 
     var luminosityMin: Float
         get() = prefs.getFloat(KEY_LUMINOSITY_MIN, 0.01f)
-        set(value) = prefs.edit().putFloat(KEY_LUMINOSITY_MIN, value).apply()
+        set(value) = prefs.edit {putFloat(KEY_LUMINOSITY_MIN, value)}
 
     var luminosityMax: Float
         get() = prefs.getFloat(KEY_LUMINOSITY_MAX, 0.10f)
-        set(value) = prefs.edit().putFloat(KEY_LUMINOSITY_MAX, value).apply()
+        set(value) = prefs.edit {putFloat(KEY_LUMINOSITY_MAX, value)}
 
     var luminosityFixed: Float
         get() = prefs.getFloat(KEY_LUMINOSITY_FIXED, 0.05f)
-        set(value) = prefs.edit().putFloat(KEY_LUMINOSITY_FIXED, value).apply()
+        set(value) = prefs.edit {putFloat(KEY_LUMINOSITY_FIXED, value)}
 
     // Relay System Config (stored as JSON)
     private val gson = Gson()
@@ -123,7 +124,7 @@ class PreferenceManager private constructor(context: Context) {
                 RelaySystemConfigFlat()
             }
         }
-        set(value) = prefs.edit().putString(KEY_RELAY_SYSTEM_CONFIG, gson.toJson(value)).apply()
+        set(value) = prefs.edit {putString(KEY_RELAY_SYSTEM_CONFIG, gson.toJson(value))}
 
     companion object {
         private const val PREFS_NAME = "darkroom_timer_prefs"

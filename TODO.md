@@ -7,8 +7,14 @@
 
 ## Feature
 
-- Teststrip est incomplet : 
-  - Il faut pouvoir choisir le nombre de patch : défaut 6 patch
-  - Le mode : incrémental ou separate (defaut: séparate)
-  - le type d'incrément : en fstop ou en seconde
-  - la valeur de l'incrément
+- L'interface de TestStrip est difficile à utiliser :
+  - Il fautdrait que l'interface tienne sur un écran
+  - Suprimmer "Configuration"
+  - Mettre sur une ligne : 
+    - Mode et les 2 boutons
+    - Type d'incréments et les deux boutons
+  - A quoi sert "en attente" ?
+
+
+
+

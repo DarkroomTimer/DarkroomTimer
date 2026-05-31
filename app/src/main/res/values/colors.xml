@@ -1,7 +1,3 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="darkroom_black">#FF000000</color>
-    <color name="darkroom_surface">#FF0D0000</color>
-    <color name="darkroom_red_bright">#FFCC0000</color>
-    <color name="black">#FF000000</color>
 </resources>

@@ -33,7 +33,7 @@ fun BurnDodgeDialog(
 ) {
     var label by remember { mutableStateOf("") }
     var type by remember { mutableStateOf(BurnDodgeType.BURN) }
-    var denominator by remember { mutableStateOf(3) }
+    var denominator by remember { mutableIntStateOf(3) }
 
     val validFractions = listOf(12, 6, 4, 3, 2, 1)
     val fractionLabels = listOf("1/12", "1/6", "1/4", "1/3", "1/2", "1")

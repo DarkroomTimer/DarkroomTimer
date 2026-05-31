@@ -74,8 +74,10 @@ class ToneGeneratorAudioEngine(
 
         currentThread?.interrupt()
         currentThread = Thread {
-            tg.startTone(ToneGenerator.TONE_PROP_BEEP, durationMs)
-            Thread.sleep(durationMs.toLong())
+            try {
+                tg.startTone(ToneGenerator.TONE_PROP_BEEP, durationMs)
+                Thread.sleep(durationMs.toLong())
+            } catch (_: InterruptedException) { }
         }.apply { start() }
     }
 
@@ -97,13 +99,13 @@ class ToneGeneratorAudioEngine(
 
         currentThread?.interrupt()
         currentThread = Thread {
-            for (i in 0 until beepCount) {
-                tg.startTone(ToneGenerator.TONE_PROP_BEEP, beepDurationMs)
-                Thread.sleep(beepDurationMs.toLong())
-                if (i < beepCount - 1) {
-                    Thread.sleep(silenceBetweenMs.toLong())
+            try {
+                for (i in 0 until beepCount) {
+                    tg.startTone(ToneGenerator.TONE_PROP_BEEP, beepDurationMs)
+                    Thread.sleep(beepDurationMs.toLong())
+                    if (i < beepCount - 1) Thread.sleep(silenceBetweenMs.toLong())
                 }
-            }
+            } catch (_: InterruptedException) { }
         }.apply { start() }
     }
 

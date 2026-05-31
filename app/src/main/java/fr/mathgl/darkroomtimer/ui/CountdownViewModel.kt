@@ -2,6 +2,7 @@ package fr.mathgl.darkroomtimer.ui
 
 import android.app.Application
 import android.content.Intent
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -408,7 +409,7 @@ open class CountdownViewModel(
             this.action = action
             putExtra(ForegroundTimerService.EXTRA_REMAINING_MS, remainingMs)
         }
-        getApplication<Application>().startForegroundService(intent)
+        ContextCompat.startForegroundService(getApplication(), intent)
     }
 
     override fun onCleared() {

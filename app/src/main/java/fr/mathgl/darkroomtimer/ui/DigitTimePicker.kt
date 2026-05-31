@@ -112,7 +112,7 @@ private fun SingleDigitPicker(
 ) {
     val digitWidth = digitHeight / 2
     val arrowZoneHeight = digitHeight * 0.35f
-    var activeZone by remember { mutableStateOf(0) } // 0=none, 1=increment, -1=decrement
+    var activeZone by remember { mutableIntStateOf(0) } // 0=none, 1=increment, -1=decrement
     val currentOnIncrement by rememberUpdatedState(onIncrement)
     val currentOnDecrement by rememberUpdatedState(onDecrement)
 

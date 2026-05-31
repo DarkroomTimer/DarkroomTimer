@@ -27,9 +27,9 @@ private val SEGMENT_PATTERNS = intArrayOf(
 @Composable
 fun SegmentDisplay(
     digit: Int,
+    modifier: Modifier = Modifier,
     segOnColor: Color = DarkroomRedBright,
     segOffColor: Color = DarkroomRedFaint,
-    modifier: Modifier = Modifier
 ) {
     val pattern = SEGMENT_PATTERNS[digit.coerceIn(0, 9)]
     Canvas(modifier = modifier) {
