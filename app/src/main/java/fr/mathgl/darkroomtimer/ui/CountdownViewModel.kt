@@ -6,9 +6,8 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import fr.mathgl.darkroomtimer.audio.AudioPreferences
 import fr.mathgl.darkroomtimer.audio.AudioSystem
-import fr.mathgl.darkroomtimer.audio.ToneGeneratorAudioEngine
+import fr.mathgl.darkroomtimer.audio.createAudioSystem
 import fr.mathgl.darkroomtimer.math.BurnDodgeEntry
 import fr.mathgl.darkroomtimer.math.BurnDodgeType
 import fr.mathgl.darkroomtimer.math.ContrastGrade
@@ -132,16 +131,7 @@ open class CountdownViewModel(
         relaySystem = relaySystemFactory(viewModelScope)
         _uiState.update { it.copy(relayType = relayType) }
 
-        // Initialize audio from preferences
-        try {
-            val context = getApplication<Application>()
-            val preferenceManager = PreferenceManager.getInstance(context)
-            val audioPreferences = AudioPreferences(preferenceManager.prefs)
-            val audioEngine = ToneGeneratorAudioEngine(audioPreferences.buzzerVolume)
-            audioSystem = AudioSystem(audioEngine, audioPreferences, audioPreferences.buzzerVolume)
-        } catch (e: Exception) {
-            // audio unavailable in test environment
-        }
+        audioSystem = createAudioSystem(getApplication())
 
         // Load defaults from preferences
         try {
@@ -210,13 +200,7 @@ open class CountdownViewModel(
         if (timer.state != TimerState.RUNNING) return
         timer.pause()
         tickJob?.cancel(); tickJob = null
-        viewModelScope.launch {
-            val res1 = relaySystem.setEnlarger(false)
-            val res2 = relaySystem.setSafelight(false)
-            if (!res1.isSuccess || !res2.isSuccess) {
-                _uiState.update { it.copy(errorMessage = "Pause failed: Hardware did not respond") }
-            }
-        }
+        viewModelScope.launch { shutOffRelays("pause") }
         audioSystem?.pause()
         _uiState.update { it.copy(
             timerState = TimerState.PAUSED,
@@ -261,13 +245,7 @@ open class CountdownViewModel(
                 remaining
             )
             if (ended) {
-                viewModelScope.launch {
-                    val res1 = relaySystem.setEnlarger(false)
-                    val res2 = relaySystem.setSafelight(false)
-                    if (!res1.isSuccess || !res2.isSuccess) {
-                        _uiState.update { it.copy(errorMessage = "CRITICAL: Failed to shut off relays on timer end!") }
-                    }
-                }
+                viewModelScope.launch { shutOffRelays("timer end") }
                 audioSystem?.stopExposure()
                 tickJob = null
                 break
@@ -283,13 +261,7 @@ open class CountdownViewModel(
         tickJob?.cancel(); tickJob = null
         timer.stop()
         timer.configuredTimeMs = baseTimeMs                           // restore base; start() will re-apply correction
-        viewModelScope.launch {
-            val res1 = relaySystem.setEnlarger(false)
-            val res2 = relaySystem.setSafelight(false)
-            if (!res1.isSuccess || !res2.isSuccess) {
-                _uiState.update { it.copy(errorMessage = "CRITICAL: Failed to shut off relays!") }
-            }
-        }
+        viewModelScope.launch { shutOffRelays("stop") }
         if (timerCompletedNaturally) {
             audioSystem?.stopExposure()
         }
@@ -400,6 +372,13 @@ open class CountdownViewModel(
             burnDodgeEntries = burnDodgeManager.entriesList,
             maxEntriesReached = burnDodgeManager.isFull
         ) }
+    }
+
+    private suspend fun shutOffRelays(errorContext: String) {
+        val r1 = relaySystem.setEnlarger(false)
+        val r2 = relaySystem.setSafelight(false)
+        if (!r1.isSuccess || !r2.isSuccess)
+            _uiState.update { it.copy(errorMessage = "Failed to shut off relays ($errorContext)") }
     }
 
     private fun currentState() = _uiState.value

@@ -4,9 +4,8 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import fr.mathgl.darkroomtimer.audio.AudioPreferences
 import fr.mathgl.darkroomtimer.audio.AudioSystem
-import fr.mathgl.darkroomtimer.audio.ToneGeneratorAudioEngine
+import fr.mathgl.darkroomtimer.audio.createAudioSystem
 import fr.mathgl.darkroomtimer.math.ContrastGrade
 import fr.mathgl.darkroomtimer.math.IncrementType
 import fr.mathgl.darkroomtimer.math.TeststripEngine
@@ -82,16 +81,7 @@ class TeststripViewModel(
     init {
         relaySystem = relaySystemFactory(viewModelScope)
 
-        // Initialize audio from preferences
-        try {
-            val context = getApplication<Application>()
-            val preferenceManager = PreferenceManager.getInstance(context)
-            val audioPreferences = AudioPreferences(preferenceManager.prefs)
-            val audioEngine = ToneGeneratorAudioEngine(audioPreferences.buzzerVolume)
-            audioSystem = AudioSystem(audioEngine, audioPreferences, audioPreferences.buzzerVolume)
-        } catch (e: Exception) {
-            // audio unavailable in test environment
-        }
+        audioSystem = createAudioSystem(getApplication())
 
         engine = TeststripEngine(
             baseTimeMs = 8000,
@@ -156,13 +146,7 @@ class TeststripViewModel(
         tickJob?.cancel()
         tickJob = null
         session.pause()
-        viewModelScope.launch {
-            val res1 = relaySystem.setEnlarger(false)
-            val res2 = relaySystem.setSafelight(false)
-            if (!res1.isSuccess || !res2.isSuccess) {
-                _uiState.update { it.copy(errorMessage = "Pause failed: Hardware did not respond") }
-            }
-        }
+        viewModelScope.launch { shutOffRelays("pause") }
         audioSystem?.pause()
         updateUiState()
     }
@@ -181,13 +165,7 @@ class TeststripViewModel(
         exposureJob = null
         tickJob?.cancel()
         tickJob = null
-        viewModelScope.launch {
-            val res1 = relaySystem.setEnlarger(false)
-            val res2 = relaySystem.setSafelight(false)
-            if (!res1.isSuccess || !res2.isSuccess) {
-                _uiState.update { it.copy(errorMessage = "CRITICAL: Failed to shut off relays!") }
-            }
-        }
+        viewModelScope.launch { shutOffRelays("finish exposure") }
         audioSystem?.stopTeststripPatch()
         session.finishExposure()
 
@@ -217,13 +195,7 @@ class TeststripViewModel(
         tickJob?.cancel()
         exposureJob = null
         tickJob = null
-        viewModelScope.launch {
-            val res1 = relaySystem.setEnlarger(false)
-            val res2 = relaySystem.setSafelight(false)
-            if (!res1.isSuccess || !res2.isSuccess) {
-                _uiState.update { it.copy(errorMessage = "CRITICAL: Failed to shut off relays!") }
-            }
-        }
+        viewModelScope.launch { shutOffRelays("abandon") }
         audioSystem?.stop()
         session.abandon()
         updateUiState()
@@ -276,6 +248,13 @@ class TeststripViewModel(
         _uiState.update { it.copy(selectedGrade = grade) }
     }
 
+    private suspend fun shutOffRelays(errorContext: String) {
+        val r1 = relaySystem.setEnlarger(false)
+        val r2 = relaySystem.setSafelight(false)
+        if (!r1.isSuccess || !r2.isSuccess)
+            _uiState.update { it.copy(errorMessage = "Failed to shut off relays ($errorContext)") }
+    }
+
     private fun startExposure() {
         if (session.state != TeststripState.EXPOSING) return
         val durationMs = session.currentExposureTimeMs
@@ -284,6 +263,7 @@ class TeststripViewModel(
             relaySystem.startTimedExposure(durationMs).onFailure { e ->
                 _uiState.update { it.copy(errorMessage = "Hardware Error: ${e.message}") }
                 session.pause()
+                updateUiState()
             }
         }
         exposureJob = viewModelScope.launch {

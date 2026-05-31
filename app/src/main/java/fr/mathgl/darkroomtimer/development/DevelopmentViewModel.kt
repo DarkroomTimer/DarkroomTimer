@@ -3,10 +3,8 @@ package fr.mathgl.darkroomtimer.development
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import fr.mathgl.darkroomtimer.audio.AudioPreferences
 import fr.mathgl.darkroomtimer.audio.AudioSystem
-import fr.mathgl.darkroomtimer.audio.ToneGeneratorAudioEngine
-import fr.mathgl.darkroomtimer.storage.PreferenceManager
+import fr.mathgl.darkroomtimer.audio.createAudioSystem
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.StateFlow
@@ -19,24 +17,10 @@ class DevelopmentViewModel(
 
     private val session = DevelopmentSession(profile)
 
-    private var audioSystem: AudioSystem? = null
+    private val audioSystem: AudioSystem? = createAudioSystem(getApplication())
     private var tickJob: Job? = null
 
-    private fun getAudioSystem(): AudioSystem? {
-        if (audioSystem == null) {
-            try {
-                val context = getApplication<Application>()
-                val preferenceManager = PreferenceManager.getInstance(context)
-                val audioPreferences = AudioPreferences(preferenceManager.prefs)
-                val audioEngine = ToneGeneratorAudioEngine(audioPreferences.buzzerVolume)
-                audioSystem = AudioSystem(audioEngine, audioPreferences, audioPreferences.buzzerVolume)
-            } catch (e: Exception) {
-                // In test environments or when prefs are unavailable, audioSystem remains null
-                // Audio operations will be silently skipped
-            }
-        }
-        return audioSystem
-    }
+    private fun getAudioSystem(): AudioSystem? = audioSystem
 
     val stateFlow: StateFlow<DevelopmentSessionStateSnapshot> = session.stateFlow
 

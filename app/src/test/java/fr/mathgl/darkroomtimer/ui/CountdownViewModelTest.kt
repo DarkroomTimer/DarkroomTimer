@@ -3,9 +3,7 @@ package fr.mathgl.darkroomtimer.ui
 import android.app.Application
 import fr.mathgl.darkroomtimer.math.ContrastGrade
 import fr.mathgl.darkroomtimer.system.CountdownTimer
-import fr.mathgl.darkroomtimer.system.MockRelayController
 import fr.mathgl.darkroomtimer.system.MockRelaySystem
-import fr.mathgl.darkroomtimer.system.MockRelaySystemNoPause
 import fr.mathgl.darkroomtimer.system.RelaySystem
 import fr.mathgl.darkroomtimer.system.RelayStates
 import fr.mathgl.darkroomtimer.system.TimerState
@@ -57,28 +55,32 @@ class CountdownViewModelTest {
     @Test
     fun `start should trigger timed exposure on relay system`() = runTest {
         viewModel.start()
-        // Advance time to let the startTimedExposure coroutine execute
         testDispatcher.scheduler.runCurrent()
-        assertEquals(true, relaySystem.startTimedExposureCalled)
+        assertEquals(1, relaySystem.startTimedExposureCallCount)
     }
 
     @Test
     fun `stop should turn off relays`() = runTest {
-        // First start the timer (which calls startTimedExposure)
         viewModel.start()
         testDispatcher.scheduler.runCurrent()
 
-        // Reset flags to test stop separately
-        relaySystem.setEnlargerCalled = false
-        relaySystem.setSafelightCalled = false
-
-        // Call stop which should turn off the enlarger and safelight
         viewModel.stop()
         testDispatcher.scheduler.runCurrent()
 
-        // Stop should call setEnlarger(false) and setSafelight(false)
-        assertEquals(true, relaySystem.setEnlargerCalled)
-        assertEquals(true, relaySystem.setSafelightCalled)
+        assertEquals(false, relaySystem.setEnlargerCalls.last())
+        assertEquals(false, relaySystem.setSafelightCalls.last())
+    }
+
+    @Test
+    fun `stop with relay failure should set errorMessage`() = runTest {
+        viewModel.start()
+        testDispatcher.scheduler.runCurrent()
+
+        relaySystem.shouldFailRelays = true
+        viewModel.stop()
+        testDispatcher.scheduler.runCurrent()
+
+        assertEquals(false, viewModel.uiState.value.errorMessage.isNullOrEmpty())
     }
 
     @Test
@@ -192,47 +194,36 @@ class CountdownViewModelTest {
         viewModel.start()
         testDispatcher.scheduler.runCurrent()
 
-        val startCount = relaySystem.startTimedExposureCalled
+        val startCount = relaySystem.startTimedExposureCallCount
 
         // Try to start again
         viewModel.start()
         testDispatcher.scheduler.runCurrent()
 
         // Should only have called startTimedExposure once
-        assertEquals(startCount, relaySystem.startTimedExposureCalled)
+        assertEquals(startCount, relaySystem.startTimedExposureCallCount)
     }
 
     @Test
     fun `stop should return early when timer is already STOPPED`() = runTest {
-        // Reset flags
-        relaySystem.setEnlargerCalled = false
-        relaySystem.setSafelightCalled = false
-
-        // Try to stop when already stopped
         viewModel.stop()
         testDispatcher.scheduler.runCurrent()
 
-        // Should not have called set methods
-        assertEquals(false, relaySystem.setEnlargerCalled)
-        assertEquals(false, relaySystem.setSafelightCalled)
+        assertEquals(true, relaySystem.setEnlargerCalls.isEmpty())
+        assertEquals(true, relaySystem.setSafelightCalls.isEmpty())
     }
 
     @Test
     fun `start with canPause false should use setEnlarger and setSafelight`() = runTest {
-        // Create a relay system with canPause = false
-        val mockController = MockRelayController(canPause = false)
-        val relaySystemNoPause = MockRelaySystemNoPause(
-            scope = TestScope(testDispatcher),
-            controller = mockController
-        )
+        val relaySystemNoPause = MockRelaySystem(scope = TestScope(testDispatcher), canPause = false)
 
         val vm = TestCountdownViewModel(application, { relaySystemNoPause }, CountdownTimer(clock = { testDispatcher.scheduler.currentTime }))
         vm.start()
         testDispatcher.scheduler.runCurrent()
 
-        assertEquals(true, relaySystemNoPause.setEnlargerCalled)
-        assertEquals(true, relaySystemNoPause.setSafelightCalled)
-        assertEquals(false, relaySystemNoPause.startTimedExposureCalled)
+        assertEquals(true, relaySystemNoPause.setEnlargerCalls.contains(true))
+        assertEquals(true, relaySystemNoPause.setSafelightCalls.contains(true))
+        assertEquals(0, relaySystemNoPause.startTimedExposureCallCount)
     }
 
     @Test
