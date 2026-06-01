@@ -18,6 +18,7 @@ class AudioPreferencesTest {
         mockEditor = mock(SharedPreferences.Editor::class.java)
 
         `when`(mockPrefs.edit()).thenReturn(mockEditor)
+        `when`(mockEditor.putBoolean(anyString(), anyBoolean())).thenReturn(mockEditor)
         `when`(mockEditor.putString(anyString(), anyString())).thenReturn(mockEditor)
         `when`(mockEditor.putInt(anyString(), anyInt())).thenReturn(mockEditor)
         `when`(mockEditor.apply()).thenAnswer { }
@@ -62,7 +63,7 @@ class AudioPreferencesTest {
     @Test
     fun testSaveMetronomeEnabledStoresValueInSharedPreferences() {
         audioPrefs.isMetronomeEnabled = true
-        verify(mockEditor).putString("pref_metronome_enabled", "true")
+        verify(mockEditor).putBoolean("pref_metronome_enabled", true)
         verify(mockEditor).apply()
     }
 

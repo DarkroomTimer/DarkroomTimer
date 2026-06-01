@@ -3,15 +3,17 @@ package fr.mathgl.darkroomtimer.system.drivers
 import fr.mathgl.darkroomtimer.system.*
 import fr.mathgl.darkroomtimer.system.drivers.ESPhomeHttpRelayController
 import fr.mathgl.darkroomtimer.system.drivers.TasmotaRelayController
-import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.runBlocking
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okhttp3.mockwebserver.RecordedRequest
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Before
 import org.junit.Test
 import java.util.Base64
+import java.util.concurrent.TimeUnit
 
 class RelayDriverTest {
     private lateinit var server: MockWebServer
@@ -29,19 +31,20 @@ class RelayDriverTest {
 
     @After
     fun teardown() {
+        runBlocking { tasmotaController.disconnect() }
         server.shutdown()
     }
 
     @Test
-    fun `Tasmota connect should send Status 0 command`() = runTest {
+    fun `Tasmota connect should send Status 0 command`() = runBlocking {
         server.enqueue(MockResponse().setResponseCode(200))
         tasmotaController.connect()
-        val request: RecordedRequest = server.takeRequest()
+        val request: RecordedRequest = server.takeRequest(10, TimeUnit.SECONDS)!!
         assertEquals("/cm?cmnd=Status%200", request.path)
     }
 
     @Test
-    fun `Tasmota authentication should add Basic Auth header`() = runTest {
+    fun `Tasmota authentication should add Basic Auth header`() = runBlocking {
         val user = "admin"
         val pass = "password"
         val authController = TasmotaRelayController(
@@ -54,43 +57,43 @@ class RelayDriverTest {
         server.enqueue(MockResponse().setResponseCode(200))
         authController.connect()
 
-        val request: RecordedRequest = server.takeRequest()
+        val request: RecordedRequest = server.takeRequest(10, TimeUnit.SECONDS)!!
         val expectedAuth = "Basic " + Base64.getEncoder().encodeToString("$user:$pass".toByteArray())
         assertEquals(expectedAuth, request.getHeader("Authorization"))
     }
 
     @Test
-    fun `Tasmota set should send PowerX ON or OFF`() = runTest {
+    fun `Tasmota set should send PowerX ON or OFF`() = runBlocking {
         server.enqueue(MockResponse().setResponseCode(200))
         tasmotaController.connect()
-        server.takeRequest()
+        server.takeRequest(10, TimeUnit.SECONDS)!!
 
         server.enqueue(MockResponse().setResponseCode(200))
         tasmotaController.set(true)
-        val reqOn = server.takeRequest()
+        val reqOn = server.takeRequest(10, TimeUnit.SECONDS)!!
         assertEquals("/cm?cmnd=Power1%20ON", reqOn.path)
 
         server.enqueue(MockResponse().setResponseCode(200))
         tasmotaController.set(false)
-        val reqOff = server.takeRequest()
+        val reqOff = server.takeRequest(10, TimeUnit.SECONDS)!!
         assertEquals("/cm?cmnd=Power1%20OFF", reqOff.path)
     }
 
     @Test
-    fun `Tasmota startTimed should send PowerX seconds`() = runTest {
+    fun `Tasmota startTimed should send PowerX seconds`() = runBlocking {
         server.enqueue(MockResponse().setResponseCode(200))
         tasmotaController.connect()
-        server.takeRequest()
+        server.takeRequest(10, TimeUnit.SECONDS)!!
 
         server.enqueue(MockResponse().setResponseCode(200))
         tasmotaController.startTimed(2000L)
 
-        val request: RecordedRequest = server.takeRequest()
+        val request: RecordedRequest = server.takeRequest(10, TimeUnit.SECONDS)!!
         assertEquals("/cm?cmnd=Power1%202", request.path)
     }
 
     @Test
-    fun `Tasmota connect failure should set ConnectionState Error`() = runTest {
+    fun `Tasmota connect failure should set ConnectionState Error`() = runBlocking {
         server.enqueue(MockResponse().setResponseCode(500))
         val result = tasmotaController.connect()
         assertEquals(false, result.isSuccess)
@@ -98,7 +101,7 @@ class RelayDriverTest {
     }
 
     @Test
-    fun `ESPhome connect should send HEAD request`() = runTest {
+    fun `ESPhome connect should send HEAD request`() = runBlocking {
         val esphomeController = ESPhomeHttpRelayController(
             host = server.hostName,
             port = server.port,
@@ -108,13 +111,13 @@ class RelayDriverTest {
         server.enqueue(MockResponse().setResponseCode(200))
         esphomeController.connect()
 
-        val request: RecordedRequest = server.takeRequest()
+        val request: RecordedRequest = server.takeRequest(10, TimeUnit.SECONDS)!!
         assertEquals("HEAD", request.method)
         assertEquals("/", request.path)
     }
 
     @Test
-    fun `ESPhome set should send POST with JSON body`() = runTest {
+    fun `ESPhome set should send POST with JSON body`() = runBlocking {
         val esphomeController = ESPhomeHttpRelayController(
             host = server.hostName,
             port = server.port,
@@ -123,19 +126,19 @@ class RelayDriverTest {
 
         server.enqueue(MockResponse().setResponseCode(200))
         esphomeController.connect()
-        server.takeRequest()
+        server.takeRequest(10, TimeUnit.SECONDS)!!
 
         server.enqueue(MockResponse().setResponseCode(200))
         esphomeController.set(true)
 
-        val request: RecordedRequest = server.takeRequest()
+        val request: RecordedRequest = server.takeRequest(10, TimeUnit.SECONDS)!!
         assertEquals("POST", request.method)
         assertEquals("/api/switch.set", request.path)
         assertEquals("{\"entity_id\":\"switch.light\",\"state\":true}", request.body.readUtf8())
     }
 
     @Test
-    fun `ESPhome startTimed should fallback to simple set`() = runTest {
+    fun `ESPhome startTimed should fallback to simple set`() = runBlocking {
         val esphomeController = ESPhomeHttpRelayController(
             host = server.hostName,
             port = server.port,
@@ -144,12 +147,12 @@ class RelayDriverTest {
 
         server.enqueue(MockResponse().setResponseCode(200))
         esphomeController.connect()
-        server.takeRequest()
+        server.takeRequest(10, TimeUnit.SECONDS)!!
 
         server.enqueue(MockResponse().setResponseCode(200))
         esphomeController.startTimed(2000L)
 
-        val request: RecordedRequest = server.takeRequest()
+        val request: RecordedRequest = server.takeRequest(10, TimeUnit.SECONDS)!!
         assertEquals("POST", request.method)
         assertEquals("{\"entity_id\":\"switch.light\",\"state\":true}", request.body.readUtf8())
     }

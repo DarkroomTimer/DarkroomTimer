@@ -16,17 +16,18 @@ class MetronomeController(
     private val audioEngine: AudioEngine,
     private var cadenceMs: Int = 1000,
     private val frequencyHz: Int = 250,
-    private val durationMs: Int = 25
+    private val durationMs: Int = 25,
+    private val externalScope: CoroutineScope? = null
 ) {
-    private var scope: CoroutineScope? = null
+    private var ownScope: CoroutineScope? = null
     private var job: Job? = null
 
     val isRunning: Boolean get() = job?.isActive == true
 
     fun start() {
         if (isRunning) return
-        scope = CoroutineScope(Dispatchers.Default)
-        job = scope?.launch {
+        val scope = externalScope ?: CoroutineScope(Dispatchers.Default).also { ownScope = it }
+        job = scope.launch {
             while (isActive) {
                 audioEngine.playTone(frequencyHz, durationMs, 1f)
                 delay(cadenceMs.toLong())
@@ -37,8 +38,8 @@ class MetronomeController(
     fun stop() {
         job?.cancel()
         job = null
-        scope?.cancel()
-        scope = null
+        ownScope?.cancel()
+        ownScope = null
     }
 
     fun setCadence(newCadenceMs: Int) {

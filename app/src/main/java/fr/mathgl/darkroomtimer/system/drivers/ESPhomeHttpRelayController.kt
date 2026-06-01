@@ -17,7 +17,12 @@ class ESPhomeHttpRelayController(
     private val entityId: String
 ) : RelayController {
 
-    private var client: OkHttpClient? = null
+    private val okHttpClient = OkHttpClient.Builder()
+        .connectTimeout(5, TimeUnit.SECONDS)
+        .readTimeout(5, TimeUnit.SECONDS)
+        .build()
+
+    private var isConnected = false
     private val gson = Gson()
     private val jsonMediaType = "application/json; charset=utf-8".toMediaType()
 
@@ -28,12 +33,6 @@ class ESPhomeHttpRelayController(
     override suspend fun connect(): Result<Unit> = withContext(Dispatchers.IO) {
         connectionState.value = ConnectionState.Connecting
         try {
-            val okHttpClient = OkHttpClient.Builder()
-                .connectTimeout(5, TimeUnit.SECONDS)
-                .readTimeout(5, TimeUnit.SECONDS)
-                .build()
-
-            // Simple reachability check: try to get the root page or a known endpoint
             val request = Request.Builder()
                 .url("http://$host:$port/")
                 .head()
@@ -41,7 +40,7 @@ class ESPhomeHttpRelayController(
 
             okHttpClient.newCall(request).execute().use { response ->
                 if (response.isSuccessful) {
-                    client = okHttpClient
+                    isConnected = true
                     connectionState.value = ConnectionState.Connected
                     Result.success(Unit)
                 } else {
@@ -56,13 +55,13 @@ class ESPhomeHttpRelayController(
     }
 
     override suspend fun disconnect() = withContext(Dispatchers.IO) {
-        client?.dispatcher?.executorService?.shutdown()
-        client = null
+        okHttpClient.dispatcher.executorService.shutdown()
+        isConnected = false
         connectionState.value = ConnectionState.Disconnected
     }
 
     override suspend fun set(on: Boolean): Result<Unit> = withContext(Dispatchers.IO) {
-        val currentClient = client ?: return@withContext Result.failure(Exception("Not connected"))
+        if (!isConnected) return@withContext Result.failure(Exception("Not connected"))
 
         val bodyMap = mapOf(
             "entity_id" to entityId,
@@ -77,7 +76,7 @@ class ESPhomeHttpRelayController(
             .build()
 
         try {
-            currentClient.newCall(request).execute().use { response ->
+            okHttpClient.newCall(request).execute().use { response ->
                 if (response.isSuccessful) {
                     state.value = if (on) RelayState.ON else RelayState.OFF
                     Result.success(Unit)

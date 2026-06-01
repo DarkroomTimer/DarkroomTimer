@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.withContext
 import okhttp3.*
+import okhttp3.Credentials
 import java.util.concurrent.TimeUnit
 
 class TasmotaRelayController(
@@ -17,7 +18,12 @@ class TasmotaRelayController(
     val timingMode: TimingMode = TimingMode.TIMED_POWER
 ) : RelayController {
 
-    private var client: OkHttpClient? = null
+    private val okHttpClient = OkHttpClient.Builder()
+        .connectTimeout(5, TimeUnit.SECONDS)
+        .readTimeout(5, TimeUnit.SECONDS)
+        .build()
+
+    private var isConnected = false
 
     override val canPause: Boolean = timingMode == TimingMode.EXPLICIT_ON_OFF
     override val state = MutableStateFlow(RelayState.UNKNOWN)
@@ -28,9 +34,7 @@ class TasmotaRelayController(
         val requestBuilder = Request.Builder().url(url)
 
         if (username != null && password != null) {
-            val credentials = "$username:$password"
-            val encodedCredentials = android.util.Base64.encodeToString(credentials.toByteArray(), android.util.Base64.NO_WRAP)
-            requestBuilder.addHeader("Authorization", "Basic $encodedCredentials")
+            requestBuilder.addHeader("Authorization", Credentials.basic(username, password))
         }
 
         return requestBuilder.build()
@@ -39,15 +43,10 @@ class TasmotaRelayController(
     override suspend fun connect(): Result<Unit> = withContext(Dispatchers.IO) {
         connectionState.value = ConnectionState.Connecting
         try {
-            val okHttpClient = OkHttpClient.Builder()
-                .connectTimeout(5, TimeUnit.SECONDS)
-                .readTimeout(5, TimeUnit.SECONDS)
-                .build()
-
             val request = createRequest("Status 0")
             okHttpClient.newCall(request).execute().use { response ->
                 if (response.isSuccessful) {
-                    client = okHttpClient
+                    isConnected = true
                     connectionState.value = ConnectionState.Connected
                     Result.success(Unit)
                 } else {
@@ -62,18 +61,18 @@ class TasmotaRelayController(
     }
 
     override suspend fun disconnect() = withContext(Dispatchers.IO) {
-        client?.dispatcher?.executorService?.shutdown()
-        client = null
+        okHttpClient.dispatcher.executorService.shutdown()
+        isConnected = false
         connectionState.value = ConnectionState.Disconnected
     }
 
     override suspend fun set(on: Boolean): Result<Unit> = withContext(Dispatchers.IO) {
-        val currentClient = client ?: return@withContext Result.failure(Exception("Not connected"))
+        if (!isConnected) return@withContext Result.failure(Exception("Not connected"))
         val cmd = if (on) "Power$channel ON" else "Power$channel OFF"
 
         try {
             val request = createRequest(cmd)
-            currentClient.newCall(request).execute().use { response ->
+            okHttpClient.newCall(request).execute().use { response ->
                 if (response.isSuccessful) {
                     state.value = if (on) RelayState.ON else RelayState.OFF
                     Result.success(Unit)
@@ -91,9 +90,9 @@ class TasmotaRelayController(
             val seconds = maxOf(1, ((durationMs + 500) / 1000).toInt())
             val cmd = "Power$channel $seconds"
             try {
-                val currentClient = client ?: return@withContext Result.failure(Exception("Not connected"))
+                if (!isConnected) return@withContext Result.failure(Exception("Not connected"))
                 val request = createRequest(cmd)
-                currentClient.newCall(request).execute().use { response ->
+                okHttpClient.newCall(request).execute().use { response ->
                     if (response.isSuccessful) {
                         state.value = RelayState.ON
                         Result.success(Unit)

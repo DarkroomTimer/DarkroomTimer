@@ -35,6 +35,13 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+    testOptions {
+        unitTests {
+            // Prevents android.util.Log / TrafficStats stubs from throwing in unit tests,
+            // which would otherwise break OkHttp's platform detection and network calls.
+            isReturnDefaultValues = true
+        }
+    }
     buildFeatures {
         compose = true
     }
