@@ -54,6 +54,7 @@ class TeststripViewModel(
     private var tickJob: Job? = null
     private var audioSystem: AudioSystem? = null
     private lateinit var relaySystem: RelaySystem
+    private var prefs: PreferenceManager? = null
 
     private var selectedPatchIndex: Int = 0
 
@@ -87,14 +88,37 @@ class TeststripViewModel(
 
         audioSystem = createAudioSystem(getApplication())
 
+        var initBaseMs = 8000L
+        var initNumerator = 1
+        var initDenominator = 3
+        var initPatchCount = 6
+        var initMode = TeststripMode.SEPARATE
+        var initIncrementType = IncrementType.F_STOP
+        var initIncrementMs = 0L
+
+        try {
+            val p = PreferenceManager.getInstance(getApplication())
+            prefs = p
+            initBaseMs = p.teststripBaseMs
+            initNumerator = p.teststripStopNumerator
+            initDenominator = p.teststripStopDenominator
+            initPatchCount = p.teststripPatchCount
+            initMode = runCatching { TeststripMode.valueOf(p.teststripMode) }.getOrDefault(TeststripMode.SEPARATE)
+            initIncrementType = runCatching { IncrementType.valueOf(p.teststripIncrementType) }.getOrDefault(IncrementType.F_STOP)
+            initIncrementMs = p.teststripIncrementMs
+        } catch (e: Exception) {
+            // prefs unavailable in test environment, keep hardcoded defaults
+        }
+
         engine = TeststripEngine(
-            baseTimeMs = 8000,
-            numerator = 1,
-            denominator = 3,
-            patchCount = 6,
-            mode = TeststripMode.SEPARATE,
-            incrementType = IncrementType.F_STOP
+            baseTimeMs = initBaseMs,
+            numerator = initNumerator,
+            denominator = initDenominator,
+            patchCount = initPatchCount,
+            mode = initMode,
+            incrementType = initIncrementType
         )
+        engine.incrementMs = initIncrementMs
         session = TeststripSession(engine = engine)
         updateUiState()
 
@@ -224,6 +248,7 @@ class TeststripViewModel(
     fun updateBaseTime(newTimeMs: Long) {
         if (session.state != TeststripState.INIT && session.state != TeststripState.BETWEEN_PATCHES) return
         engine.baseTimeMs = newTimeMs
+        prefs?.teststripBaseMs = newTimeMs
         updateUiState()
     }
 
@@ -231,36 +256,43 @@ class TeststripViewModel(
         if (session.state != TeststripState.INIT && session.state != TeststripState.BETWEEN_PATCHES) return
         engine.numerator = numerator
         engine.denominator = denominator
+        prefs?.teststripStopNumerator = numerator
+        prefs?.teststripStopDenominator = denominator
         updateUiState()
     }
 
     fun updatePatchCount(count: Int) {
         if (session.state != TeststripState.INIT) return
         engine.patchCount = count
+        prefs?.teststripPatchCount = count
         updateUiState()
     }
 
     fun updateMode(mode: TeststripMode) {
         if (session.state != TeststripState.INIT) return
         engine.mode = mode
+        prefs?.teststripMode = mode.name
         updateUiState()
     }
 
     fun updateIncrementType(type: IncrementType) {
         if (session.state != TeststripState.INIT) return
         engine.incrementType = type
+        prefs?.teststripIncrementType = type.name
         updateUiState()
     }
 
     fun updateIncrementMs(ms: Long) {
         if (session.state != TeststripState.INIT) return
         engine.incrementMs = ms
+        prefs?.teststripIncrementMs = ms
         updateUiState()
     }
 
     fun adjustIncrement(delta: Int) {
         if (session.state != TeststripState.INIT) return
         engine.adjustIncrement(delta)
+        prefs?.teststripIncrementMs = engine.incrementMs
         updateUiState()
     }
 

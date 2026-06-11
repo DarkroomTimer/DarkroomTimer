@@ -60,6 +60,7 @@ open class CountdownViewModel(
     private var audioSystem: AudioSystem? = null
     private var tickJob: Job? = null
     private var baseTimeMs: Long = timer.configuredTimeMs
+    private var prefs: PreferenceManager? = null
 
     private fun calculatedTimeMs(): Long {
         val state = _uiState.value
@@ -103,6 +104,7 @@ open class CountdownViewModel(
         val calc = calculatedTimeMs()
         baseTimeMs = calc
         timer.configuredTimeMs = calc
+        prefs?.defaultExposureMs = calc
         _uiState.update { it.copy(
             configuredTimeMs = calc,
             fStopCorrectionNumerator = 0,
@@ -136,14 +138,14 @@ open class CountdownViewModel(
         // Load defaults from preferences
         try {
             val context = getApplication<Application>()
-            val prefs = PreferenceManager.getInstance(context)
-            timer.configuredTimeMs = prefs.defaultExposureMs
+            prefs = PreferenceManager.getInstance(context)
+            timer.configuredTimeMs = prefs!!.defaultExposureMs
             baseTimeMs = timer.configuredTimeMs
             _uiState.update { it.copy(
                 displayTime = CountdownTimer.formatTime(timer.configuredTimeMs),
                 displayTimeMs = timer.configuredTimeMs,
                 configuredTimeMs = timer.configuredTimeMs,
-                selectedGrade = prefs.defaultContrastGrade
+                selectedGrade = prefs!!.defaultContrastGrade
             ) }
         } catch (e: Exception) {
             // prefs unavailable in test environment, keep hardcoded defaults
@@ -282,6 +284,7 @@ open class CountdownViewModel(
         if (timer.state == TimerState.STOPPED) {
             val newBase = (baseTimeMs + deltaMs).coerceIn(100L, 999_000L)
             baseTimeMs = newBase
+            prefs?.defaultExposureMs = newBase
             val calc = calculatedTimeMs()
             _uiState.update { it.copy(
                 displayTime = CountdownTimer.formatTime(calc),
@@ -304,6 +307,7 @@ open class CountdownViewModel(
         val clamped = ms.coerceIn(100L, 999_000L)
         baseTimeMs = clamped
         timer.configuredTimeMs = clamped
+        prefs?.defaultExposureMs = clamped
         _uiState.update { it.copy(
             displayTime = CountdownTimer.formatTime(clamped),
             displayTimeMs = clamped,

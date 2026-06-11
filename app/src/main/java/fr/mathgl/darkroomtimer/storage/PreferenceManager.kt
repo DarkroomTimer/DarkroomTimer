@@ -80,6 +80,14 @@ class PreferenceManager internal constructor(context: Context) {
         get() = prefs.getInt(KEY_TESTSTRIP_STOP_DENOMINATOR, 3)
         set(value) = prefs.edit {putInt(KEY_TESTSTRIP_STOP_DENOMINATOR, value)}
 
+    var teststripIncrementType: String
+        get() = prefs.getString(KEY_TESTSTRIP_INCREMENT_TYPE, "F_STOP") ?: "F_STOP"
+        set(value) = prefs.edit {putString(KEY_TESTSTRIP_INCREMENT_TYPE, value)}
+
+    var teststripIncrementMs: Long
+        get() = prefs.getLong(KEY_TESTSTRIP_INCREMENT_MS, 1000L)
+        set(value) = prefs.edit {putLong(KEY_TESTSTRIP_INCREMENT_MS, value)}
+
     // Bluetooth Settings
     var bluetoothEnabled: Boolean
         get() = prefs.getBoolean(KEY_BLUETOOTH_ENABLED, false)
@@ -155,6 +163,8 @@ class PreferenceManager internal constructor(context: Context) {
         private const val KEY_TESTSTRIP_BASE_MS = "pref_teststrip_base_ms"
         private const val KEY_TESTSTRIP_STOP_NUMERATOR = "pref_teststrip_stop_numerator"
         private const val KEY_TESTSTRIP_STOP_DENOMINATOR = "pref_teststrip_stop_denominator"
+        private const val KEY_TESTSTRIP_INCREMENT_TYPE = "pref_teststrip_increment_type"
+        private const val KEY_TESTSTRIP_INCREMENT_MS = "pref_teststrip_increment_ms"
 
         private const val KEY_BLUETOOTH_ENABLED = "pref_bluetooth_enabled"
         private const val KEY_BLUETOOTH_DEVICE_ADDRESS = "pref_bluetooth_device_address"
