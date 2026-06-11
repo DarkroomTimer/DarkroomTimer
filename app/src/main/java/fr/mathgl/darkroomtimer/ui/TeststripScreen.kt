@@ -3,9 +3,9 @@ package fr.mathgl.darkroomtimer.ui
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.itemsIndexed
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
@@ -286,13 +286,18 @@ fun TeststripScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(3),
+            val lazyListState = rememberLazyListState()
+
+            LaunchedEffect(state.currentPatchIndex) {
+                lazyListState.animateScrollToItem(maxOf(0, state.currentPatchIndex - 1))
+            }
+
+            LazyRow(
+                state = lazyListState,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f)
+                    .height(120.dp)
             ) {
                 itemsIndexed(state.patchTimesMs) { index, timeMs ->
                     PatchItem(
@@ -301,7 +306,9 @@ fun TeststripScreen(
                         differentialMs = state.differentialTimesMs[index],
                         isExposed = index in state.exposedPatches,
                         isCurrent = index == state.currentPatchIndex,
-                        modifier = Modifier.aspectRatio(1f)
+                        modifier = Modifier
+                            .width(110.dp)
+                            .fillParentMaxHeight()
                     )
                 }
             }
@@ -309,20 +316,12 @@ fun TeststripScreen(
             Spacer(modifier = Modifier.height(24.dp))
 
             if (state.sessionState == TeststripState.EXPOSING) {
-                Text(
-                    text = state.displayTime,
-                    fontSize = 60.sp,
-                    fontFamily = FontFamily.Monospace,
-                    fontWeight = FontWeight.Bold,
-                    color = DarkroomRedBright
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Text(
-                    text = "Temps: ${state.remainingTimeMs / 1000.0}s",
-                    fontSize = 16.sp,
-                    color = DarkroomRedDim
+                DigitTimePicker(
+                    valueMs = state.remainingTimeMs,
+                    onValueChange = {},
+                    enabled = false,
+                    format = DigitTimeFormat.MINUTES_SECONDS_TENTHS,
+                    digitHeight = 80.dp
                 )
 
                 Spacer(modifier = Modifier.height(24.dp))
