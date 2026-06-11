@@ -36,9 +36,13 @@ class ForegroundTimerService : Service() {
             ACTION_START -> {
                 val remaining = intent.getLongExtra(EXTRA_REMAINING_MS, 0L)
 
+                // A repeated START must not overwrite held locks (leak until timeout)
+                releaseLocks()
+
                 // Acquire locks to prevent CPU/WiFi sleep
                 val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
-                wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "DarkroomTimer:ExposureLock").apply { acquire(3_600_000L) }
+                val lockTimeout = if (remaining > 0) remaining + LOCK_MARGIN_MS else MAX_LOCK_MS
+                wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "DarkroomTimer:ExposureLock").apply { acquire(lockTimeout) }
 
                 val wm = getSystemService(Context.WIFI_SERVICE) as WifiManager
                 val lockType = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
@@ -55,19 +59,27 @@ class ForegroundTimerService : Service() {
                 notificationManager.notify(NOTIFICATION_ID, buildNotification(remaining))
             }
             ACTION_STOP -> {
-                try {
-                    wakeLock?.release()
-                    wifiLock?.release()
-                } finally {
-                    wakeLock = null
-                    wifiLock = null
-                }
-
+                releaseLocks()
                 stopForeground(STOP_FOREGROUND_REMOVE)
                 stopSelf()
             }
         }
         return START_STICKY
+    }
+
+    override fun onDestroy() {
+        releaseLocks()
+        super.onDestroy()
+    }
+
+    private fun releaseLocks() {
+        try {
+            if (wakeLock?.isHeld == true) wakeLock?.release()
+            if (wifiLock?.isHeld == true) wifiLock?.release()
+        } finally {
+            wakeLock = null
+            wifiLock = null
+        }
     }
 
     private fun buildNotification(remainingMs: Long) =
@@ -104,5 +116,7 @@ class ForegroundTimerService : Service() {
         const val EXTRA_REMAINING_MS = "remaining_ms"
         private const val NOTIFICATION_ID = 1001
         private const val CHANNEL_ID = "darkroom_timer_channel"
+        private const val LOCK_MARGIN_MS = 60_000L
+        private const val MAX_LOCK_MS = 3_600_000L
     }
 }
