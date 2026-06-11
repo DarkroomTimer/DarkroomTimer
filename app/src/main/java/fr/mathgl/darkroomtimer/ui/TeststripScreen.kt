@@ -85,21 +85,12 @@ fun TeststripScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Teststrip",
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = DarkroomRedBright
-                )
-                TextButton(onClick = onBack) {
-                    Text("← Retour", color = DarkroomRedBright)
-                }
-            }
+            Text(
+                text = "Teststrip",
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+                color = DarkroomRedBright
+            )
 
             Text(
                 text = "Configuration",
@@ -225,7 +216,7 @@ fun TeststripScreen(
                     fontWeight = FontWeight.Bold,
                     color = DarkroomRedBright
                 )
-                TextButton(onClick = onBack) {
+                TextButton(onClick = { viewModel.abandon() }) {
                     Text("← Retour", color = DarkroomRedBright)
                 }
             }
