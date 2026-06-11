@@ -12,8 +12,9 @@ object RelayControllerFactory {
                 host = config.host,
                 port = config.port,
                 channel = config.channel,
-                username = config.username,
-                password = config.password,
+                // Blank credentials must not produce a Basic-Auth header
+                username = config.username.ifBlank { null },
+                password = config.password.ifBlank { null },
                 timingMode = config.timingMode
             )
             is RelayControllerConfig.ESPhomeHttp -> ESPhomeHttpRelayController(

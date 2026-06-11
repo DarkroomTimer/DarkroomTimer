@@ -10,7 +10,7 @@ import fr.mathgl.darkroomtimer.system.RelaySystemConfigFlat
 /**
  * Manager for handling basic scalar settings for the application using SharedPreferences.
  */
-class PreferenceManager private constructor(context: Context) {
+class PreferenceManager internal constructor(context: Context) {
     internal val prefs: SharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
     // General Settings
