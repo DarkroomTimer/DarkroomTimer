@@ -278,7 +278,7 @@ fun StepEditorDialog(
     onSave: (DevelopmentStep) -> Unit,
     onDismiss: () -> Unit
 ) {
-    var stepType by remember { mutableIntStateOf(if (step?.type == DevelopmentStepType.BATH) 0 else 1) }
+    var stepType by remember { mutableIntStateOf(if (step?.type == DevelopmentStepType.PAUSE) 1 else 0) }
     var name by remember { mutableStateOf(step?.name ?: "") }
     var durationMs by remember { mutableLongStateOf((step?.durationSeconds ?: 60) * 1000L) }
     var preEndAlertSeconds by remember { mutableStateOf(if (step is DevelopmentStep.BathStep) step.preEndAlertSeconds.toString() else "") }

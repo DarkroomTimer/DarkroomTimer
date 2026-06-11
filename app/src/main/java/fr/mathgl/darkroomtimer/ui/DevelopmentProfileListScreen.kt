@@ -27,9 +27,11 @@ import kotlinx.coroutines.flow.flowOf
 
 @Composable
 fun DevelopmentProfileListScreen(
+    defaultProfileId: Long,
     onSelectProfile: (DevelopmentProfile) -> Unit,
     onEditProfile: (DevelopmentProfile) -> Unit,
     onNewProfile: () -> Unit,
+    onSetDefault: (Long) -> Unit,
     onBack: () -> Unit
 ) {
     val context = LocalContext.current
@@ -98,12 +100,14 @@ fun DevelopmentProfileListScreen(
                 items(profiles) { profile ->
                     ProfileItem(
                         profile = profile,
+                        isDefault = profile.id == defaultProfileId,
                         onClick = { onSelectProfile(profile) },
                         onEdit = { onEditProfile(profile) },
                         onDelete = {
                             profileToDelete = profile
                             showDeleteDialog = true
-                        }
+                        },
+                        onSetDefault = { onSetDefault(profile.id) }
                     )
                 }
             }
@@ -130,7 +134,10 @@ fun DevelopmentProfileListScreen(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        profileToDelete?.let { viewModel?.deleteProfile(it) }
+                        profileToDelete?.let { p ->
+                            viewModel?.deleteProfile(p)
+                            if (p.id == defaultProfileId) onSetDefault(-1L)
+                        }
                         showDeleteDialog = false
                         profileToDelete = null
                     }
@@ -161,9 +168,11 @@ fun DevelopmentProfileListScreen(
 @Composable
 private fun ProfileItem(
     profile: DevelopmentProfile,
+    isDefault: Boolean,
     onClick: () -> Unit,
     onEdit: () -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    onSetDefault: () -> Unit
 ) {
     Card(
         modifier = Modifier
@@ -197,8 +206,21 @@ private fun ProfileItem(
                     color = DarkroomRedDim,
                     fontSize = 11.sp
                 )
+                if (isDefault) {
+                    Text(
+                        text = "★ Par défaut",
+                        color = DarkroomRedBright,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
             Row {
+                if (!isDefault) {
+                    TextButton(onClick = onSetDefault) {
+                        Text("★", color = DarkroomRedDim, fontSize = 18.sp)
+                    }
+                }
                 TextButton(onClick = onEdit) {
                     Text("Edit", color = DarkroomRedBright, fontSize = 18.sp)
                 }

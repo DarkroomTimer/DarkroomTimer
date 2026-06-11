@@ -98,6 +98,11 @@ class PreferenceManager internal constructor(context: Context) {
         get() = prefs.getInt(KEY_ENLARGER_PROFILE_ID, 0)
         set(value) = prefs.edit {putInt(KEY_ENLARGER_PROFILE_ID, value)}
 
+    // Development Profile Settings
+    var defaultDevelopmentProfileId: Long
+        get() = prefs.getLong(KEY_DEFAULT_DEVELOPMENT_PROFILE_ID, -1L)
+        set(value) = prefs.edit { putLong(KEY_DEFAULT_DEVELOPMENT_PROFILE_ID, value) }
+
     // Luminosity Settings
     var luminosityMode: String
         get() = prefs.getString(KEY_LUMINOSITY_MODE, "ADAPTIVE") ?: "ADAPTIVE"
@@ -156,6 +161,7 @@ class PreferenceManager internal constructor(context: Context) {
         private const val KEY_BLUETOOTH_DEVICE_NAME = "pref_bluetooth_device_name"
 
         private const val KEY_ENLARGER_PROFILE_ID = "pref_enlarger_profile_id"
+        private const val KEY_DEFAULT_DEVELOPMENT_PROFILE_ID = "pref_default_development_profile_id"
 
         private const val KEY_LUMINOSITY_MODE = "pref_luminosity_mode"
         private const val KEY_LUMINOSITY_MIN = "pref_luminosity_min"

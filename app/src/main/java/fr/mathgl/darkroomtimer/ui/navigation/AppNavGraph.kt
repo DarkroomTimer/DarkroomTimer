@@ -18,8 +18,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -32,6 +34,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import fr.mathgl.darkroomtimer.development.DevelopmentListViewModel
+import fr.mathgl.darkroomtimer.storage.PreferenceManager
 import fr.mathgl.darkroomtimer.storage.room.AppDatabase
 import fr.mathgl.darkroomtimer.ui.CountdownScreen
 import fr.mathgl.darkroomtimer.ui.DevelopmentFlowViewModel
@@ -142,11 +145,15 @@ fun AppNavGraph() {
                         }
                         val devVM: DevelopmentFlowViewModel = viewModel(devGraphEntry)
                         val selectedProfile by devVM.selectedProfile.collectAsState()
+                        val context = LocalContext.current
+                        val prefManager = remember { PreferenceManager.getInstance(context) }
 
                         DevelopmentLaunchScreen(
                             initialProfile = selectedProfile,
+                            defaultProfileId = prefManager.defaultDevelopmentProfileId,
                             onLaunchSession = { profile ->
                                 devVM.startSession(profile)
+                                devVM.sessionStart()
                                 navController.navigate(AppRoutes.DEVELOPMENT_SESSION)
                             },
                             onSelectProfile = {
@@ -160,8 +167,12 @@ fun AppNavGraph() {
                             navController.getBackStackEntry(AppRoutes.DEVELOPMENT_GRAPH)
                         }
                         val devVM: DevelopmentFlowViewModel = viewModel(devGraphEntry)
+                        val context = LocalContext.current
+                        val prefManager = remember { PreferenceManager.getInstance(context) }
+                        var defaultProfileId by remember { mutableStateOf(prefManager.defaultDevelopmentProfileId) }
 
                         DevelopmentProfileListScreen(
+                            defaultProfileId = defaultProfileId,
                             onSelectProfile = { profile ->
                                 devVM.setSelectedProfile(profile)
                                 navController.popBackStack()
@@ -173,6 +184,10 @@ fun AppNavGraph() {
                             onNewProfile = {
                                 devVM.setEditingProfile(null)
                                 navController.navigate(AppRoutes.DEVELOPMENT_PROFILE_EDITOR)
+                            },
+                            onSetDefault = { id ->
+                                prefManager.defaultDevelopmentProfileId = id
+                                defaultProfileId = id
                             },
                             onBack = {
                                 navController.popBackStack()

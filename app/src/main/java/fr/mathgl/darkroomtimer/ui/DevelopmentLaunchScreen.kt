@@ -29,6 +29,7 @@ import kotlinx.coroutines.flow.first
 @Composable
 fun DevelopmentLaunchScreen(
     initialProfile: DevelopmentProfile?,
+    defaultProfileId: Long,
     onLaunchSession: (DevelopmentProfile) -> Unit,
     onSelectProfile: () -> Unit
 ) {
@@ -36,19 +37,22 @@ fun DevelopmentLaunchScreen(
     var resolvedProfile by remember { mutableStateOf(initialProfile) }
     var isLoading by remember { mutableStateOf(initialProfile == null) }
 
-    LaunchedEffect(initialProfile) {
+    LaunchedEffect(initialProfile, defaultProfileId) {
         if (initialProfile != null) {
             resolvedProfile = initialProfile
             isLoading = false
         } else {
             isLoading = true
-            val db = AppDatabase.getDatabase(
+            val dao = AppDatabase.getDatabase(
                 context.applicationContext as Application,
                 CoroutineScope(Dispatchers.Default)
-            )
-            val entities = db.developmentDao().getAllProfiles().first()
-            val profiles = entities.map { it.toDomain() }.sortedBy { it.name }
-            resolvedProfile = profiles.firstOrNull()
+            ).developmentDao()
+            val defaultEntity = if (defaultProfileId != -1L) dao.getProfileById(defaultProfileId) else null
+            resolvedProfile = if (defaultEntity != null) {
+                defaultEntity.toDomain()
+            } else {
+                dao.getAllProfiles().first().map { it.toDomain() }.sortedBy { it.name }.firstOrNull()
+            }
             isLoading = false
         }
     }
@@ -135,6 +139,14 @@ fun DevelopmentLaunchScreen(
                             fontSize = 14.sp,
                             color = DarkroomRedDim
                         )
+                        if (profile.id == defaultProfileId) {
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "★ Profil par défaut",
+                                fontSize = 11.sp,
+                                color = DarkroomRedDim
+                            )
+                        }
                         if (profile.isNotEmpty()) {
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
