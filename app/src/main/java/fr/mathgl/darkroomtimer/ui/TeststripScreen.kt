@@ -71,6 +71,10 @@ fun TeststripScreen(
 ) {
     val state by viewModel.uiState.collectAsState()
 
+    LaunchedEffect(state.isSessionComplete) {
+        if (state.isSessionComplete) viewModel.abandon()
+    }
+
     if (state.sessionState == TeststripState.INIT) {
         Column(
             modifier = Modifier
