@@ -292,8 +292,10 @@ fun TeststripScreen(
 
             val lazyListState = rememberLazyListState()
 
-            LaunchedEffect(state.currentPatchIndex) {
-                lazyListState.animateScrollToItem(maxOf(0, state.currentPatchIndex - 1))
+            val scrollToIndex = if (state.sessionState == TeststripState.BETWEEN_PATCHES)
+                state.selectedPatchIndex else state.currentPatchIndex
+            LaunchedEffect(scrollToIndex) {
+                lazyListState.animateScrollToItem(maxOf(0, scrollToIndex - 1))
             }
 
             LazyRow(
@@ -309,7 +311,10 @@ fun TeststripScreen(
                         timeMs = timeMs,
                         differentialMs = state.differentialTimesMs[index],
                         isExposed = index in state.exposedPatches,
-                        isCurrent = index == state.currentPatchIndex,
+                        isCurrent = if (state.sessionState == TeststripState.BETWEEN_PATCHES)
+                            index == state.selectedPatchIndex
+                        else
+                            index == state.currentPatchIndex,
                         modifier = Modifier
                             .width(110.dp)
                             .fillParentMaxHeight()
@@ -369,34 +374,27 @@ fun TeststripScreen(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     OutlinedButton(
-                        onClick = { viewModel.adjustIncrement(-1) },
+                        onClick = { viewModel.selectPreviousPatch() },
                         modifier = Modifier.weight(1f).height(56.dp),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = DarkroomRedDim),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = DarkroomRedMedium),
                         border = BorderStroke(1.dp, DarkroomRedFaint)
                     ) {
-                        Text("-", fontSize = 24.sp)
-                    }
-                    Button(
-                        onClick = { viewModel.restartCurrentPatch() },
-                        modifier = Modifier.weight(1f).height(56.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = DarkroomRedBright)
-                    ) {
-                        Text("RECOMMENCER", fontSize = 14.sp)
+                        Text("◀", fontSize = 20.sp)
                     }
                     Button(
                         onClick = { viewModel.nextPatch() },
-                        modifier = Modifier.weight(1f).height(56.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = DarkroomRedMedium)
+                        modifier = Modifier.weight(3f).height(56.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = DarkroomRedBright)
                     ) {
-                        Text("SUIVANT →", fontSize = 14.sp)
+                        Text("GO", fontSize = 20.sp, fontWeight = FontWeight.Bold)
                     }
                     OutlinedButton(
-                        onClick = { viewModel.adjustIncrement(1) },
+                        onClick = { viewModel.selectNextPatch() },
                         modifier = Modifier.weight(1f).height(56.dp),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = DarkroomRedDim),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = DarkroomRedMedium),
                         border = BorderStroke(1.dp, DarkroomRedFaint)
                     ) {
-                        Text("+", fontSize = 24.sp)
+                        Text("▶", fontSize = 20.sp)
                     }
                 }
 

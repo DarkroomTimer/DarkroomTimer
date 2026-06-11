@@ -89,14 +89,10 @@ class TeststripSession(
         state = BETWEEN_PATCHES
     }
 
-    fun nextPatch() {
+    fun nextPatch(targetIndex: Int) {
         check(state == BETWEEN_PATCHES) { "nextPatch() called from state $state" }
-        val nextIndex = if (currentPatchIndexValue == engine.patchCount - 1) 0 else currentPatchIndexValue + 1
-        if (nextIndex == 0 && currentPatchIndexValue == engine.patchCount - 1) {
-            exposedPatches.clear()
-        }
-        currentPatchIndexValue = nextIndex
-        exposedPatches.remove(currentPatchIndexValue)
+        currentPatchIndexValue = targetIndex
+        exposedPatches.remove(targetIndex)
         state = EXPOSING
         exposureStartAt = clock()
         elapsedBeforePause = 0L

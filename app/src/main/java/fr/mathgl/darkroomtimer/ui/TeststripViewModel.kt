@@ -26,6 +26,7 @@ import kotlinx.coroutines.launch
 data class TeststripUiState(
     val sessionState: TeststripState,
     val currentPatchIndex: Int,
+    val selectedPatchIndex: Int,
     val patchCount: Int,
     val patchTimesMs: List<Long>,
     val differentialTimesMs: List<Long>,
@@ -54,9 +55,12 @@ class TeststripViewModel(
     private var audioSystem: AudioSystem? = null
     private lateinit var relaySystem: RelaySystem
 
+    private var selectedPatchIndex: Int = 0
+
     private val _uiState = MutableStateFlow(TeststripUiState(
         sessionState = TeststripState.INIT,
         currentPatchIndex = -1,
+        selectedPatchIndex = 0,
         patchCount = 6,
         patchTimesMs = emptyList(),
         differentialTimesMs = emptyList(),
@@ -111,6 +115,7 @@ class TeststripViewModel(
         _uiState.update { it.copy(
             sessionState = session.state,
             currentPatchIndex = session.currentPatchIndex,
+            selectedPatchIndex = selectedPatchIndex,
             patchTimesMs = engine.patchTimesMs,
             differentialTimesMs = engine.differentialTimesMs,
             exposedPatches = (0 until engine.patchCount).filter { i -> session.isPatchExposed(i) }.toSet(),
@@ -168,8 +173,8 @@ class TeststripViewModel(
         viewModelScope.launch { shutOffRelays("finish exposure") }
         audioSystem?.stopTeststripPatch()
         session.finishExposure()
+        selectedPatchIndex = (session.currentPatchIndex + 1) % engine.patchCount
 
-        // Check if session is complete or if we need to wrap around to next patch
         if (session.isSessionComplete) {
             audioSystem?.stopTeststripSession()
         }
@@ -178,16 +183,21 @@ class TeststripViewModel(
 
     fun nextPatch() {
         if (session.state != TeststripState.BETWEEN_PATCHES) return
-        session.nextPatch()
+        session.nextPatch(selectedPatchIndex)
         updateUiState()
         startExposure()
     }
 
-    fun restartCurrentPatch() {
+    fun selectPreviousPatch() {
         if (session.state != TeststripState.BETWEEN_PATCHES) return
-        session.restartCurrentPatch()
+        selectedPatchIndex = (selectedPatchIndex - 1 + engine.patchCount) % engine.patchCount
         updateUiState()
-        startExposure()
+    }
+
+    fun selectNextPatch() {
+        if (session.state != TeststripState.BETWEEN_PATCHES) return
+        selectedPatchIndex = (selectedPatchIndex + 1) % engine.patchCount
+        updateUiState()
     }
 
     fun abandon() {
@@ -198,6 +208,7 @@ class TeststripViewModel(
         viewModelScope.launch { shutOffRelays("abandon") }
         audioSystem?.stop()
         session.abandon()
+        selectedPatchIndex = 0
         updateUiState()
     }
 

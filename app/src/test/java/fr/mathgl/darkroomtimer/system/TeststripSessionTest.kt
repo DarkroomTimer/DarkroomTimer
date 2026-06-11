@@ -82,7 +82,7 @@ class TeststripSessionTest {
     fun `nextPatch starts exposure for next patch`() {
         session.start()
         session.finishExposure()
-        session.nextPatch()
+        session.nextPatch(1)
         assertEquals(TeststripState.EXPOSING, session.state)
         assertEquals(1, session.currentPatchIndex)
         assertEquals(10079L, session.currentExposureTimeMs)
@@ -94,12 +94,12 @@ class TeststripSessionTest {
         session.start()
         session.finishExposure()
         // Expose remaining 5 patches using nextPatch
-        repeat(5) {
-            session.nextPatch()
+        repeat(5) { i ->
+            session.nextPatch(i + 1)
             session.finishExposure()
         }
-        // Now at patch 5 (last), call nextPatch -> should wrap to patch 0
-        session.nextPatch()
+        // Now at patch 5 (last), call nextPatch(0) -> wrap to patch 0
+        session.nextPatch(0)
         assertEquals(TeststripState.EXPOSING, session.state)
         assertEquals(0, session.currentPatchIndex)
     }
@@ -112,8 +112,8 @@ class TeststripSessionTest {
         session.start()
         session.finishExposure()
         // Expose remaining 5 patches using nextPatch
-        repeat(5) {
-            session.nextPatch()
+        repeat(5) { i ->
+            session.nextPatch(i + 1)
             session.finishExposure()
         }
         assertEquals(TeststripState.BETWEEN_PATCHES, session.state)
@@ -126,11 +126,11 @@ class TeststripSessionTest {
         session.start()
         session.finishExposure()
         // Expose remaining 5 patches using nextPatch
-        repeat(5) {
-            session.nextPatch()
+        repeat(5) { i ->
+            session.nextPatch(i + 1)
             session.finishExposure()
         }
-        session.nextPatch()  // This should start a new session, wrapping to patch 0
+        session.nextPatch(0)  // wrap back to patch 0
         assertEquals(TeststripState.EXPOSING, session.state)
         assertEquals(0, session.currentPatchIndex)
         assertFalse(session.isSessionComplete)
@@ -211,7 +211,7 @@ class TeststripSessionTest {
     @Test(expected = IllegalStateException::class)
     fun `nextPatch during exposure throws`() {
         session.start()
-        session.nextPatch()
+        session.nextPatch(0)
     }
 
     @Test(expected = IllegalStateException::class)
