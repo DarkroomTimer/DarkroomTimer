@@ -12,6 +12,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -85,14 +86,26 @@ fun TeststripScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text(
-                text = "Teststrip",
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
-                color = DarkroomRedBright
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Teststrip",
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = DarkroomRedBright
+                )
+                TextButton(
+                    onClick = {},
+                    modifier = Modifier.alpha(0f)
+                ) {
+                    Text("← Retour")
+                }
+            }
 
-DigitTimePicker(
+            DigitTimePicker(
                 valueMs = state.baseTimeMs,
                 onValueChange = { viewModel.updateBaseTime(it) },
                 format = DigitTimeFormat.MINUTES_SECONDS_TENTHS,
