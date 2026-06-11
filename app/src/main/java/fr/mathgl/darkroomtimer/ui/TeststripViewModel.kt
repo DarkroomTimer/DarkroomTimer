@@ -277,7 +277,7 @@ class TeststripViewModel(
 
     private fun startExposure() {
         if (session.state != TeststripState.EXPOSING) return
-        val durationMs = session.currentExposureTimeMs
+        val durationMs = session.remainingTimeMs
         viewModelScope.launch {
             _uiState.update { it.copy(errorMessage = null) }
             relaySystem.startTimedExposure(durationMs).onFailure { e ->
