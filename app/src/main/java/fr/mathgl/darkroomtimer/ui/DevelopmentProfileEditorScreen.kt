@@ -21,6 +21,7 @@ import fr.mathgl.darkroomtimer.development.DevelopmentProfile
 import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedBright
 import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedDim
 import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedFaint
+import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedMedium
 import fr.mathgl.darkroomtimer.ui.theme.DarkroomSurface
 import fr.mathgl.darkroomtimer.ui.theme.DarkroomSurfaceElevated
 import fr.mathgl.darkroomtimer.development.DevelopmentNavigationMode
@@ -98,23 +99,14 @@ fun DevelopmentProfileEditorScreen(
             )
             Spacer(modifier = Modifier.height(8.dp))
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                NavigationModeButton(
-                    modifier = Modifier.weight(1f).height(48.dp),
-                    selected = navigationMode == DevelopmentNavigationMode.MANUAL,
-                    label = "Manuel",
-                    onClick = { navigationMode = DevelopmentNavigationMode.MANUAL }
-                )
-                NavigationModeButton(
-                    modifier = Modifier.weight(1f).height(48.dp),
-                    selected = navigationMode == DevelopmentNavigationMode.AUTOMATIC,
-                    label = "Automatique",
-                    onClick = { navigationMode = DevelopmentNavigationMode.AUTOMATIC }
-                )
-            }
+            SegmentedControl(
+                options = listOf(
+                    DevelopmentNavigationMode.MANUAL to "Manuel",
+                    DevelopmentNavigationMode.AUTOMATIC to "Automatique"
+                ),
+                selectedOption = navigationMode,
+                onOptionSelected = { navigationMode = it }
+            )
 
             Spacer(modifier = Modifier.height(24.dp))
 
@@ -202,24 +194,6 @@ fun DevelopmentProfileEditorScreen(
             },
             onDismiss = { showStepDialog = false }
         )
-    }
-}
-
-@Composable
-private fun NavigationModeButton(
-    modifier: Modifier = Modifier,
-    selected: Boolean,
-    label: String,
-    onClick: () -> Unit
-) {
-    Button(
-        onClick = onClick,
-        modifier = modifier,
-        colors = ButtonDefaults.buttonColors(
-            containerColor = if (selected) DarkroomRedBright else DarkroomRedDim
-        )
-    ) {
-        Text(label, fontSize = 14.sp, color = if (selected) Color.White else DarkroomRedDim)
     }
 }
 
