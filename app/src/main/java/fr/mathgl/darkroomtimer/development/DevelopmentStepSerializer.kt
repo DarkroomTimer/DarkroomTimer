@@ -1,5 +1,6 @@
 package fr.mathgl.darkroomtimer.development
 
+import android.util.Log
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonDeserializationContext
@@ -18,6 +19,8 @@ import java.lang.reflect.Type
  */
 object DevelopmentStepSerializer {
 
+    private const val TAG = "DevelopmentStepSerializer"
+
     private val gson: Gson = GsonBuilder()
         .registerTypeAdapter(DevelopmentStep::class.java, DevelopmentStepTypeAdapter)
         .create()
@@ -30,8 +33,10 @@ object DevelopmentStepSerializer {
         return try {
             gson.fromJson(json, Array<DevelopmentStep>::class.java).toList()
         } catch (e: JsonParseException) {
+            Log.e(TAG, "Failed to deserialize development steps", e)
             emptyList()
         } catch (e: Exception) {
+            Log.e(TAG, "Failed to deserialize development steps", e)
             emptyList()
         }
     }

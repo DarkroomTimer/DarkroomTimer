@@ -54,7 +54,10 @@ class StorageServiceTest {
 
     @Test
     fun `importBackup should succeed with valid JSON`() = runBlocking {
-        // Arrange
+        // Arrange: stub String properties so the rollback snapshot doesn't NPE
+        whenever(preferenceManager.buzzerVolume).thenReturn("MEDIUM")
+        whenever(preferenceManager.teststripMode).thenReturn("FIXED")
+
         val validJson = """
             {
                 "version": 1,

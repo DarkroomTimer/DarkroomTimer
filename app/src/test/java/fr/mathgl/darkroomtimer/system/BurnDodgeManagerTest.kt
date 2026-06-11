@@ -201,6 +201,34 @@ class BurnDodgeManagerTest {
         assertNull(manager.adjustmentTimeMsForEntry(999))
     }
 
+    @Test(expected = IllegalArgumentException::class)
+    fun `throws when numerator is zero`() {
+        manager = BurnDodgeManager()
+
+        manager.addEntry("Zone", BurnDodgeType.BURN, numerator = 0, denominator = 3, contrastGrade = ContrastGrade.GRADE_2)
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun `throws when denominator is zero`() {
+        manager = BurnDodgeManager()
+
+        manager.addEntry("Zone", BurnDodgeType.BURN, numerator = 1, denominator = 0, contrastGrade = ContrastGrade.GRADE_2)
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun `throws when numerator is negative`() {
+        manager = BurnDodgeManager()
+
+        manager.addEntry("Zone", BurnDodgeType.BURN, numerator = -1, denominator = 3, contrastGrade = ContrastGrade.GRADE_2)
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun `throws when denominator is negative`() {
+        manager = BurnDodgeManager()
+
+        manager.addEntry("Zone", BurnDodgeType.BURN, numerator = 1, denominator = -3, contrastGrade = ContrastGrade.GRADE_2)
+    }
+
     @Test
     fun `transitions from not full to full when adding last entry`() {
         manager = BurnDodgeManager()

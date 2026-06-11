@@ -1,5 +1,6 @@
 package fr.mathgl.darkroomtimer.system
 
+import android.util.Log
 import fr.mathgl.darkroomtimer.system.drivers.DemoRelayController
 import fr.mathgl.darkroomtimer.system.drivers.ESPhomeHttpRelayController
 import fr.mathgl.darkroomtimer.system.drivers.NullRelayController
@@ -52,7 +53,10 @@ data class RelaySystemConfigFlat(
             port     = enlargerPort,
             entityId = enlargerEntityId
         )
-        else           -> NullRelayController()  // "NULL" and fallback
+        else           -> {
+            if (enlargerType != "NULL") Log.w(TAG, "Unknown enlarger type '$enlargerType', using NullRelayController")
+            NullRelayController()
+        }
     }
 
     private fun buildSafelight(): RelayController {
@@ -73,7 +77,10 @@ data class RelaySystemConfigFlat(
                     port     = enlargerPort,
                     entityId = safelightEntityId
                 )
-                else -> NullRelayController()
+                else -> {
+                    if (enlargerType != "NULL") Log.w(TAG, "Unknown enlarger type '$enlargerType' for same-device safelight, using NullRelayController")
+                    NullRelayController()
+                }
             }
         }
         return when (safelightType) {
@@ -91,7 +98,14 @@ data class RelaySystemConfigFlat(
                 port     = safelightPort,
                 entityId = safelightEntityId
             )
-            else           -> NullRelayController()
+            else           -> {
+                if (safelightType != "NULL") Log.w(TAG, "Unknown safelight type '$safelightType', using NullRelayController")
+                NullRelayController()
+            }
         }
+    }
+
+    companion object {
+        private const val TAG = "RelaySystemConfigFlat"
     }
 }

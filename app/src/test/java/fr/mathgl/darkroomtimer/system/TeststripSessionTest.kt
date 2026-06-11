@@ -246,4 +246,18 @@ class TeststripSessionTest {
         fakeNow = 100000L  // lots of time passes
         assertEquals(5000L, session.remainingTimeMs)
     }
+
+    @Test
+    fun `clock going backward does not produce negative remaining time`() {
+        // With a monotonic clock (elapsedRealtime), this simulates what would happen
+        // if the clock source were to jump backward (e.g. a faulty mock or system glitch).
+        // remainingTimeMs must clamp to 0 rather than go negative.
+        session.start()
+        fakeNow = 6000L   // 6s elapsed, 2s remain
+        assertEquals(2000L, session.remainingTimeMs)
+
+        fakeNow = 4000L   // clock goes backward
+        val remaining = session.remainingTimeMs
+        assertTrue("remainingTimeMs must not be negative, was $remaining", remaining >= 0)
+    }
 }

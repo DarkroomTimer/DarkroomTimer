@@ -23,7 +23,7 @@ data class DevelopmentSessionStateSnapshot(
  */
 class DevelopmentSession(
     private val profile: DevelopmentProfile,
-    private val clock: () -> Long = { System.currentTimeMillis() }
+    private val clock: () -> Long = { android.os.SystemClock.elapsedRealtime() }
 ) {
     private val _stateFlow = MutableStateFlow(initialState())
     val stateFlow: StateFlow<DevelopmentSessionStateSnapshot> = _stateFlow.asStateFlow()

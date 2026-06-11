@@ -7,7 +7,7 @@ enum class TeststripState { INIT, EXPOSING, BETWEEN_PATCHES, PAUSED }
 
 class TeststripSession(
     private val engine: TeststripEngine,
-    private val clock: () -> Long = { System.currentTimeMillis() }
+    private val clock: () -> Long = { android.os.SystemClock.elapsedRealtime() }
 ) {
     var state: TeststripState = INIT
         private set

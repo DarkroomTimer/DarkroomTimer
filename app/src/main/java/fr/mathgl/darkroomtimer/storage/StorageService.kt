@@ -66,6 +66,7 @@ class StorageService(
     /**
      * Imports settings and profiles from a JSON string.
      * Throws [IllegalArgumentException] if validation fails.
+     * Settings are rolled back if profile insertion fails.
      */
     suspend fun importBackup(json: String) {
         val backupData = try {
@@ -76,23 +77,60 @@ class StorageService(
 
         validateBackupData(backupData)
 
-        // Apply settings
-        val s = backupData.settings
-        preferenceManager.defaultExposureMs = (s["default_exposure_ms"] as? Number)?.toLong() ?: preferenceManager.defaultExposureMs
-        preferenceManager.defaultContrastGradeIndex = (s["default_contrast_grade_index"] as? Number)?.toInt() ?: preferenceManager.defaultContrastGradeIndex
-        preferenceManager.defaultStopNumerator = (s["default_stop_numerator"] as? Number)?.toInt() ?: preferenceManager.defaultStopNumerator
-        preferenceManager.defaultStopDenominator = (s["default_stop_denominator"] as? Number)?.toInt() ?: preferenceManager.defaultStopDenominator
-        preferenceManager.metronomeEnabled = s["metronome_enabled"] as? Boolean ?: preferenceManager.metronomeEnabled
-        preferenceManager.metronomeCadenceMs = (s["metronome_cadence_ms"] as? Number)?.toInt() ?: preferenceManager.metronomeCadenceMs
-        preferenceManager.buzzerVolume = s["buzzer_volume"] as? String ?: preferenceManager.buzzerVolume
-        preferenceManager.teststripMode = s["teststrip_mode"] as? String ?: preferenceManager.teststripMode
-        preferenceManager.teststripPatchCount = (s["teststrip_patch_count"] as? Number)?.toInt() ?: preferenceManager.teststripPatchCount
+        // Snapshot current settings before applying, so we can roll back on partial failure
+        val snapshot = PrefsSnapshot(
+            defaultExposureMs        = preferenceManager.defaultExposureMs,
+            defaultContrastGradeIndex = preferenceManager.defaultContrastGradeIndex,
+            defaultStopNumerator     = preferenceManager.defaultStopNumerator,
+            defaultStopDenominator   = preferenceManager.defaultStopDenominator,
+            metronomeEnabled         = preferenceManager.metronomeEnabled,
+            metronomeCadenceMs       = preferenceManager.metronomeCadenceMs,
+            buzzerVolume             = preferenceManager.buzzerVolume,
+            teststripMode            = preferenceManager.teststripMode,
+            teststripPatchCount      = preferenceManager.teststripPatchCount
+        )
 
-        // Apply profiles
-        backupData.enlarger_profiles.forEach { profile ->
-            profileDao.insert(profile)
+        try {
+            val s = backupData.settings
+            preferenceManager.defaultExposureMs = (s["default_exposure_ms"] as? Number)?.toLong() ?: preferenceManager.defaultExposureMs
+            preferenceManager.defaultContrastGradeIndex = (s["default_contrast_grade_index"] as? Number)?.toInt() ?: preferenceManager.defaultContrastGradeIndex
+            preferenceManager.defaultStopNumerator = (s["default_stop_numerator"] as? Number)?.toInt() ?: preferenceManager.defaultStopNumerator
+            preferenceManager.defaultStopDenominator = (s["default_stop_denominator"] as? Number)?.toInt() ?: preferenceManager.defaultStopDenominator
+            preferenceManager.metronomeEnabled = s["metronome_enabled"] as? Boolean ?: preferenceManager.metronomeEnabled
+            preferenceManager.metronomeCadenceMs = (s["metronome_cadence_ms"] as? Number)?.toInt() ?: preferenceManager.metronomeCadenceMs
+            preferenceManager.buzzerVolume = s["buzzer_volume"] as? String ?: preferenceManager.buzzerVolume
+            preferenceManager.teststripMode = s["teststrip_mode"] as? String ?: preferenceManager.teststripMode
+            preferenceManager.teststripPatchCount = (s["teststrip_patch_count"] as? Number)?.toInt() ?: preferenceManager.teststripPatchCount
+
+            backupData.enlarger_profiles.forEach { profile ->
+                profileDao.insert(profile)
+            }
+        } catch (e: Exception) {
+            // Restore preferences to pre-import state
+            preferenceManager.defaultExposureMs = snapshot.defaultExposureMs
+            preferenceManager.defaultContrastGradeIndex = snapshot.defaultContrastGradeIndex
+            preferenceManager.defaultStopNumerator = snapshot.defaultStopNumerator
+            preferenceManager.defaultStopDenominator = snapshot.defaultStopDenominator
+            preferenceManager.metronomeEnabled = snapshot.metronomeEnabled
+            preferenceManager.metronomeCadenceMs = snapshot.metronomeCadenceMs
+            preferenceManager.buzzerVolume = snapshot.buzzerVolume
+            preferenceManager.teststripMode = snapshot.teststripMode
+            preferenceManager.teststripPatchCount = snapshot.teststripPatchCount
+            throw e
         }
     }
+
+    private data class PrefsSnapshot(
+        val defaultExposureMs: Long,
+        val defaultContrastGradeIndex: Int,
+        val defaultStopNumerator: Int,
+        val defaultStopDenominator: Int,
+        val metronomeEnabled: Boolean,
+        val metronomeCadenceMs: Int,
+        val buzzerVolume: String,
+        val teststripMode: String,
+        val teststripPatchCount: Int
+    )
 
     private fun validateBackupData(data: BackupData) {
         if (data.version > currentVersion) {

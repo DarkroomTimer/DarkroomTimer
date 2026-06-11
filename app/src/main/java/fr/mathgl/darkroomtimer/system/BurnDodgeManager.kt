@@ -32,6 +32,8 @@ class BurnDodgeManager(
         contrastGrade: ContrastGrade
     ): BurnDodgeEntry {
         check(entries.size < MAX_ENTRIES) { "Maximum $MAX_ENTRIES entries reached" }
+        require(numerator > 0) { "numerator must be > 0" }
+        require(denominator > 0) { "denominator must be > 0" }
         val entry = BurnDodgeEntry(
             id = nextId++,
             label = label.take(MAX_LABEL_LENGTH),
