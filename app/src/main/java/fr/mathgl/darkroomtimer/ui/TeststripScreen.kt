@@ -99,12 +99,11 @@ fun TeststripScreen(
                 color = DarkroomRedBright
             )
 
-            Text("Temps de base:", fontSize = 14.sp, color = DarkroomRedDim)
             DigitTimePicker(
                 valueMs = state.baseTimeMs,
                 onValueChange = { viewModel.updateBaseTime(it) },
                 format = DigitTimeFormat.MINUTES_SECONDS_TENTHS,
-                digitHeight = 52.dp
+                digitHeight = 80.dp
             )
 
             Row(
@@ -221,65 +220,13 @@ fun TeststripScreen(
                 }
             }
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                val stateRows = sessionStateText(
-                    state.sessionState,
-                    state.currentPatchIndex,
-                    state.patchCount,
-                    state.mode,
-                    state.incrementType,
-                    state.numerator,
-                    state.denominator,
-                    state.incrementMs
-                )
-
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    stateRows.filterIsInstance<RowContent.ModeBadge>().firstOrNull()?.let { badge ->
-                        RowContentText(badge.mode.name)
-                    }
-                    stateRows.filterIsInstance<RowContent.IncrementBadge>().firstOrNull()?.let { badge ->
-                        RowContentText(
-                            when (badge.incrementType) {
-                                IncrementType.F_STOP -> "${badge.numerator}/${badge.denominator} stop"
-                                IncrementType.SECONDS -> TeststripEngine.formatStopTime(badge.incrementMs)
-                            }
-                        )
-                    }
-                    stateRows.filterIsInstance<RowContent.Text>().firstOrNull()?.let { textRow ->
-                        Text(
-                            text = textRow.text,
-                            fontSize = 16.sp,
-                            color = when (state.sessionState) {
-                                TeststripState.EXPOSING -> DarkroomRedBright
-                                TeststripState.BETWEEN_PATCHES -> DarkroomRedMedium
-                                else -> DarkroomRedDim
-                            }
-                        )
-                    }
-                }
-                val errorMsg = state.errorMessage
-                if (errorMsg != null) {
-                    Text(
-                        text = errorMsg,
-                        fontSize = 14.sp,
-                        color = DarkroomRedBright,
-                        fontWeight = FontWeight.Medium
-                    )
-                } else if (state.isSessionComplete) {
-                    Text(
-                        text = "COMPLÉTÉ ✓",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = DarkroomRedMedium
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
+            DigitTimePicker(
+                valueMs = state.remainingTimeMs,
+                onValueChange = {},
+                enabled = false,
+                format = DigitTimeFormat.MINUTES_SECONDS_TENTHS,
+                digitHeight = 80.dp
+            )
 
             val lazyListState = rememberLazyListState()
 
@@ -313,51 +260,55 @@ fun TeststripScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                val configText = when (state.incrementType) {
+                    IncrementType.F_STOP -> "${state.mode.name} - ${state.numerator}/${state.denominator} stop"
+                    IncrementType.SECONDS -> "${state.mode.name} - ${TeststripEngine.formatStopTime(state.incrementMs)}"
+                }
+                Text(configText, fontSize = 14.sp, color = DarkroomRedDim)
+
+                val statusText = state.errorMessage
+                    ?: if (state.isSessionComplete) "COMPLÉTÉ ✓"
+                    else when (state.sessionState) {
+                        TeststripState.EXPOSING -> "Patch ${state.currentPatchIndex + 1} / ${state.patchCount}"
+                        TeststripState.BETWEEN_PATCHES -> "Patch ${state.currentPatchIndex + 1} terminé"
+                        TeststripState.PAUSED -> "PAUSÉ"
+                        else -> ""
+                    }
+                Text(
+                    text = statusText,
+                    fontSize = 16.sp,
+                    color = when {
+                        state.errorMessage != null -> DarkroomRedBright
+                        state.isSessionComplete -> DarkroomRedMedium
+                        state.sessionState == TeststripState.EXPOSING -> DarkroomRedBright
+                        else -> DarkroomRedDim
+                    }
+                )
+            }
 
             if (state.sessionState == TeststripState.EXPOSING) {
-                DigitTimePicker(
-                    valueMs = state.remainingTimeMs,
-                    onValueChange = {},
-                    enabled = false,
-                    format = DigitTimeFormat.MINUTES_SECONDS_TENTHS,
-                    digitHeight = 80.dp
-                )
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                Button(
+                    onClick = { viewModel.pause() },
+                    modifier = Modifier.fillMaxWidth().height(56.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = DarkroomRedDim)
                 ) {
-                    Button(
-                        onClick = { viewModel.pause() },
-                        modifier = Modifier.weight(1f).height(56.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = DarkroomRedDim)
-                    ) {
-                        Text("PAUSE", fontSize = 18.sp)
-                    }
+                    Text("PAUSE", fontSize = 18.sp)
                 }
             }
 
             if (state.sessionState == TeststripState.PAUSED) {
-                Spacer(modifier = Modifier.height(24.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                Button(
+                    onClick = { viewModel.resume() },
+                    modifier = Modifier.fillMaxWidth().height(56.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = DarkroomRedBright)
                 ) {
-                    Button(
-                        onClick = { viewModel.resume() },
-                        modifier = Modifier.weight(1f).height(56.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = DarkroomRedBright)
-                    ) {
-                        Text("REPRENDRE", fontSize = 18.sp)
-                    }
+                    Text("REPRENDRE", fontSize = 18.sp)
                 }
             }
-
-            Spacer(modifier = Modifier.height(16.dp))
 
             if (state.sessionState == TeststripState.BETWEEN_PATCHES) {
                 Row(
@@ -389,8 +340,6 @@ fun TeststripScreen(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
-
                 OutlinedButton(
                     onClick = { viewModel.abandon() },
                     modifier = Modifier.fillMaxWidth().height(48.dp),
@@ -400,8 +349,6 @@ fun TeststripScreen(
                     Text("Annuler", fontSize = 14.sp)
                 }
             }
-
-            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }
@@ -433,48 +380,3 @@ private fun FStopStepSelector(
     }
 }
 
-@Composable
-private fun sessionStateText(
-    state: TeststripState,
-    patchIndex: Int,
-    patchCount: Int,
-    mode: TeststripMode,
-    incrementType: IncrementType,
-    numerator: Int,
-    denominator: Int,
-    incrementMs: Long
-): List<RowContent> {
-    return when (state) {
-        TeststripState.INIT -> emptyList()
-        TeststripState.EXPOSING -> listOf(
-            RowContent.ModeBadge(mode),
-            RowContent.IncrementBadge(incrementType, numerator, denominator, incrementMs),
-            RowContent.Text("Patch ${patchIndex + 1} / $patchCount")
-        )
-        TeststripState.BETWEEN_PATCHES -> listOf(
-            RowContent.ModeBadge(mode),
-            RowContent.IncrementBadge(incrementType, numerator, denominator, incrementMs),
-            RowContent.Text("Patch ${patchIndex + 1} terminé")
-        )
-        TeststripState.PAUSED -> listOf(
-            RowContent.ModeBadge(mode),
-            RowContent.IncrementBadge(incrementType, numerator, denominator, incrementMs),
-            RowContent.Text("PAUSÉ")
-        )
-    }
-}
-
-sealed class RowContent {
-    data class ModeBadge(val mode: TeststripMode) : RowContent()
-    data class IncrementBadge(val incrementType: IncrementType, val numerator: Int, val denominator: Int, val incrementMs: Long) : RowContent()
-    data class Text(val text: String) : RowContent()
-}
-
-@Composable
-private fun RowContentText(text: String) {
-    Text(
-        text = text,
-        fontSize = 14.sp,
-        color = DarkroomRedDim
-    )
-}
