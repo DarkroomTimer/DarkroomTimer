@@ -55,6 +55,7 @@ class ToneGeneratorAudioEngine(
 ) : AudioEngine {
 
     private var toneGenerator: ToneGenerator? = null
+    private var toneGeneratorVolume: Int = -1
     private var currentThread: Thread? = null
 
     override fun playTone(frequencyHz: Int, durationMs: Int, volume: Float) {
@@ -66,11 +67,7 @@ class ToneGeneratorAudioEngine(
         val actualVolume = clampVolume(volume)
         if (actualVolume <= 0f) return
 
-        val tg = toneGenerator ?: run {
-            val newTg = ToneGenerator(AudioManager.STREAM_ALARM, (actualVolume * 100).toInt())
-            toneGenerator = newTg
-            newTg
-        }
+        val tg = obtainGenerator((actualVolume * 100).toInt())
 
         currentThread?.interrupt()
         currentThread = Thread {
@@ -91,11 +88,7 @@ class ToneGeneratorAudioEngine(
         val actualVolume = clampVolume(volume)
         if (actualVolume <= 0f) return
 
-        val tg = toneGenerator ?: run {
-            val newTg = ToneGenerator(AudioManager.STREAM_ALARM, (actualVolume * 100).toInt())
-            toneGenerator = newTg
-            newTg
-        }
+        val tg = obtainGenerator((actualVolume * 100).toInt())
 
         currentThread?.interrupt()
         currentThread = Thread {
@@ -119,6 +112,19 @@ class ToneGeneratorAudioEngine(
         stop()
         toneGenerator?.release()
         toneGenerator = null
+    }
+
+    // ToneGenerator's volume is fixed at construction: recreate it when the
+    // requested volume differs from the one the current instance was built with.
+    private fun obtainGenerator(volumeInt: Int): ToneGenerator {
+        val existing = toneGenerator
+        if (existing != null && toneGeneratorVolume == volumeInt) return existing
+
+        existing?.release()
+        val newTg = ToneGenerator(AudioManager.STREAM_ALARM, volumeInt)
+        toneGenerator = newTg
+        toneGeneratorVolume = volumeInt
+        return newTg
     }
 
     private fun clampVolume(value: Float): Float {

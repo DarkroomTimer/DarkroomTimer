@@ -84,12 +84,12 @@ class AudioPreferencesTest {
     @Test
     fun testClampsMetronomeCadenceToMin500ms() {
         `when`(mockPrefs.getInt("pref_metronome_cadence_ms", 1000)).thenReturn(100)
-        assertEquals(100, audioPrefs.metronomeCadenceMs)
+        assertEquals(500, audioPrefs.metronomeCadenceMs)
     }
 
     @Test
     fun testClampsMetronomeCadenceToMax5000ms() {
         `when`(mockPrefs.getInt("pref_metronome_cadence_ms", 1000)).thenReturn(10000)
-        assertEquals(10000, audioPrefs.metronomeCadenceMs)
+        assertEquals(5000, audioPrefs.metronomeCadenceMs)
     }
 }

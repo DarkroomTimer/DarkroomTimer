@@ -26,7 +26,8 @@ class AudioPreferences(private val prefs: SharedPreferences) : AudioSettingsProv
 
     override var metronomeCadenceMs: Int
         get() = prefs.getInt(KEY_METRONOME_CADENCE_MS, DEFAULT_METRONOME_CADENCE_MS)
-        set(value) = prefs.edit {putInt(KEY_METRONOME_CADENCE_MS, value)}
+            .coerceIn(MIN_CADENCE_MS, MAX_CADENCE_MS)
+        set(value) = prefs.edit {putInt(KEY_METRONOME_CADENCE_MS, value.coerceIn(MIN_CADENCE_MS, MAX_CADENCE_MS))}
 
     override val metronomeFrequencyHz: Int = DEFAULT_METRONOME_FREQUENCY_HZ
 
@@ -47,6 +48,9 @@ class AudioPreferences(private val prefs: SharedPreferences) : AudioSettingsProv
         private const val KEY_BUZZER_VOLUME = "pref_buzzer_volume"
 
         private const val DEFAULT_METRONOME_CADENCE_MS = 1000
+        // Mirrors MetronomeController's accepted cadence range
+        private const val MIN_CADENCE_MS = 500
+        private const val MAX_CADENCE_MS = 5000
         private const val DEFAULT_METRONOME_FREQUENCY_HZ = 250
         private const val DEFAULT_METRONOME_DURATION_MS = 25
     }
