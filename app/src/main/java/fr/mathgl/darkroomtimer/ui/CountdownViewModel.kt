@@ -45,7 +45,8 @@ data class CountdownUiState(
     val connectionState: ConnectionState = ConnectionState.Disconnected,
     val errorMessage: String? = null,
     val fStopCorrectionNumerator: Int = 0,
-    val fStopCorrectionDenominator: Int = 1
+    val fStopCorrectionDenominator: Int = 1,
+    val isMetronomeEnabled: Boolean = false
 )
 
 open class CountdownViewModel(
@@ -145,7 +146,8 @@ open class CountdownViewModel(
                 displayTime = CountdownTimer.formatTime(timer.configuredTimeMs),
                 displayTimeMs = timer.configuredTimeMs,
                 configuredTimeMs = timer.configuredTimeMs,
-                selectedGrade = prefs!!.defaultContrastGrade
+                selectedGrade = prefs!!.defaultContrastGrade,
+                isMetronomeEnabled = prefs!!.metronomeEnabled
             ) }
         } catch (e: Exception) {
             // prefs unavailable in test environment, keep hardcoded defaults
@@ -365,6 +367,14 @@ open class CountdownViewModel(
     fun clearBurnDodgeEntries() {
         burnDodgeManager.clear()
         updateBurnDodgeState()
+    }
+
+    fun toggleMetronome() {
+        val prefs = this.prefs ?: return
+        val newEnabled = !prefs.metronomeEnabled
+        val isExposureRunning = _uiState.value.timerState == TimerState.RUNNING
+        audioSystem?.setMetronomeEnabled(newEnabled, activateNow = isExposureRunning)
+        _uiState.update { it.copy(isMetronomeEnabled = newEnabled) }
     }
 
     fun toggleBurnDodgePanel() {

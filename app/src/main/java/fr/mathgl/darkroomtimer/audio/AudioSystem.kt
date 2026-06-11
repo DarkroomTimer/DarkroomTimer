@@ -153,6 +153,18 @@ class AudioSystem(
     }
 
     /**
+     * Enable or disable the metronome, persisting the preference.
+     *
+     * @param enabled Whether the metronome should be enabled
+     * @param activateNow If true, immediately start/stop the metronome (use during an active exposure)
+     */
+    fun setMetronomeEnabled(enabled: Boolean, activateNow: Boolean = false) {
+        audioSettingsProvider.isMetronomeEnabled = enabled
+        if (!enabled) stopMetronome()
+        else if (activateNow) startMetronome()
+    }
+
+    /**
      * Set the metronome cadence (time between clicks).
      *
      * @param newCadenceMs The new cadence in milliseconds

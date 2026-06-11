@@ -4,6 +4,9 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.MusicNote
+import androidx.compose.material.icons.filled.MusicOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -108,12 +111,14 @@ fun CountdownScreen(
             enlargerOverride = state.enlargerOverride,
             safelightOverride = state.safelightOverride,
             overrideEnabled = state.timerState != TimerState.RUNNING,
+            isMetronomeEnabled = state.isMetronomeEnabled,
             onStart = { viewModel.start() },
             onPause = { viewModel.pause() },
             onResume = { viewModel.resume() },
             onStop = { viewModel.stop() },
             onToggleEnlarger = { viewModel.toggleEnlargerOverride() },
-            onToggleSafelight = { viewModel.toggleSafelightOverride() }
+            onToggleSafelight = { viewModel.toggleSafelightOverride() },
+            onToggleMetronome = { viewModel.toggleMetronome() }
         )
     }
 
@@ -137,12 +142,14 @@ private fun BottomControlBar(
     enlargerOverride: Boolean,
     safelightOverride: Boolean,
     overrideEnabled: Boolean,
+    isMetronomeEnabled: Boolean,
     onStart: () -> Unit,
     onPause: () -> Unit,
     onResume: () -> Unit,
     onStop: () -> Unit,
     onToggleEnlarger: () -> Unit,
-    onToggleSafelight: () -> Unit
+    onToggleSafelight: () -> Unit,
+    onToggleMetronome: () -> Unit
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
         when (timerState) {
@@ -203,7 +210,8 @@ private fun BottomControlBar(
 
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
             RelayButton(
                 label = "Safelight",
@@ -221,6 +229,16 @@ private fun BottomControlBar(
                 onClick = onToggleEnlarger,
                 modifier = Modifier.weight(1f)
             )
+            IconButton(
+                onClick = onToggleMetronome,
+                modifier = Modifier.size(37.dp)
+            ) {
+                Icon(
+                    imageVector = if (isMetronomeEnabled) Icons.Default.MusicNote else Icons.Default.MusicOff,
+                    contentDescription = if (isMetronomeEnabled) "Désactiver le métronome" else "Activer le métronome",
+                    tint = if (isMetronomeEnabled) DarkroomRedBright else DarkroomRedFaint
+                )
+            }
         }
     }
 }
