@@ -92,14 +92,7 @@ fun TeststripScreen(
                 color = DarkroomRedBright
             )
 
-            Text(
-                text = "Configuration",
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                color = DarkroomRedBright
-            )
-
-            DigitTimePicker(
+DigitTimePicker(
                 valueMs = state.baseTimeMs,
                 onValueChange = { viewModel.updateBaseTime(it) },
                 format = DigitTimeFormat.MINUTES_SECONDS_TENTHS,
