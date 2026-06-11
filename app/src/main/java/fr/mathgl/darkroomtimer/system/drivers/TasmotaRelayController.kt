@@ -61,7 +61,9 @@ class TasmotaRelayController(
     }
 
     override suspend fun disconnect() = withContext(Dispatchers.IO) {
-        okHttpClient.dispatcher.executorService.shutdown()
+        // Do not shut down the dispatcher executor: the controller must stay
+        // usable for a later connect() on the same instance.
+        okHttpClient.dispatcher.cancelAll()
         isConnected = false
         connectionState.value = ConnectionState.Disconnected
     }

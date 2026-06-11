@@ -93,6 +93,41 @@ class RelayDriverTest {
     }
 
     @Test
+    fun `Tasmota should reconnect after disconnect`() = runBlocking {
+        server.enqueue(MockResponse().setResponseCode(200))
+        tasmotaController.connect()
+        server.takeRequest(10, TimeUnit.SECONDS)!!
+
+        tasmotaController.disconnect()
+        assertEquals(ConnectionState.Disconnected, tasmotaController.connectionState.value)
+
+        server.enqueue(MockResponse().setResponseCode(200))
+        val result = tasmotaController.connect()
+        assertEquals(true, result.isSuccess)
+        assertEquals(ConnectionState.Connected, tasmotaController.connectionState.value)
+    }
+
+    @Test
+    fun `ESPhome should reconnect after disconnect`() = runBlocking {
+        val esphomeController = ESPhomeHttpRelayController(
+            host = server.hostName,
+            port = server.port,
+            entityId = "switch.light"
+        )
+
+        server.enqueue(MockResponse().setResponseCode(200))
+        esphomeController.connect()
+        server.takeRequest(10, TimeUnit.SECONDS)!!
+
+        esphomeController.disconnect()
+
+        server.enqueue(MockResponse().setResponseCode(200))
+        val result = esphomeController.connect()
+        assertEquals(true, result.isSuccess)
+        assertEquals(ConnectionState.Connected, esphomeController.connectionState.value)
+    }
+
+    @Test
     fun `Tasmota connect failure should set ConnectionState Error`() = runBlocking {
         server.enqueue(MockResponse().setResponseCode(500))
         val result = tasmotaController.connect()
