@@ -151,6 +151,7 @@ class TeststripViewModel(
         tickJob?.cancel()
         tickJob = null
         session.pause()
+        selectedPatchIndex = session.currentPatchIndex
         viewModelScope.launch { shutOffRelays("pause") }
         audioSystem?.pause()
         updateUiState()
@@ -189,15 +190,23 @@ class TeststripViewModel(
     }
 
     fun selectPreviousPatch() {
-        if (session.state != TeststripState.BETWEEN_PATCHES) return
+        if (session.state != TeststripState.BETWEEN_PATCHES && session.state != TeststripState.PAUSED) return
         selectedPatchIndex = (selectedPatchIndex - 1 + engine.patchCount) % engine.patchCount
         updateUiState()
     }
 
     fun selectNextPatch() {
-        if (session.state != TeststripState.BETWEEN_PATCHES) return
+        if (session.state != TeststripState.BETWEEN_PATCHES && session.state != TeststripState.PAUSED) return
         selectedPatchIndex = (selectedPatchIndex + 1) % engine.patchCount
         updateUiState()
+    }
+
+    fun goFromPaused() {
+        if (session.state != TeststripState.PAUSED) return
+        session.skipToPatch(selectedPatchIndex)
+        updateUiState()
+        audioSystem?.stopTeststripPatch()
+        startExposure()
     }
 
     fun abandon() {

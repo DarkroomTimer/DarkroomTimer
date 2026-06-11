@@ -108,6 +108,17 @@ class TeststripSession(
         pauseStartAt = null
     }
 
+    fun skipToPatch(targetIndex: Int) {
+        check(state == PAUSED) { "skipToPatch() called from state $state" }
+        exposedPatches.add(currentPatchIndex)
+        currentPatchIndexValue = targetIndex
+        exposedPatches.remove(targetIndex)
+        state = EXPOSING
+        exposureStartAt = clock()
+        elapsedBeforePause = 0L
+        pauseStartAt = null
+    }
+
     fun abandon() {
         state = INIT
         currentPatchIndexValue = -1

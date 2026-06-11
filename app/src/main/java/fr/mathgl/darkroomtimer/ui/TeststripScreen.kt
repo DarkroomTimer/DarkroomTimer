@@ -223,7 +223,7 @@ DigitTimePicker(
 
             val lazyListState = rememberLazyListState()
 
-            val scrollToIndex = if (state.sessionState == TeststripState.BETWEEN_PATCHES)
+            val scrollToIndex = if (state.sessionState == TeststripState.BETWEEN_PATCHES || state.sessionState == TeststripState.PAUSED)
                 state.selectedPatchIndex else state.currentPatchIndex
             LaunchedEffect(scrollToIndex) {
                 lazyListState.animateScrollToItem(maxOf(0, scrollToIndex - 1))
@@ -242,7 +242,7 @@ DigitTimePicker(
                         timeMs = timeMs,
                         differentialMs = state.differentialTimesMs[index],
                         isExposed = index in state.exposedPatches,
-                        isCurrent = if (state.sessionState == TeststripState.BETWEEN_PATCHES)
+                        isCurrent = if (state.sessionState == TeststripState.BETWEEN_PATCHES || state.sessionState == TeststripState.PAUSED)
                             index == state.selectedPatchIndex
                         else
                             index == state.currentPatchIndex,
@@ -294,12 +294,47 @@ DigitTimePicker(
             }
 
             if (state.sessionState == TeststripState.PAUSED) {
-                Button(
-                    onClick = { viewModel.resume() },
-                    modifier = Modifier.fillMaxWidth().height(56.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = DarkroomRedBright)
+                val isOnCurrentPatch = state.selectedPatchIndex == state.currentPatchIndex
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text("REPRENDRE", fontSize = 18.sp)
+                    OutlinedButton(
+                        onClick = { viewModel.selectPreviousPatch() },
+                        modifier = Modifier.weight(1f).height(56.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = DarkroomRedMedium),
+                        border = BorderStroke(1.dp, DarkroomRedFaint)
+                    ) {
+                        Text("◀", fontSize = 20.sp)
+                    }
+                    Button(
+                        onClick = { if (isOnCurrentPatch) viewModel.resume() else viewModel.goFromPaused() },
+                        modifier = Modifier.weight(3f).height(56.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = DarkroomRedBright)
+                    ) {
+                        Text(
+                            if (isOnCurrentPatch) "REPRENDRE" else "GO",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    OutlinedButton(
+                        onClick = { viewModel.selectNextPatch() },
+                        modifier = Modifier.weight(1f).height(56.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = DarkroomRedMedium),
+                        border = BorderStroke(1.dp, DarkroomRedFaint)
+                    ) {
+                        Text("▶", fontSize = 20.sp)
+                    }
+                }
+
+                OutlinedButton(
+                    onClick = { viewModel.abandon() },
+                    modifier = Modifier.fillMaxWidth().height(48.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = DarkroomRedDim),
+                    border = BorderStroke(1.dp, DarkroomRedFaint)
+                ) {
+                    Text("Annuler", fontSize = 14.sp)
                 }
             }
 
