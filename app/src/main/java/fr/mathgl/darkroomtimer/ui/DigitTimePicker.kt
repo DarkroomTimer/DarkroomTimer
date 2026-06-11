@@ -74,7 +74,7 @@ fun DigitTimePicker(
                     DigitTimeFormat.MINUTES_SECONDS_TENTHS -> when (i - 1) { 1 -> ':'; 3 -> '.'; else -> null }
                     DigitTimeFormat.HOURS_MINUTES_SECONDS  -> when (i - 1) { 1 -> ':'; 3 -> ':'; else -> null }
                 }
-                if (prevSep == null) Spacer(Modifier.width(5.dp))
+                if (prevSep == null) Spacer(Modifier.width(8.dp))
             }
             SingleDigitPicker(
                 digit = digit,
@@ -88,6 +88,7 @@ fun DigitTimePicker(
                 DigitTimeFormat.HOURS_MINUTES_SECONDS  -> when (i) { 1 -> ':'; 3 -> ':'; else -> null }
             }
             if (sep != null) {
+                Spacer(Modifier.width(4.dp))
                 Text(
                     text = sep.toString(),
                     fontSize = (digitHeight.value * 0.6f).sp,
@@ -95,6 +96,7 @@ fun DigitTimePicker(
                     fontWeight = FontWeight.Bold,
                     color = DarkroomRedBright.copy(alpha = 0.7f)
                 )
+                Spacer(Modifier.width(4.dp))
             }
         }
     }
