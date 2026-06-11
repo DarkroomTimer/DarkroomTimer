@@ -16,7 +16,7 @@ class FStopMathTest {
         assertEquals("Step 1", 10079L, FStopMath.adjustTime(base, num, den, 1))
         assertEquals("Step 2", 12699L, FStopMath.adjustTime(base, num, den, 2))
         assertEquals("Step 3", 16000L, FStopMath.adjustTime(base, num, den, 3))
-        assertEquals("Step -1", 6349L, FStopMath.adjustTime(base, num, den, -1))
+        assertEquals("Step -1", 6350L, FStopMath.adjustTime(base, num, den, -1))
         assertEquals("Step -3", 4000L, FStopMath.adjustTime(base, num, den, -3))
     }
 

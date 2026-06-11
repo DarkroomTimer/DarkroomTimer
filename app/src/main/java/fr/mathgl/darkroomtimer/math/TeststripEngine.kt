@@ -74,7 +74,7 @@ class TeststripEngine(
      * Returns the simplified fraction (numerator, denominator) by dividing both by their GCD.
      */
     val simplifiedFraction: Pair<Int, Int>
-        get() = simplify(numerator, denominator)
+        get() = FStopMath.simplify(numerator, denominator)
 
     /**
      * Returns the cumulative exposure time in milliseconds for each patch.
@@ -119,26 +119,6 @@ class TeststripEngine(
             val minutes = totalSeconds / 60
             return "%02d:%02d.%d".format(minutes, seconds, tenths)
         }
-    }
-
-    private fun simplify(numerator: Int, denominator: Int): Pair<Int, Int> {
-        if (denominator == 0) return Pair(numerator, denominator)
-        val common = gcd(kotlin.math.abs(numerator), denominator)
-        var n = numerator / common
-        var d = denominator / common
-        if (d < 0) { n = -n; d = -d }
-        return Pair(n, d)
-    }
-
-    private fun gcd(a: Int, b: Int): Int {
-        var x = a
-        var y = b
-        while (y != 0) {
-            val temp = y
-            y = x % y
-            x = temp
-        }
-        return x
     }
 
     /**

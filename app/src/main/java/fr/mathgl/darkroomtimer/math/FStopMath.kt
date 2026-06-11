@@ -10,7 +10,7 @@ object FStopMath {
         if (denominator == 0) return baseMs
 
         val stops = (numerator.toDouble() / denominator) * step
-        val result = (baseMs * 2.0.pow(stops)).toLong()
+        val result = (baseMs * 2.0.pow(stops)).roundToLong()
 
         return if (result < 0) 0 else result
     }
