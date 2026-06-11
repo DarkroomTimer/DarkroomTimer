@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import fr.mathgl.darkroomtimer.math.BurnDodgeType
 import fr.mathgl.darkroomtimer.math.ContrastGrade
+import fr.mathgl.darkroomtimer.math.FStopMath
 import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedBright
 import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedDim
 import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedFaint
@@ -108,24 +109,7 @@ fun BurnDodgeDialog(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Grade selection
-                Text("Grade de contraste:", fontSize = 12.sp, color = DarkroomRedDim)
-                Spacer(modifier = Modifier.height(4.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    ContrastGrade.entries.forEach { grade ->
-                        Button(
-                            onClick = { /* Grade selection handled in parent */ },
-                            enabled = false,
-                            colors = ButtonDefaults.buttonColors(containerColor = DarkroomRedDim),
-                            modifier = Modifier.weight(1f).height(36.dp)
-                        ) {
-                            Text(grade.label, fontSize = 9.sp)
-                        }
-                    }
-                }
+                // Grade info (fixed for the session, no selection)
                 Text(
                     text = "Grade actuel: ${ContrastGrade.DEFAULT.label} (fixe pour la session)",
                     fontSize = 10.sp,
@@ -138,7 +122,7 @@ fun BurnDodgeDialog(
                 // Preview
                 val sign = if (type == BurnDodgeType.BURN) "+" else "-"
                 Text(
-                    text = "Ajustement: $sign$denominator stop",
+                    text = "Ajustement: $sign${FStopMath.formatStop(1, denominator)} stop",
                     fontSize = 12.sp,
                     color = DarkroomRedDim,
                     fontFamily = FontFamily.Monospace,

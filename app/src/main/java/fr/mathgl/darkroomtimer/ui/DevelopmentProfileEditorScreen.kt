@@ -34,9 +34,9 @@ fun DevelopmentProfileEditorScreen(
     onSave: (DevelopmentProfile) -> Unit,
     onCancel: () -> Unit
 ) {
-    var name by remember { mutableStateOf(profile?.name ?: "") }
-    var navigationMode by remember { mutableStateOf(profile?.navigationMode ?: DevelopmentNavigationMode.MANUAL) }
-    val steps = remember { mutableStateListOf<DevelopmentStep>().also { it.addAll(profile?.steps ?: emptyList()) } }
+    var name by remember(profile) { mutableStateOf(profile?.name ?: "") }
+    var navigationMode by remember(profile) { mutableStateOf(profile?.navigationMode ?: DevelopmentNavigationMode.MANUAL) }
+    val steps = remember(profile) { mutableStateListOf<DevelopmentStep>().also { it.addAll(profile?.steps ?: emptyList()) } }
 
     var showStepDialog by remember { mutableStateOf(false) }
     var editingStepIndex by remember { mutableStateOf<Int?>(null) }
