@@ -52,13 +52,15 @@ class AudioSystem(
         stopMetronome()
 
         // Play stop exposure feedback (3 beeps at 880Hz)
-        audioEngine.playBeepSequence(
-            frequencyHz = STOP_EXPOSURE_FREQUENCY_HZ,
-            beepCount = 3,
-            beepDurationMs = DEFAULT_BEEP_DURATION_MS,
-            silenceBetweenMs = DEFAULT_BEEP_GAP_MS,
-            volume = audioVolume.toFloat()
-        )
+        if (audioSettingsProvider.isEndBeepEnabled) {
+            audioEngine.playBeepSequence(
+                frequencyHz = STOP_EXPOSURE_FREQUENCY_HZ,
+                beepCount = 3,
+                beepDurationMs = DEFAULT_BEEP_DURATION_MS,
+                silenceBetweenMs = DEFAULT_BEEP_GAP_MS,
+                volume = audioVolume.toFloat()
+            )
+        }
     }
 
     /**

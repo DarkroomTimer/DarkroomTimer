@@ -243,5 +243,6 @@ class FakeAudioSettingsProvider : AudioSettingsProvider {
     override val metronomeFrequencyHz: Int = 250
     override val metronomeDurationMs: Int = 25
     override var isStartBeepEnabled: Boolean = true
+    override var isEndBeepEnabled: Boolean = true
     override var buzzerVolume: AudioVolume = AudioVolume.MEDIUM
 }

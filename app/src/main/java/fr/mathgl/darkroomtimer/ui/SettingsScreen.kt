@@ -43,6 +43,7 @@ fun SettingsScreen(
 
     var buzzerVolume by remember { mutableStateOf(AudioVolume.fromString(prefs.buzzerVolume)) }
     var startBeepEnabled by remember { mutableStateOf(prefs.startBeepEnabled) }
+    var endBeepEnabled by remember { mutableStateOf(prefs.endBeepEnabled) }
     var metronomeEnabled by remember { mutableStateOf(prefs.metronomeEnabled) }
     var metronomeCadenceMs by remember { mutableIntStateOf(prefs.metronomeCadenceMs) }
     var defaultGrade by remember { mutableStateOf(prefs.defaultContrastGrade) }
@@ -74,6 +75,11 @@ fun SettingsScreen(
             label = "Bip au démarrage",
             checked = startBeepEnabled,
             onCheckedChange = { startBeepEnabled = it; prefs.startBeepEnabled = it }
+        )
+        SettingsSwitch(
+            label = "Bip de fin",
+            checked = endBeepEnabled,
+            onCheckedChange = { endBeepEnabled = it; prefs.endBeepEnabled = it }
         )
 
         // MÉTRONOME

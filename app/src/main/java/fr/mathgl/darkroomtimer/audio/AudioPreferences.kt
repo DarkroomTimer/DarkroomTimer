@@ -12,6 +12,7 @@ interface AudioSettingsProvider {
     val metronomeFrequencyHz: Int
     val metronomeDurationMs: Int
     var isStartBeepEnabled: Boolean
+    var isEndBeepEnabled: Boolean
     var buzzerVolume: AudioVolume
 }
 
@@ -37,6 +38,10 @@ class AudioPreferences(private val prefs: SharedPreferences) : AudioSettingsProv
         get() = prefs.getBoolean(KEY_START_BEEP_ENABLED, true)
         set(value) = prefs.edit {putBoolean(KEY_START_BEEP_ENABLED, value)}
 
+    override var isEndBeepEnabled: Boolean
+        get() = prefs.getBoolean(KEY_END_BEEP_ENABLED, true)
+        set(value) = prefs.edit {putBoolean(KEY_END_BEEP_ENABLED, value)}
+
     override var buzzerVolume: AudioVolume
         get() = AudioVolume.fromString(prefs.getString(KEY_BUZZER_VOLUME, "MEDIUM"))
         set(value) = prefs.edit {putString(KEY_BUZZER_VOLUME, value.name)}
@@ -45,6 +50,7 @@ class AudioPreferences(private val prefs: SharedPreferences) : AudioSettingsProv
         private const val KEY_METRONOME_ENABLED = "pref_metronome_enabled"
         private const val KEY_METRONOME_CADENCE_MS = "pref_metronome_cadence_ms"
         private const val KEY_START_BEEP_ENABLED = "pref_start_beep_enabled"
+        private const val KEY_END_BEEP_ENABLED = "pref_end_beep_enabled"
         private const val KEY_BUZZER_VOLUME = "pref_buzzer_volume"
 
         private const val DEFAULT_METRONOME_CADENCE_MS = 1000

@@ -55,6 +55,12 @@ class AudioPreferencesTest {
     }
 
     @Test
+    fun testDefaultEndBeepEnabledIsTrue() {
+        `when`(mockPrefs.getBoolean("pref_end_beep_enabled", true)).thenReturn(true)
+        assertTrue(audioPrefs.isEndBeepEnabled)
+    }
+
+    @Test
     fun testDefaultBuzzerVolumeIsMedium() {
         `when`(mockPrefs.getString("pref_buzzer_volume", "MEDIUM")).thenReturn("MEDIUM")
         assertEquals(AudioVolume.MEDIUM, audioPrefs.buzzerVolume)

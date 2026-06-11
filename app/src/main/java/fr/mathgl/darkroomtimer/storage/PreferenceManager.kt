@@ -30,6 +30,10 @@ class PreferenceManager internal constructor(context: Context) {
         get() = prefs.getBoolean(KEY_START_BEEP_ENABLED, true)
         set(value) = prefs.edit {putBoolean(KEY_START_BEEP_ENABLED, value)}
 
+    var endBeepEnabled: Boolean
+        get() = prefs.getBoolean(KEY_END_BEEP_ENABLED, true)
+        set(value) = prefs.edit {putBoolean(KEY_END_BEEP_ENABLED, value)}
+
     // Exposure Settings
     var defaultExposureMs: Long
         get() = prefs.getLong(KEY_DEFAULT_EXPOSURE_MS, 8000L)
@@ -133,6 +137,7 @@ class PreferenceManager internal constructor(context: Context) {
         private const val KEY_METRONOME_CADENCE_MS = "pref_metronome_cadence_ms"
         private const val KEY_BUZZER_VOLUME = "pref_buzzer_volume"
         private const val KEY_START_BEEP_ENABLED = "pref_start_beep_enabled"
+        private const val KEY_END_BEEP_ENABLED = "pref_end_beep_enabled"
 
         private const val KEY_DEFAULT_EXPOSURE_MS = "pref_default_exposure_ms"
         private const val KEY_DEFAULT_CONTRAST_GRADE_INDEX = "pref_default_contrast_grade_index"
