@@ -543,7 +543,7 @@ private fun SettingsDropdown(
             DropdownMenu(
                 expanded = expanded,
                 onDismissRequest = { expanded = false },
-                modifier = Modifier.background(DarkroomSurfaceElevated)
+                containerColor = DarkroomSurfaceElevated
             ) {
                 options.forEach { option ->
                     DropdownMenuItem(
@@ -584,7 +584,7 @@ private fun RelayTextField(label: String, value: String, onValueChange: (String)
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
-        label = { Text(label, color = Color.Gray, fontSize = 12.sp) },
+        label = { Text(label, color = DarkroomRedDim, fontSize = 12.sp) },
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 2.dp),
@@ -604,7 +604,7 @@ private fun RelayNumberField(label: String, value: Int, onValueChange: (Int) -> 
     OutlinedTextField(
         value = value.toString(),
         onValueChange = { onValueChange(it.toIntOrNull() ?: value) },
-        label = { Text(label, color = Color.Gray, fontSize = 12.sp) },
+        label = { Text(label, color = DarkroomRedDim, fontSize = 12.sp) },
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 2.dp),
