@@ -80,7 +80,7 @@ class RelayDriverTest {
     }
 
     @Test
-    fun `Tasmota startTimed should send PowerX seconds`() = runBlocking {
+    fun `Tasmota startTimed should send TimedPowerX milliseconds`() = runBlocking {
         server.enqueue(MockResponse().setResponseCode(200))
         tasmotaController.connect()
         server.takeRequest(10, TimeUnit.SECONDS)!!
@@ -89,7 +89,7 @@ class RelayDriverTest {
         tasmotaController.startTimed(2000L)
 
         val request: RecordedRequest = server.takeRequest(10, TimeUnit.SECONDS)!!
-        assertEquals("/cm?cmnd=Power1%202", request.path)
+        assertEquals("/cm?cmnd=TimedPower1%202000", request.path)
     }
 
     @Test

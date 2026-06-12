@@ -184,12 +184,12 @@ open class CountdownViewModel(
 
         viewModelScope.launch {
             _uiState.update { it.copy(errorMessage = null) }
-            val result = if (relaySystem.capabilities.canPause) {
+            val result = if (!relaySystem.capabilities.canPause) {
+                // TIMED_POWER : Tasmota gère l'extinction via TimedPower
                 relaySystem.startTimedExposure(timer.configuredTimeMs)
             } else {
-                val res1 = relaySystem.setEnlarger(true)
-                val res2 = relaySystem.setSafelight(true)
-                if (res1.isSuccess && res2.isSuccess) Result.success(Unit) else Result.failure(Exception("Relay activation failed"))
+                // EXPLICIT_ON_OFF : le tick job envoie Power OFF en fin de minuteur
+                relaySystem.setEnlarger(true)
             }
 
             if (result.isFailure) {

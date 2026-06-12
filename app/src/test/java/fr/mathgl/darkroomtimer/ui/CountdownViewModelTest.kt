@@ -53,10 +53,13 @@ class CountdownViewModelTest {
     }
 
     @Test
-    fun `start should trigger timed exposure on relay system`() = runTest {
+    fun `start with canPause true should use setEnlarger only`() = runTest {
+        // canPause=true = EXPLICIT_ON_OFF : l'app gère l'extinction, seul l'agrandisseur est allumé
         viewModel.start()
         testDispatcher.scheduler.runCurrent()
-        assertEquals(1, relaySystem.startTimedExposureCallCount)
+        assertEquals(true, relaySystem.setEnlargerCalls.contains(true))
+        assertEquals(true, relaySystem.setSafelightCalls.isEmpty())
+        assertEquals(0, relaySystem.startTimedExposureCallCount)
     }
 
     @Test
@@ -214,16 +217,17 @@ class CountdownViewModelTest {
     }
 
     @Test
-    fun `start with canPause false should use setEnlarger and setSafelight`() = runTest {
+    fun `start with canPause false should use startTimedExposure only`() = runTest {
+        // canPause=false = TIMED_POWER : Tasmota gère l'extinction via TimedPower, pas de safelight
         val relaySystemNoPause = MockRelaySystem(scope = TestScope(testDispatcher), canPause = false)
 
         val vm = TestCountdownViewModel(application, { relaySystemNoPause }, CountdownTimer(clock = { testDispatcher.scheduler.currentTime }))
         vm.start()
         testDispatcher.scheduler.runCurrent()
 
-        assertEquals(true, relaySystemNoPause.setEnlargerCalls.contains(true))
-        assertEquals(true, relaySystemNoPause.setSafelightCalls.contains(true))
-        assertEquals(0, relaySystemNoPause.startTimedExposureCallCount)
+        assertEquals(1, relaySystemNoPause.startTimedExposureCallCount)
+        assertEquals(true, relaySystemNoPause.setEnlargerCalls.isEmpty())
+        assertEquals(true, relaySystemNoPause.setSafelightCalls.isEmpty())
     }
 
     @Test

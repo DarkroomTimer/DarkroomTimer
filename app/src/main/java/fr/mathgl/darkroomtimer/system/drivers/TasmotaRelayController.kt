@@ -89,8 +89,7 @@ class TasmotaRelayController(
 
     override suspend fun startTimed(durationMs: Long): Result<Unit> = withContext(Dispatchers.IO) {
         if (timingMode == TimingMode.TIMED_POWER) {
-            val seconds = maxOf(1, ((durationMs + 500) / 1000).toInt())
-            val cmd = "Power$channel $seconds"
+            val cmd = "TimedPower$channel $durationMs"
             try {
                 if (!isConnected) return@withContext Result.failure(Exception("Not connected"))
                 val request = createRequest(cmd)
