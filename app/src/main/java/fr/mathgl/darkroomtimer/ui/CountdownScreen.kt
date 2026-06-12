@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.Color
 import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedBright
 import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedDim
 import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedFaint
+import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedMedium
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -210,9 +211,9 @@ private fun BottomControlBar(
 
         val linkIconTint = when {
             relayType == "NULL" || relayType == "DEMO" -> DarkroomRedDim
-            connectionState is ConnectionState.Connected  -> Color(0xFF44AA44)
-            connectionState is ConnectionState.Connecting -> Color(0xFFAA8800)
-            connectionState is ConnectionState.Error      -> Color.Red
+            connectionState is ConnectionState.Connected  -> DarkroomRedBright
+            connectionState is ConnectionState.Connecting -> DarkroomRedMedium
+            connectionState is ConnectionState.Error      -> DarkroomRedBright
             else                                          -> DarkroomRedDim
         }
 
