@@ -22,6 +22,7 @@ import fr.mathgl.darkroomtimer.math.ContrastGrade
 import fr.mathgl.darkroomtimer.storage.PreferenceManager
 import fr.mathgl.darkroomtimer.storage.StorageService
 import fr.mathgl.darkroomtimer.storage.room.AppDatabase
+import fr.mathgl.darkroomtimer.system.LuminosityManager
 import fr.mathgl.darkroomtimer.system.RelaySystemConfigFlat
 import fr.mathgl.darkroomtimer.ui.theme.DarkroomBlack
 import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedBright
@@ -36,6 +37,7 @@ import kotlinx.coroutines.withContext
 
 @Composable
 fun SettingsScreen(
+    luminosityManager: LuminosityManager? = null,
     onNavigateToEnlargerProfiles: () -> Unit
 ) {
     val context = LocalContext.current
@@ -51,6 +53,16 @@ fun SettingsScreen(
     var luminosityMin by remember { mutableFloatStateOf(prefs.luminosityMin) }
     var luminosityMax by remember { mutableFloatStateOf(prefs.luminosityMax) }
     var luminosityFixed by remember { mutableFloatStateOf(prefs.luminosityFixed) }
+
+    fun applyLuminosity(mode: String, min: Float, max: Float, fixed: Float) {
+        luminosityManager?.setConfig(LuminosityManager.Config(
+            mode = if (mode == "FIXED") LuminosityManager.Mode.FIXED else LuminosityManager.Mode.ADAPTIVE,
+            minBrightness = min,
+            maxBrightness = max,
+            fixedBrightness = fixed
+        ))
+        luminosityManager?.applyImmediately()
+    }
 
     Column(
         modifier = Modifier
@@ -159,24 +171,24 @@ fun SettingsScreen(
             label = "Mode",
             options = listOf("ADAPTIVE", "FIXED"),
             selected = luminosityMode,
-            onSelect = { luminosityMode = it; prefs.luminosityMode = it }
+            onSelect = { luminosityMode = it; prefs.luminosityMode = it; applyLuminosity(it, luminosityMin, luminosityMax, luminosityFixed) }
         )
         if (luminosityMode == "ADAPTIVE") {
             LuminositySlider(
                 label = "Minimum : ${(luminosityMin * 100).toInt()}%",
                 value = luminosityMin,
-                onValueChange = { luminosityMin = it; prefs.luminosityMin = it }
+                onValueChange = { luminosityMin = it; prefs.luminosityMin = it; applyLuminosity(luminosityMode, it, luminosityMax, luminosityFixed) }
             )
             LuminositySlider(
                 label = "Maximum : ${(luminosityMax * 100).toInt()}%",
                 value = luminosityMax,
-                onValueChange = { luminosityMax = it; prefs.luminosityMax = it }
+                onValueChange = { luminosityMax = it; prefs.luminosityMax = it; applyLuminosity(luminosityMode, luminosityMin, it, luminosityFixed) }
             )
         } else {
             LuminositySlider(
                 label = "Luminosité fixe : ${(luminosityFixed * 100).toInt()}%",
                 value = luminosityFixed,
-                onValueChange = { luminosityFixed = it; prefs.luminosityFixed = it }
+                onValueChange = { luminosityFixed = it; prefs.luminosityFixed = it; applyLuminosity(luminosityMode, luminosityMin, luminosityMax, it) }
             )
         }
 

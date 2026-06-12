@@ -48,6 +48,7 @@ import fr.mathgl.darkroomtimer.ui.DevelopmentProfileEditorScreen
 import fr.mathgl.darkroomtimer.ui.DevelopmentProfileListScreen
 import fr.mathgl.darkroomtimer.ui.DevelopmentSessionScreen
 import fr.mathgl.darkroomtimer.ui.EnlargerProfilesScreen
+import fr.mathgl.darkroomtimer.system.LuminosityManager
 import fr.mathgl.darkroomtimer.ui.SettingsScreen
 import fr.mathgl.darkroomtimer.ui.TeststripScreen
 import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedBright
@@ -55,7 +56,7 @@ import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedDim
 import fr.mathgl.darkroomtimer.ui.theme.DarkroomSurface
 
 @Composable
-fun AppNavGraph() {
+fun AppNavGraph(luminosityManager: LuminosityManager) {
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
@@ -169,6 +170,7 @@ fun AppNavGraph() {
 
                 composable(AppRoutes.SETTINGS) {
                     SettingsScreen(
+                        luminosityManager = luminosityManager,
                         onNavigateToEnlargerProfiles = {
                             navController.navigate(AppRoutes.ENLARGER_PROFILES)
                         }

@@ -24,7 +24,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             DarkroomTimerTheme {
                 Surface(modifier = Modifier.fillMaxSize(), color = Color.Black) {
-                    AppNavGraph()
+                    AppNavGraph(luminosityManager = luminosityManager)
                 }
             }
         }

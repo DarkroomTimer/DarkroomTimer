@@ -31,6 +31,7 @@ class LuminosityManager(
     private val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
     private val lightSensor = sensorManager.getDefaultSensor(Sensor.TYPE_LIGHT)
     private val calculator = LuminosityCalculator()
+    private var lastSmoothedLux: Float = 0f
 
     fun setWindow(window: Window?) {
         this.window = window
@@ -63,10 +64,13 @@ class LuminosityManager(
     override fun onSensorChanged(event: SensorEvent) {
         if (event.sensor.type == Sensor.TYPE_LIGHT) {
             val lux = event.values[0]
-            val smoothedLux = calculator.updateSmoothingFilter(lux, System.currentTimeMillis())
-            val brightness = calculator.calculateBrightness(smoothedLux, config)
-            applyBrightness(brightness)
+            lastSmoothedLux = calculator.updateSmoothingFilter(lux, System.currentTimeMillis())
+            applyBrightness(calculator.calculateBrightness(lastSmoothedLux, config))
         }
+    }
+
+    fun applyImmediately() {
+        applyBrightness(calculator.calculateBrightness(lastSmoothedLux, config))
     }
 
     override fun onAccuracyChanged(sensor: Sensor, accuracy: Int) {
