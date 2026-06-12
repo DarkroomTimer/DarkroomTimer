@@ -3,8 +3,9 @@ package fr.mathgl.darkroomtimer.ui
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Link
+import androidx.compose.material.icons.filled.LinkOff
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.MusicOff
 import androidx.compose.material3.*
@@ -47,20 +48,13 @@ fun CountdownScreen(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Spacer(modifier = Modifier.height(32.dp))
-        ConnectionIndicator(
-            connectionState = state.connectionState,
-            relayType = state.relayType
+        Text(
+            text = "Exposition",
+            fontSize = 24.sp,
+            fontWeight = FontWeight.Bold,
+            color = DarkroomRedBright,
+            modifier = Modifier.fillMaxWidth()
         )
-        val error = state.errorMessage
-        if (error != null) {
-            Text(
-                text = error,
-                fontSize = 14.sp,
-                color = DarkroomRedBright,
-                fontWeight = FontWeight.Medium,
-                modifier = Modifier.padding(top = 4.dp)
-            )
-        }
         Spacer(modifier = Modifier.height(8.dp))
 
         DigitTimePicker(
@@ -112,6 +106,9 @@ fun CountdownScreen(
             safelightOverride = state.safelightOverride,
             overrideEnabled = state.timerState != TimerState.RUNNING,
             isMetronomeEnabled = state.isMetronomeEnabled,
+            connectionState = state.connectionState,
+            relayType = state.relayType,
+            errorMessage = state.errorMessage,
             onStart = { viewModel.start() },
             onPause = { viewModel.pause() },
             onResume = { viewModel.resume() },
@@ -143,6 +140,9 @@ private fun BottomControlBar(
     safelightOverride: Boolean,
     overrideEnabled: Boolean,
     isMetronomeEnabled: Boolean,
+    connectionState: ConnectionState,
+    relayType: String,
+    errorMessage: String?,
     onStart: () -> Unit,
     onPause: () -> Unit,
     onResume: () -> Unit,
@@ -151,6 +151,8 @@ private fun BottomControlBar(
     onToggleSafelight: () -> Unit,
     onToggleMetronome: () -> Unit
 ) {
+    var showConnectionDialog by remember { mutableStateOf(false) }
+
     Column(modifier = Modifier.fillMaxWidth()) {
         when (timerState) {
             TimerState.STOPPED -> {
@@ -229,9 +231,24 @@ private fun BottomControlBar(
                 onClick = onToggleEnlarger,
                 modifier = Modifier.weight(1f)
             )
+        }
+
+        val linkIconTint = when {
+            relayType == "NULL" || relayType == "DEMO" -> DarkroomRedDim
+            connectionState is ConnectionState.Connected  -> Color(0xFF44AA44)
+            connectionState is ConnectionState.Connecting -> Color(0xFFAA8800)
+            connectionState is ConnectionState.Error      -> Color.Red
+            else                                          -> DarkroomRedDim
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             IconButton(
                 onClick = onToggleMetronome,
-                modifier = Modifier.size(37.dp)
+                modifier = Modifier.size(40.dp)
             ) {
                 Icon(
                     imageVector = if (isMetronomeEnabled) Icons.Default.MusicNote else Icons.Default.MusicOff,
@@ -239,7 +256,49 @@ private fun BottomControlBar(
                     tint = if (isMetronomeEnabled) DarkroomRedBright else DarkroomRedFaint
                 )
             }
+            IconButton(
+                onClick = { showConnectionDialog = true },
+                modifier = Modifier.size(40.dp)
+            ) {
+                Icon(
+                    imageVector = if (connectionState is ConnectionState.Connected) Icons.Default.Link else Icons.Default.LinkOff,
+                    contentDescription = "Statut connexion",
+                    tint = linkIconTint
+                )
+            }
         }
+    }
+
+    if (showConnectionDialog) {
+        val stateLabel = when {
+            relayType == "NULL"  -> "Simulation (sans matériel)"
+            relayType == "DEMO"  -> "Démonstration"
+            connectionState is ConnectionState.Connected  -> "Connecté"
+            connectionState is ConnectionState.Connecting -> "Connexion en cours…"
+            connectionState is ConnectionState.Error      -> "Erreur"
+            else                                          -> "Déconnecté"
+        }
+        AlertDialog(
+            onDismissRequest = { showConnectionDialog = false },
+            title = { Text("Connexion", color = DarkroomRedBright) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text("Driver : $relayType", fontSize = 14.sp, color = DarkroomRedDim)
+                    Text("État : $stateLabel", fontSize = 14.sp, color = DarkroomRedDim)
+                    if (errorMessage != null) {
+                        Text("Erreur : $errorMessage", fontSize = 13.sp, color = Color.Red)
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showConnectionDialog = false }) {
+                    Text("OK", color = DarkroomRedBright)
+                }
+            },
+            containerColor = Color.Black,
+            titleContentColor = DarkroomRedBright,
+            textContentColor = DarkroomRedDim
+        )
     }
 }
 
@@ -265,7 +324,7 @@ private fun RelayButton(
             disabledContentColor = DarkroomRedFaint
         ),
         border = BorderStroke(1.dp, borderColor),
-        modifier = modifier.height(37.dp),
+        modifier = modifier.height(48.dp),
         contentPadding = PaddingValues(horizontal = 8.dp)
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -374,29 +433,3 @@ private fun FStopDeltaButton(label: String, onClick: () -> Unit, modifier: Modif
     }
 }
 
-@Composable
-private fun ConnectionIndicator(connectionState: ConnectionState, relayType: String) {
-    val (dotColor, label) = when {
-        relayType == "NULL" || relayType == "DEMO" ->
-            DarkroomRedDim to relayType.lowercase()
-        connectionState is ConnectionState.Connected ->
-            Color(0xFF44AA44) to "connecté"
-        connectionState is ConnectionState.Connecting ->
-            Color(0xFFAA8800) to "connexion…"
-        connectionState is ConnectionState.Error ->
-            Color.Red to "erreur"
-        else ->
-            DarkroomRedDim to "déconnecté"
-    }
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(6.dp)
-    ) {
-        Box(
-            modifier = Modifier
-                .size(8.dp)
-                .background(dotColor, shape = RoundedCornerShape(4.dp))
-        )
-        Text(text = label, fontSize = 11.sp, color = dotColor)
-    }
-}
