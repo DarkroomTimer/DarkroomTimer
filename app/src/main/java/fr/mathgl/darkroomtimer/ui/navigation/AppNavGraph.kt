@@ -259,7 +259,7 @@ fun AppNavGraph() {
                                 progress = s.progress,
                                 state = s.state,
                                 totalSteps = s.totalSteps,
-                                currentStepIndex = if (s.currentStepIndex >= 0) s.currentStepIndex + 1 else 0,
+                                currentStepIndex = maxOf(0, s.currentStepIndex),
                                 onStart = { devVM.sessionStart() },
                                 onPause = { devVM.sessionPause() },
                                 onResume = { devVM.sessionResume() },
