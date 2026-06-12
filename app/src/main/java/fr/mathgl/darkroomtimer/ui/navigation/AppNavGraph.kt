@@ -36,7 +36,12 @@ import androidx.navigation.compose.rememberNavController
 import fr.mathgl.darkroomtimer.development.DevelopmentListViewModel
 import fr.mathgl.darkroomtimer.storage.PreferenceManager
 import fr.mathgl.darkroomtimer.storage.room.AppDatabase
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
+import fr.mathgl.darkroomtimer.ui.BurnDodgeEntryEditorScreen
+import fr.mathgl.darkroomtimer.ui.BurnDodgeStepsScreen
 import fr.mathgl.darkroomtimer.ui.CountdownScreen
+import fr.mathgl.darkroomtimer.ui.CountdownViewModel
 import fr.mathgl.darkroomtimer.ui.DevelopmentFlowViewModel
 import fr.mathgl.darkroomtimer.ui.DevelopmentLaunchScreen
 import fr.mathgl.darkroomtimer.ui.DevelopmentProfileEditorScreen
@@ -56,6 +61,8 @@ fun AppNavGraph() {
     val currentRoute = backStackEntry?.destination?.route
     val showBottomBar = currentRoute != AppRoutes.ENLARGER_PROFILES
         && currentRoute != AppRoutes.DEVELOPMENT_PROFILE_EDITOR
+        && currentRoute != AppRoutes.BURN_DODGE_STEPS
+        && currentRoute?.startsWith(AppRoutes.BURN_DODGE_ENTRY_EDITOR) != true
 
     val navBarItems = listOf(
         Triple(AppRoutes.EXPOSITION, Icons.Default.Timer, "Exposition"),
@@ -108,7 +115,46 @@ fun AppNavGraph() {
                 startDestination = AppRoutes.EXPOSITION
             ) {
                 composable(AppRoutes.EXPOSITION) {
-                    CountdownScreen()
+                    CountdownScreen(
+                        onNavigateToBurnDodgeSteps = {
+                            navController.navigate(AppRoutes.BURN_DODGE_STEPS)
+                        }
+                    )
+                }
+
+                composable(AppRoutes.BURN_DODGE_STEPS) { backStackEntry ->
+                    val expositionEntry = remember(backStackEntry) {
+                        navController.getBackStackEntry(AppRoutes.EXPOSITION)
+                    }
+                    val vm: CountdownViewModel = viewModel(expositionEntry)
+                    BurnDodgeStepsScreen(
+                        viewModel = vm,
+                        onBack = { navController.popBackStack() },
+                        onNavigateToAddEntry = {
+                            navController.navigate(AppRoutes.BURN_DODGE_ENTRY_EDITOR)
+                        },
+                        onNavigateToEditEntry = { id ->
+                            navController.navigate("${AppRoutes.BURN_DODGE_ENTRY_EDITOR}?entryId=$id")
+                        }
+                    )
+                }
+
+                composable(
+                    route = "${AppRoutes.BURN_DODGE_ENTRY_EDITOR}?entryId={entryId}",
+                    arguments = listOf(
+                        navArgument("entryId") { type = NavType.IntType; defaultValue = -1 }
+                    )
+                ) { backStackEntry ->
+                    val entryId = backStackEntry.arguments?.getInt("entryId") ?: -1
+                    val expositionEntry = remember(backStackEntry) {
+                        navController.getBackStackEntry(AppRoutes.EXPOSITION)
+                    }
+                    val vm: CountdownViewModel = viewModel(expositionEntry)
+                    BurnDodgeEntryEditorScreen(
+                        entryId = entryId,
+                        viewModel = vm,
+                        onBack = { navController.popBackStack() }
+                    )
                 }
 
                 composable(AppRoutes.TESTSTRIP) {

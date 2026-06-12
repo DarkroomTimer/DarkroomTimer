@@ -87,8 +87,8 @@ class BurnDodgeEntryTest {
             contrastGrade = ContrastGrade.GRADE_2
         )
 
-        assertEquals("+1/1 stop", burnEntry.fractionLabel)
-        assertEquals("-1/1 stop", dodgeEntry.fractionLabel)
+        assertEquals("+1 stop", burnEntry.fractionLabel)
+        assertEquals("-1 stop", dodgeEntry.fractionLabel)
     }
 
     @Test

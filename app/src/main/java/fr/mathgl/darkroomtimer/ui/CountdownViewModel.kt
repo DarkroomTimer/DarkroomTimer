@@ -36,6 +36,7 @@ data class CountdownUiState(
     val relayState: RelayStates,
     val selectedGrade: ContrastGrade,
     val configuredTimeMs: Long,
+    val baseTimeMs: Long,
     val burnDodgeEntries: List<BurnDodgeEntry>,
     val burnDodgeVisible: Boolean,
     val maxEntriesReached: Boolean,
@@ -108,6 +109,7 @@ open class CountdownViewModel(
         prefs?.defaultExposureMs = calc
         _uiState.update { it.copy(
             configuredTimeMs = calc,
+            baseTimeMs = calc,
             fStopCorrectionNumerator = 0,
             fStopCorrectionDenominator = 1,
             displayTime = CountdownTimer.formatTime(calc),
@@ -123,6 +125,7 @@ open class CountdownViewModel(
             relayState = RelayStates.INITIAL,
             selectedGrade = ContrastGrade.DEFAULT,
             configuredTimeMs = timer.configuredTimeMs,
+            baseTimeMs = baseTimeMs,
             burnDodgeEntries = emptyList(),
             burnDodgeVisible = false,
             maxEntriesReached = false
@@ -146,6 +149,7 @@ open class CountdownViewModel(
                 displayTime = CountdownTimer.formatTime(timer.configuredTimeMs),
                 displayTimeMs = timer.configuredTimeMs,
                 configuredTimeMs = timer.configuredTimeMs,
+                baseTimeMs = timer.configuredTimeMs,
                 selectedGrade = prefs!!.defaultContrastGrade,
                 isMetronomeEnabled = prefs!!.metronomeEnabled
             ) }
@@ -291,7 +295,8 @@ open class CountdownViewModel(
             _uiState.update { it.copy(
                 displayTime = CountdownTimer.formatTime(calc),
                 displayTimeMs = calc,
-                configuredTimeMs = newBase
+                configuredTimeMs = newBase,
+                baseTimeMs = newBase
             ) }
         } else {
             // PAUSED: fine-tune remaining time; does not affect baseTimeMs or correction
@@ -314,6 +319,7 @@ open class CountdownViewModel(
             displayTime = CountdownTimer.formatTime(clamped),
             displayTimeMs = clamped,
             configuredTimeMs = clamped,
+            baseTimeMs = clamped,
             fStopCorrectionNumerator = 0,
             fStopCorrectionDenominator = 1
         )}
@@ -366,6 +372,28 @@ open class CountdownViewModel(
 
     fun clearBurnDodgeEntries() {
         burnDodgeManager.clear()
+        updateBurnDodgeState()
+    }
+
+    fun updateBurnDodgeEntry(
+        id: Int,
+        label: String,
+        type: BurnDodgeType,
+        numerator: Int,
+        denominator: Int,
+        contrastGrade: ContrastGrade
+    ) {
+        burnDodgeManager.updateEntry(id, label, type, numerator, denominator, contrastGrade)
+        updateBurnDodgeState()
+    }
+
+    fun moveBurnDodgeEntryUp(id: Int) {
+        burnDodgeManager.moveUp(id)
+        updateBurnDodgeState()
+    }
+
+    fun moveBurnDodgeEntryDown(id: Int) {
+        burnDodgeManager.moveDown(id)
         updateBurnDodgeState()
     }
 

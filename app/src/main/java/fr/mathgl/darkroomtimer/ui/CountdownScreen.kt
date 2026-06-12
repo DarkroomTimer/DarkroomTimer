@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.LinkOff
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.MusicOff
 import androidx.compose.material3.*
@@ -27,18 +28,10 @@ import fr.mathgl.darkroomtimer.system.TimerState
 
 @Composable
 fun CountdownScreen(
-    viewModel: CountdownViewModel = viewModel(factory = CountdownViewModel.Factory)
+    viewModel: CountdownViewModel = viewModel(factory = CountdownViewModel.Factory),
+    onNavigateToBurnDodgeSteps: () -> Unit = {}
 ) {
     val state by viewModel.uiState.collectAsState()
-    var showBurnDodgeDialog by remember { mutableStateOf(false) }
-
-    LaunchedEffect(showBurnDodgeDialog) {
-        if (!showBurnDodgeDialog) {
-            if (state.burnDodgeVisible) {
-                viewModel.toggleBurnDodgePanel()
-            }
-        }
-    }
 
     Column(
         modifier = Modifier
@@ -69,18 +62,6 @@ fun CountdownScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        if (state.timerState == TimerState.RUNNING || state.timerState == TimerState.PAUSED) {
-            BurnDodgePanel(
-                entries = state.burnDodgeEntries,
-                maxEntriesReached = state.maxEntriesReached,
-                isExpanded = state.burnDodgeVisible,
-                onToggleExpanded = { viewModel.toggleBurnDodgePanel() },
-                onAddEntry = { showBurnDodgeDialog = true },
-                onRemoveEntry = { viewModel.removeBurnDodgeEntry(it) }
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-        }
-
         if (state.timerState == TimerState.STOPPED) {
             FStopCorrectionSection(
                 fStopCorrectionNumerator = state.fStopCorrectionNumerator,
@@ -106,6 +87,7 @@ fun CountdownScreen(
             safelightOverride = state.safelightOverride,
             overrideEnabled = state.timerState != TimerState.RUNNING,
             isMetronomeEnabled = state.isMetronomeEnabled,
+            hasBurnDodgeSteps = state.burnDodgeEntries.isNotEmpty(),
             connectionState = state.connectionState,
             relayType = state.relayType,
             errorMessage = state.errorMessage,
@@ -115,17 +97,8 @@ fun CountdownScreen(
             onStop = { viewModel.stop() },
             onToggleEnlarger = { viewModel.toggleEnlargerOverride() },
             onToggleSafelight = { viewModel.toggleSafelightOverride() },
-            onToggleMetronome = { viewModel.toggleMetronome() }
-        )
-    }
-
-    if (showBurnDodgeDialog) {
-        BurnDodgeDialog(
-            onDismiss = { showBurnDodgeDialog = false },
-            onConfirm = { label, type, numerator, denominator, grade ->
-                viewModel.addBurnDodgeEntry(label, type, numerator, denominator, grade)
-                showBurnDodgeDialog = false
-            }
+            onToggleMetronome = { viewModel.toggleMetronome() },
+            onNavigateToBurnDodgeSteps = onNavigateToBurnDodgeSteps
         )
     }
 }
@@ -140,6 +113,7 @@ private fun BottomControlBar(
     safelightOverride: Boolean,
     overrideEnabled: Boolean,
     isMetronomeEnabled: Boolean,
+    hasBurnDodgeSteps: Boolean,
     connectionState: ConnectionState,
     relayType: String,
     errorMessage: String?,
@@ -149,7 +123,8 @@ private fun BottomControlBar(
     onStop: () -> Unit,
     onToggleEnlarger: () -> Unit,
     onToggleSafelight: () -> Unit,
-    onToggleMetronome: () -> Unit
+    onToggleMetronome: () -> Unit,
+    onNavigateToBurnDodgeSteps: () -> Unit
 ) {
     var showConnectionDialog by remember { mutableStateOf(false) }
 
@@ -254,6 +229,16 @@ private fun BottomControlBar(
                     imageVector = if (isMetronomeEnabled) Icons.Default.MusicNote else Icons.Default.MusicOff,
                     contentDescription = if (isMetronomeEnabled) "Désactiver le métronome" else "Activer le métronome",
                     tint = if (isMetronomeEnabled) DarkroomRedBright else DarkroomRedFaint
+                )
+            }
+            IconButton(
+                onClick = onNavigateToBurnDodgeSteps,
+                modifier = Modifier.size(40.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.List,
+                    contentDescription = "Dodge and Burn",
+                    tint = if (hasBurnDodgeSteps) DarkroomRedBright else DarkroomRedFaint
                 )
             }
             IconButton(

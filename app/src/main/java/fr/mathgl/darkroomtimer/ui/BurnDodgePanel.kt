@@ -27,10 +27,8 @@ import fr.mathgl.darkroomtimer.ui.theme.DarkroomSurface
 @Composable
 fun BurnDodgePanel(
     entries: List<BurnDodgeEntry>,
-    maxEntriesReached: Boolean,
     isExpanded: Boolean,
     onToggleExpanded: () -> Unit,
-    onAddEntry: () -> Unit,
     onRemoveEntry: (Int) -> Unit
 ) {
     Column(
@@ -48,27 +46,17 @@ fun BurnDodgePanel(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Burn & Dodge",
+                text = "Dodge and Burn",
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
                 color = DarkroomRedBright
             )
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                if (entries.isNotEmpty()) {
-                    Text(
-                        text = "${entries.size}/${BurnDodgeManager.MAX_ENTRIES}",
-                        fontSize = 12.sp,
-                        color = DarkroomRedDim
-                    )
-                }
-                Button(
-                    onClick = onAddEntry,
-                    enabled = !maxEntriesReached,
-                    colors = ButtonDefaults.buttonColors(containerColor = DarkroomRedBright),
-                    modifier = Modifier.height(32.dp)
-                ) {
-                    Text("+", fontSize = 16.sp)
-                }
+            if (entries.isNotEmpty()) {
+                Text(
+                    text = "${entries.size}/${BurnDodgeManager.MAX_ENTRIES}",
+                    fontSize = 12.sp,
+                    color = DarkroomRedDim
+                )
             }
         }
 

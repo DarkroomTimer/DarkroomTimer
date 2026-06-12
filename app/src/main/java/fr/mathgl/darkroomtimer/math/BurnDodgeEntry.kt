@@ -29,10 +29,10 @@ data class BurnDodgeEntry(
         }
     }
 
-    /** Human-readable fraction label like "+1/3 stop" or "-1/2 stop" */
+    /** Human-readable fraction label like "+1/3 stop", "+2 1/3 stop", "-4 stop" */
     val fractionLabel: String
         get() {
             val sign = if (type == BurnDodgeType.BURN) "+" else "-"
-            return "$sign${numerator}/${denominator} stop"
+            return "$sign${FStopMath.formatStop(numerator, denominator)} stop"
         }
 }

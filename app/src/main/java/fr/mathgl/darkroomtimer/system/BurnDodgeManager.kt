@@ -84,6 +84,32 @@ class BurnDodgeManager(
     }
 
     /**
+     * Move an entry one position up (towards index 0).
+     * @return true if moved, false if not found or already first
+     */
+    fun moveUp(id: Int): Boolean {
+        val index = entries.indexOfFirst { it.id == id }
+        if (index <= 0) return false
+        val tmp = entries[index]
+        entries[index] = entries[index - 1]
+        entries[index - 1] = tmp
+        return true
+    }
+
+    /**
+     * Move an entry one position down (towards last index).
+     * @return true if moved, false if not found or already last
+     */
+    fun moveDown(id: Int): Boolean {
+        val index = entries.indexOfFirst { it.id == id }
+        if (index < 0 || index >= entries.size - 1) return false
+        val tmp = entries[index]
+        entries[index] = entries[index + 1]
+        entries[index + 1] = tmp
+        return true
+    }
+
+    /**
      * Clear all entries and reset ID counter.
      */
     fun clear() {

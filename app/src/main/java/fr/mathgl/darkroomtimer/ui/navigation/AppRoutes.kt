@@ -5,6 +5,8 @@ object AppRoutes {
     const val TESTSTRIP = "teststrip"
     const val SETTINGS = "settings"
     const val ENLARGER_PROFILES = "enlarger_profiles"
+    const val BURN_DODGE_STEPS = "burn_dodge_steps"
+    const val BURN_DODGE_ENTRY_EDITOR = "burn_dodge_entry_editor"
 
     // Nested development graph
     const val DEVELOPMENT_GRAPH = "development"
