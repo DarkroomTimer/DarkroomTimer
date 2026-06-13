@@ -1,7 +1,8 @@
-package fr.mathgl.darkroomtimer.ui
+package fr.mathgl.darkroomtimer.ui.exposure
 
 import android.app.Application
 import android.content.Intent
+import android.util.Log
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -13,13 +14,14 @@ import fr.mathgl.darkroomtimer.math.BurnDodgeType
 import fr.mathgl.darkroomtimer.math.ContrastGrade
 import fr.mathgl.darkroomtimer.math.FStopMath
 import fr.mathgl.darkroomtimer.storage.PreferenceManager
+import fr.mathgl.darkroomtimer.repository.RelayRepository
+import fr.mathgl.darkroomtimer.repository.SettingsRepository
+import fr.mathgl.darkroomtimer.ui.exposure.ConnectionTint
 import fr.mathgl.darkroomtimer.system.BurnDodgeManager
 import fr.mathgl.darkroomtimer.system.CountdownTimer
 import fr.mathgl.darkroomtimer.system.ForegroundTimerService
 import fr.mathgl.darkroomtimer.system.ConnectionState
 import fr.mathgl.darkroomtimer.system.RelayStates
-import fr.mathgl.darkroomtimer.system.RelaySystem
-import fr.mathgl.darkroomtimer.system.RelaySystemConfigFlat
 import fr.mathgl.darkroomtimer.system.TimerState
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -44,24 +46,28 @@ data class CountdownUiState(
     val safelightOverride: Boolean = false,
     val relayType: String = "NULL",
     val connectionState: ConnectionState = ConnectionState.Disconnected,
+    val connectionTint: ConnectionTint = ConnectionTint.DIM,
     val errorMessage: String? = null,
     val fStopCorrectionNumerator: Int = 0,
     val fStopCorrectionDenominator: Int = 1,
     val isMetronomeEnabled: Boolean = false
 )
 
+private const val TAG = "DT/CountdownVM"
+
 open class CountdownViewModel(
     application: Application,
-    private val relaySystemFactory: (kotlinx.coroutines.CoroutineScope) -> RelaySystem,
+    private val relayRepository: RelayRepository,
+    private val settingsRepository: SettingsRepository,
     private val relayType: String = "NULL",
     private val timer: CountdownTimer = CountdownTimer()
 ) : AndroidViewModel(application) {
 
     private val burnDodgeManager = BurnDodgeManager()
-    private lateinit var relaySystem: RelaySystem
     private var audioSystem: AudioSystem? = null
     private var tickJob: Job? = null
     private var baseTimeMs: Long = timer.configuredTimeMs
+
     private var prefs: PreferenceManager? = null
 
     private fun calculatedTimeMs(): Long {
@@ -134,44 +140,44 @@ open class CountdownViewModel(
     val uiState: StateFlow<CountdownUiState> = _uiState.asStateFlow()
 
     init {
-        relaySystem = relaySystemFactory(viewModelScope)
         _uiState.update { it.copy(relayType = relayType) }
 
         audioSystem = createAudioSystem(getApplication())
 
-        // Load defaults from preferences
+        // Load defaults from settings repository
         try {
-            val context = getApplication<Application>()
-            prefs = PreferenceManager.getInstance(context)
-            timer.configuredTimeMs = prefs!!.defaultExposureMs
+            timer.configuredTimeMs = settingsRepository.defaultExposureMs
             baseTimeMs = timer.configuredTimeMs
             _uiState.update { it.copy(
                 displayTime = CountdownTimer.formatTime(timer.configuredTimeMs),
                 displayTimeMs = timer.configuredTimeMs,
                 configuredTimeMs = timer.configuredTimeMs,
                 baseTimeMs = timer.configuredTimeMs,
-                selectedGrade = prefs!!.defaultContrastGrade,
-                isMetronomeEnabled = prefs!!.metronomeEnabled
+                selectedGrade = settingsRepository.defaultContrastGrade,
+                isMetronomeEnabled = settingsRepository.metronomeEnabled
             ) }
         } catch (e: Exception) {
             // prefs unavailable in test environment, keep hardcoded defaults
         }
 
         viewModelScope.launch {
-            relaySystem.relayStates.collect { relayState ->
+            relayRepository.relayStates.collect { relayState ->
                 _uiState.update { it.copy(relayState = relayState) }
             }
         }
 
         viewModelScope.launch {
-            relaySystem.connectionState.collect { connState ->
-                _uiState.update { it.copy(connectionState = connState) }
+            relayRepository.connectionState.collect { connState ->
+                _uiState.update { it.copy(
+                    connectionState = connState,
+                    connectionTint = calculateConnectionTint(relayType, connState)
+                ) }
             }
         }
 
         // Connect relay if not Null/Demo (network drivers need connection)
         viewModelScope.launch {
-            relaySystem.connect().onFailure { e ->
+            relayRepository.connect().onFailure { e ->
                 _uiState.update { it.copy(errorMessage = "Connection failed: ${e.message}") }
             }
         }
@@ -181,18 +187,20 @@ open class CountdownViewModel(
         if (timer.state != TimerState.STOPPED) return
         timer.configuredTimeMs = calculatedTimeMs()       // use calculated time
         timer.start()
+        Log.d(TAG, "start: ${timer.configuredTimeMs}ms")
 
         viewModelScope.launch {
             _uiState.update { it.copy(errorMessage = null) }
-            val result = if (!relaySystem.capabilities.canPause) {
+            val result = if (!relayRepository.capabilities.canPause) {
                 // TIMED_POWER : Tasmota gère l'extinction via TimedPower
-                relaySystem.startTimedExposure(timer.configuredTimeMs)
+                relayRepository.startTimedExposure(timer.configuredTimeMs)
             } else {
                 // EXPLICIT_ON_OFF : le tick job envoie Power OFF en fin de minuteur
-                relaySystem.setEnlarger(true)
+                relayRepository.setEnlarger(true)
             }
 
             if (result.isFailure) {
+                Log.e(TAG, "start: relay command failed — ${result.exceptionOrNull()?.message}")
                 _uiState.update { it.copy(errorMessage = "Hardware Error: ${result.exceptionOrNull()?.message}") }
                 timer.stop()
             }
@@ -207,6 +215,7 @@ open class CountdownViewModel(
     fun pause() {
         if (timer.state != TimerState.RUNNING) return
         timer.pause()
+        Log.d(TAG, "pause: ${timer.remainingMs()}ms remaining")
         tickJob?.cancel(); tickJob = null
         viewModelScope.launch { shutOffRelays("pause") }
         audioSystem?.pause()
@@ -221,10 +230,12 @@ open class CountdownViewModel(
     fun resume() {
         if (timer.state != TimerState.PAUSED) return
         timer.resume()
+        Log.d(TAG, "resume: ${timer.remainingMs()}ms remaining")
         viewModelScope.launch {
-            val res1 = relaySystem.setEnlarger(true)
-            val res2 = relaySystem.setSafelight(true)
+            val res1 = relayRepository.setEnlarger(true)
+            val res2 = relayRepository.setSafelight(true)
             if (!res1.isSuccess || !res2.isSuccess) {
+                Log.e(TAG, "resume: relay command failed — enlarger=${res1.exceptionOrNull()?.message} safelight=${res2.exceptionOrNull()?.message}")
                 _uiState.update { it.copy(errorMessage = "Resume failed: Hardware did not respond") }
                 timer.pause()
             }
@@ -239,7 +250,7 @@ open class CountdownViewModel(
         while (true) {
             val ended = timer.tick()
             val remaining = maxOf(0L, timer.remainingMs())
-            if (ended) timer.configuredTimeMs = baseTimeMs           // restore base on natural end
+            if (ended) timer.configuredTimeMs = baseTimeMs
             _uiState.update { it.copy(
                 displayTime = if (ended) CountdownTimer.formatTime(calculatedTimeMs())
                               else CountdownTimer.formatTime(remaining),
@@ -253,7 +264,14 @@ open class CountdownViewModel(
                 remaining
             )
             if (ended) {
+                Log.d(TAG, "timer completed")
                 viewModelScope.launch { shutOffRelays("timer end") }
+                audioSystem?.stopExposure()
+                tickJob = null
+                break
+            }
+            // Timer was stopped externally (e.g., relay failure)
+            if (timer.state == TimerState.STOPPED) {
                 audioSystem?.stopExposure()
                 tickJob = null
                 break
@@ -266,6 +284,7 @@ open class CountdownViewModel(
         if (timer.state == TimerState.STOPPED) return
         val wasPaused = timer.state == TimerState.PAUSED
         val timerCompletedNaturally = timer.state == TimerState.RUNNING
+        Log.d(TAG, "stop: wasPaused=$wasPaused")
         tickJob?.cancel(); tickJob = null
         timer.stop()
         timer.configuredTimeMs = baseTimeMs                           // restore base; start() will re-apply correction
@@ -290,7 +309,7 @@ open class CountdownViewModel(
         if (timer.state == TimerState.STOPPED) {
             val newBase = (baseTimeMs + deltaMs).coerceIn(100L, 999_000L)
             baseTimeMs = newBase
-            prefs?.defaultExposureMs = newBase
+            settingsRepository.defaultExposureMs = newBase
             val calc = calculatedTimeMs()
             _uiState.update { it.copy(
                 displayTime = CountdownTimer.formatTime(calc),
@@ -314,7 +333,7 @@ open class CountdownViewModel(
         val clamped = ms.coerceIn(100L, 999_000L)
         baseTimeMs = clamped
         timer.configuredTimeMs = clamped
-        prefs?.defaultExposureMs = clamped
+        settingsRepository.defaultExposureMs = clamped
         _uiState.update { it.copy(
             displayTime = CountdownTimer.formatTime(clamped),
             displayTimeMs = clamped,
@@ -343,14 +362,14 @@ open class CountdownViewModel(
     fun toggleEnlargerOverride() {
         if (_uiState.value.timerState == TimerState.RUNNING) return
         val newOverride = !_uiState.value.enlargerOverride
-        viewModelScope.launch { relaySystem.setEnlarger(newOverride) }
+        viewModelScope.launch { relayRepository.setEnlarger(newOverride) }
         _uiState.update { it.copy(enlargerOverride = newOverride) }
     }
 
     fun toggleSafelightOverride() {
         if (_uiState.value.timerState == TimerState.RUNNING) return
         val newOverride = !_uiState.value.safelightOverride
-        viewModelScope.launch { relaySystem.setSafelight(newOverride) }
+        viewModelScope.launch { relayRepository.setSafelight(newOverride) }
         _uiState.update { it.copy(safelightOverride = newOverride) }
     }
 
@@ -398,8 +417,8 @@ open class CountdownViewModel(
     }
 
     fun toggleMetronome() {
-        val prefs = this.prefs ?: return
-        val newEnabled = !prefs.metronomeEnabled
+        val newEnabled = !_uiState.value.isMetronomeEnabled
+        settingsRepository.metronomeEnabled = newEnabled
         val isExposureRunning = _uiState.value.timerState == TimerState.RUNNING
         audioSystem?.setMetronomeEnabled(newEnabled, activateNow = isExposureRunning)
         _uiState.update { it.copy(isMetronomeEnabled = newEnabled) }
@@ -417,13 +436,23 @@ open class CountdownViewModel(
     }
 
     private suspend fun shutOffRelays(errorContext: String) {
-        val r1 = relaySystem.setEnlarger(false)
-        val r2 = relaySystem.setSafelight(false)
-        if (!r1.isSuccess || !r2.isSuccess)
+        val r1 = relayRepository.setEnlarger(false)
+        val r2 = relayRepository.setSafelight(false)
+        if (!r1.isSuccess || !r2.isSuccess) {
+            Log.e(TAG, "shutOffRelays ($errorContext): enlarger=${r1.exceptionOrNull()?.message} safelight=${r2.exceptionOrNull()?.message}")
             _uiState.update { it.copy(errorMessage = "Failed to shut off relays ($errorContext)") }
+        }
     }
 
-    private fun currentState() = _uiState.value
+    private fun calculateConnectionTint(type: String, state: ConnectionState): ConnectionTint {
+        return when {
+            type == "NULL" || type == "DEMO" -> ConnectionTint.DIM
+            state is ConnectionState.Connected  -> ConnectionTint.BRIGHT
+            state is ConnectionState.Connecting -> ConnectionTint.MEDIUM
+            state is ConnectionState.Error      -> ConnectionTint.BRIGHT
+            else                                -> ConnectionTint.DIM
+        }
+    }
 
     open fun sendServiceIntent(action: String, remainingMs: Long) {
         val intent = Intent(getApplication(), ForegroundTimerService::class.java).apply {
@@ -437,7 +466,7 @@ open class CountdownViewModel(
         super.onCleared()
         tickJob?.cancel()
         kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
-            try { relaySystem.disconnect() } catch (e: Exception) { /* ignore */ }
+            try { relayRepository.disconnect() } catch (e: Exception) { /* ignore */ }
         }
         audioSystem?.release()
     }
@@ -462,9 +491,13 @@ open class CountdownViewModel(
                 ] as? Application
                     ?: throw IllegalStateException("Application not available")
                 val prefs = fr.mathgl.darkroomtimer.storage.PreferenceManager.getInstance(application)
+                val settingsRepo = SettingsRepository(application)
+                val relaySystem = prefs.relaySystemConfig.buildRelaySystem(kotlinx.coroutines.MainScope())
+                val relayRepo = RelayRepository(relaySystem)
                 return CountdownViewModel(
                     application,
-                    prefs.relaySystemConfig::buildRelaySystem,
+                    relayRepo,
+                    settingsRepo,
                     prefs.relaySystemConfig.enlargerType,
                     CountdownTimer()
                 ) as T

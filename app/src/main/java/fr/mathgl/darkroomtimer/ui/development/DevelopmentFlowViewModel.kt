@@ -1,4 +1,4 @@
-package fr.mathgl.darkroomtimer.ui
+package fr.mathgl.darkroomtimer.ui.development
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

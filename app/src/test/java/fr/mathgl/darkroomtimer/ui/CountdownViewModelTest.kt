@@ -2,15 +2,15 @@ package fr.mathgl.darkroomtimer.ui
 
 import android.app.Application
 import fr.mathgl.darkroomtimer.math.ContrastGrade
+import fr.mathgl.darkroomtimer.repository.RelayRepository
+import fr.mathgl.darkroomtimer.repository.SettingsRepository
 import fr.mathgl.darkroomtimer.system.CountdownTimer
 import fr.mathgl.darkroomtimer.system.MockRelaySystem
-import fr.mathgl.darkroomtimer.system.RelaySystem
 import fr.mathgl.darkroomtimer.system.RelayStates
 import fr.mathgl.darkroomtimer.system.TimerState
-import kotlinx.coroutines.CoroutineScope
+import fr.mathgl.darkroomtimer.ui.exposure.CountdownViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.*
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -27,9 +27,10 @@ class CountdownViewModelTest {
 
     class TestCountdownViewModel(
         app: Application,
-        factory: (CoroutineScope) -> RelaySystem,
+        relayRepository: RelayRepository,
+        settingsRepository: SettingsRepository,
         timer: CountdownTimer
-    ) : CountdownViewModel(app, factory, timer = timer) {
+    ) : CountdownViewModel(app, relayRepository, settingsRepository, timer = timer) {
         val serviceIntents = mutableListOf<Pair<String, Long>>()
         override fun sendServiceIntent(action: String, remainingMs: Long) {
             serviceIntents.add(action to remainingMs)
@@ -43,8 +44,12 @@ class CountdownViewModelTest {
         relaySystem = MockRelaySystem(TestScope(testDispatcher))
 
         val timer = CountdownTimer(clock = { testDispatcher.scheduler.currentTime })
-
-        viewModel = TestCountdownViewModel(application, { relaySystem }, timer)
+        val settingsRepo = mock<SettingsRepository> {
+            on { defaultExposureMs } doReturn 8000L
+            on { defaultContrastGrade } doReturn ContrastGrade.DEFAULT
+            on { metronomeEnabled } doReturn false
+        }
+        viewModel = TestCountdownViewModel(application, RelayRepository(relaySystem), settingsRepo, timer)
     }
 
     @After
@@ -220,8 +225,17 @@ class CountdownViewModelTest {
     fun `start with canPause false should use startTimedExposure only`() = runTest {
         // canPause=false = TIMED_POWER : Tasmota gère l'extinction via TimedPower, pas de safelight
         val relaySystemNoPause = MockRelaySystem(scope = TestScope(testDispatcher), canPause = false)
-
-        val vm = TestCountdownViewModel(application, { relaySystemNoPause }, CountdownTimer(clock = { testDispatcher.scheduler.currentTime }))
+        val settingsRepo = mock<SettingsRepository> {
+            on { defaultExposureMs } doReturn 8000L
+            on { defaultContrastGrade } doReturn ContrastGrade.DEFAULT
+            on { metronomeEnabled } doReturn false
+        }
+        val vm = TestCountdownViewModel(
+            application,
+            RelayRepository(relaySystemNoPause),
+            settingsRepo,
+            CountdownTimer(clock = { testDispatcher.scheduler.currentTime })
+        )
         vm.start()
         testDispatcher.scheduler.runCurrent()
 

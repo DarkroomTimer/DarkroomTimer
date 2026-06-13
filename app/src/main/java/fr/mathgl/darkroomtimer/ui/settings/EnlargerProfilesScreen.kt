@@ -1,4 +1,4 @@
-package fr.mathgl.darkroomtimer.ui
+package fr.mathgl.darkroomtimer.ui.settings
 
 import android.app.Application
 import androidx.compose.foundation.background
@@ -21,8 +21,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import fr.mathgl.darkroomtimer.storage.room.AppDatabase
 import fr.mathgl.darkroomtimer.storage.room.EnlargerProfileEntity
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 @Composable
@@ -38,7 +36,7 @@ fun EnlargerProfilesScreen(
     val db = remember {
         AppDatabase.getDatabase(
             context.applicationContext as Application,
-            CoroutineScope(Dispatchers.Default)
+            scope
         )
     }
     val dao = remember { db.enlargerProfileDao() }
@@ -109,10 +107,9 @@ fun EnlargerProfilesScreen(
                             }
                             if (profile.id != 0) {
                                 TextButton(onClick = {
-                                    scope.launch(Dispatchers.IO) {
+                                    scope.launch {
                                         dao.delete(profile)
-                                        val updated = dao.getAll().sortedBy { it.id }
-                                        profiles = updated
+                                        profiles = dao.getAll().sortedBy { it.id }
                                     }
                                 }) {
                                     Text("✕", color = DarkroomRedBright, fontSize = 18.sp)
@@ -128,8 +125,8 @@ fun EnlargerProfilesScreen(
 
         Button(
             onClick = {
-                val nextId = (profiles.maxOfOrNull { it.id } ?: 0) + 1
-                if (nextId <= 15) {
+                val nextId = (1..15).firstOrNull { id -> profiles.none { it.id == id } }
+                if (nextId != null) {
                     editingProfile = EnlargerProfileEntity(
                         id = nextId,
                         name = "",
@@ -158,10 +155,9 @@ fun EnlargerProfilesScreen(
         EnlargerProfileEditorDialog(
             profile = profile,
             onSave = { saved ->
-                scope.launch(Dispatchers.IO) {
+                scope.launch {
                     dao.insert(saved)
-                    val updated = dao.getAll().sortedBy { it.id }
-                    profiles = updated
+                    profiles = dao.getAll().sortedBy { it.id }
                 }
                 showEditor = false
                 editingProfile = null

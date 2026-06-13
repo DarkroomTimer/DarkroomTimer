@@ -1,8 +1,11 @@
 package fr.mathgl.darkroomtimer.system
 
+import android.util.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.flow.*
+
+private const val TAG = "DT/RelaySystem"
 
 data class DriverCapabilities(
     val canPause: Boolean,
@@ -79,28 +82,43 @@ open class RelaySystem(
     )
 
     open suspend fun connect(): Result<Unit> {
+        Log.d(TAG, "connect: enlarger + ${if (safelight != null) "safelight" else "no safelight"}")
         val enlargerRes = enlarger.connect()
         val safelightRes = safelight?.connect() ?: Result.success(Unit)
 
         return if (enlargerRes.isSuccess && safelightRes.isSuccess) {
+            Log.d(TAG, "connect: success")
             Result.success(Unit)
         } else {
+            Log.w(TAG, "connect: partial failure — rolling back. enlarger=${enlargerRes.exceptionOrNull()?.message} safelight=${safelightRes.exceptionOrNull()?.message}")
+            disconnect() // Rollback: disconnect all if any fail to ensure consistent state
             val errorMsg = listOfNotNull(
                 enlargerRes.exceptionOrNull()?.message,
                 safelightRes.exceptionOrNull()?.message
             ).joinToString("; ")
+            Log.e(TAG, "connect: failed — $errorMsg")
             Result.failure(Exception(errorMsg.ifEmpty { "Connection failed" }))
         }
     }
 
     open suspend fun disconnect() {
+        Log.d(TAG, "disconnect")
         enlarger.disconnect()
         safelight?.disconnect()
     }
 
-    open suspend fun setEnlarger(on: Boolean): Result<Unit> = enlarger.set(on)
-    open suspend fun setSafelight(on: Boolean): Result<Unit> =
-        safelight?.set(on) ?: Result.success(Unit)
+    open suspend fun setEnlarger(on: Boolean): Result<Unit> {
+        Log.d(TAG, "setEnlarger: $on")
+        return enlarger.set(on)
+    }
 
-    open suspend fun startTimedExposure(durationMs: Long): Result<Unit> = enlarger.startTimed(durationMs)
+    open suspend fun setSafelight(on: Boolean): Result<Unit> {
+        Log.d(TAG, "setSafelight: $on")
+        return safelight?.set(on) ?: Result.success(Unit)
+    }
+
+    open suspend fun startTimedExposure(durationMs: Long): Result<Unit> {
+        Log.d(TAG, "startTimedExposure: ${durationMs}ms")
+        return enlarger.startTimed(durationMs)
+    }
 }

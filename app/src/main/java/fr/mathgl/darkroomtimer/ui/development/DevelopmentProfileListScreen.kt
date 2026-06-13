@@ -1,4 +1,4 @@
-package fr.mathgl.darkroomtimer.ui
+package fr.mathgl.darkroomtimer.ui.development
 
 import android.app.Application
 import androidx.compose.foundation.background

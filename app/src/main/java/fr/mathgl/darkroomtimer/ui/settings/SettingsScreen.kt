@@ -1,4 +1,4 @@
-package fr.mathgl.darkroomtimer.ui
+package fr.mathgl.darkroomtimer.ui.settings
 
 import android.app.Application
 import android.content.Intent

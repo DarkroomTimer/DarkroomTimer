@@ -1,32 +1,32 @@
 package fr.mathgl.darkroomtimer.math
 
-import org.junit.Assert.assertEquals
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.CsvSource
 
 class FStopMathTest {
 
-    @Test
-    fun testAdjustTime() {
-        val base = 8000L
-        val num = 1
-        val den = 3
-
-        // Validation Table
-        assertEquals("Step 0", 8000L, FStopMath.adjustTime(base, num, den, 0))
-        assertEquals("Step 1", 10079L, FStopMath.adjustTime(base, num, den, 1))
-        assertEquals("Step 2", 12699L, FStopMath.adjustTime(base, num, den, 2))
-        assertEquals("Step 3", 16000L, FStopMath.adjustTime(base, num, den, 3))
-        assertEquals("Step -1", 6350L, FStopMath.adjustTime(base, num, den, -1))
-        assertEquals("Step -3", 4000L, FStopMath.adjustTime(base, num, den, -3))
+    @ParameterizedTest(name = "Step {0} with base {1} and fraction {2}/{3} should be {4}")
+    @CsvSource(
+        "0,  8000, 1, 3, 8000",
+        "1,  8000, 1, 3, 10079",
+        "2,  8000, 1, 3, 12699",
+        "3,  8000, 1, 3, 16000",
+        "-1, 8000, 1, 3, 6350",
+        "-3, 8000, 1, 3, 4000"
+    )
+    fun testAdjustTime(step: Int, base: Long, num: Int, den: Int, expected: Long) {
+        assertEquals(expected, FStopMath.adjustTime(base, num, den, step))
     }
 
     @Test
     fun testAdjustTimeEdgeCases() {
         // Denominator 0 -> 0 stops
-        assertEquals("Denominator 0", 8000L, FStopMath.adjustTime(8000L, 1, 0, 1))
+        assertEquals(8000L, FStopMath.adjustTime(8000L, 1, 0, 1))
 
         // Result >= 0
-        assertEquals("Negative result should be 0", 0L, FStopMath.adjustTime(8000L, -100, 1, 1))
+        assertEquals(0L, FStopMath.adjustTime(8000L, -100, 1, 1))
     }
 
     @Test

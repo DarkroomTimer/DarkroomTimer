@@ -1,4 +1,4 @@
-package fr.mathgl.darkroomtimer.ui
+package fr.mathgl.darkroomtimer.ui.development
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -16,6 +16,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import fr.mathgl.darkroomtimer.ui.common.DigitTimeFormat
+import fr.mathgl.darkroomtimer.ui.common.DigitTimePicker
+import fr.mathgl.darkroomtimer.ui.common.SegmentedControl
+import fr.mathgl.darkroomtimer.ui.common.SegmentedControl
 import androidx.activity.compose.BackHandler
 import fr.mathgl.darkroomtimer.development.DevelopmentProfile
 import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedBright

@@ -1,8 +1,11 @@
 package fr.mathgl.darkroomtimer.development
 
+import android.util.Log
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+
+private const val TAG = "DT/DevSession"
 
 enum class DevelopmentSessionState { CONFIGURED, ACTIVE, PAUSED, COMPLETED }
 
@@ -67,6 +70,7 @@ class DevelopmentSession(
         require(_stateFlow.value.state == DevelopmentSessionState.CONFIGURED) {
             "Cannot start from state ${_stateFlow.value.state}"
         }
+        Log.d(TAG, "start: profile='${profile.name}' steps=$totalSteps")
         val firstStep = profile.steps.firstOrNull()?.copyWithElapsed(0L)
         updateState { it.copy(
             state = DevelopmentSessionState.ACTIVE,
@@ -81,6 +85,7 @@ class DevelopmentSession(
         require(_stateFlow.value.state == DevelopmentSessionState.ACTIVE) {
             "Cannot pause from state ${_stateFlow.value.state}"
         }
+        Log.d(TAG, "pause: step $currentStepIndex")
         updateState { it.copy(state = DevelopmentSessionState.PAUSED) }
     }
 
@@ -88,6 +93,7 @@ class DevelopmentSession(
         require(_stateFlow.value.state == DevelopmentSessionState.PAUSED) {
             "Cannot resume from state ${_stateFlow.value.state}"
         }
+        Log.d(TAG, "resume: step $currentStepIndex")
         updateState { it.copy(state = DevelopmentSessionState.ACTIVE) }
     }
 
@@ -107,6 +113,7 @@ class DevelopmentSession(
             // Check if this is the last step - mark completed regardless of mode
             if (currentIdx + 1 >= totalSteps) {
                 // Session completed
+                Log.d(TAG, "tick: step $currentIdx '${currentStep.name}' → session COMPLETED")
                 updateState { it.copy(
                     state = DevelopmentSessionState.COMPLETED,
                     isCompleted = true,
@@ -115,6 +122,7 @@ class DevelopmentSession(
                 ) }
             } else if (profile.navigationMode == DevelopmentNavigationMode.AUTOMATIC) {
                 // Auto-advance to next step in AUTOMATIC mode
+                Log.d(TAG, "tick: step $currentIdx '${currentStep.name}' ended → auto-advance to ${currentIdx + 1}")
                 val nextStep = profile.steps[currentIdx + 1].copyWithElapsed(0L)
                 updateState { it.copy(
                     currentStepIndex = currentIdx + 1,
@@ -156,6 +164,7 @@ class DevelopmentSession(
         }
         val currentIndex = currentStepIndex
         if (currentIndex >= 0 && currentIndex < totalSteps - 1) {
+            Log.d(TAG, "nextStep: $currentIndex → ${currentIndex + 1}")
             val nextStep = profile.steps[currentIndex + 1].copyWithElapsed(0L)
             updateState { it.copy(
                 currentStepIndex = currentIndex + 1,
@@ -169,6 +178,7 @@ class DevelopmentSession(
 
     /** Annuler et retourner à l'état CONFIGURED */
     fun cancel() {
+        Log.d(TAG, "cancel: from step $currentStepIndex")
         updateState { initialState() }
     }
 

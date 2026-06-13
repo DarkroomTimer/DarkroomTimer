@@ -1,4 +1,4 @@
-package fr.mathgl.darkroomtimer.ui
+package fr.mathgl.darkroomtimer.ui.exposure
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border

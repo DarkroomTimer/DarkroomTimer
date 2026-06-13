@@ -1,4 +1,4 @@
-package fr.mathgl.darkroomtimer.ui
+package fr.mathgl.darkroomtimer.ui.exposure
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -11,6 +11,8 @@ import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.MusicOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import fr.mathgl.darkroomtimer.ui.exposure.ConnectionTint
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -23,6 +25,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import fr.mathgl.darkroomtimer.math.FStopMath
+import fr.mathgl.darkroomtimer.ui.common.DigitTimeFormat
+import fr.mathgl.darkroomtimer.ui.common.DigitTimePicker
 import fr.mathgl.darkroomtimer.system.ConnectionState
 import fr.mathgl.darkroomtimer.system.RelayState
 import fr.mathgl.darkroomtimer.system.TimerState
@@ -32,7 +36,7 @@ fun CountdownScreen(
     viewModel: CountdownViewModel = viewModel(factory = CountdownViewModel.Factory),
     onNavigateToBurnDodgeSteps: () -> Unit = {}
 ) {
-    val state by viewModel.uiState.collectAsState()
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
 
     Column(
         modifier = Modifier
@@ -77,8 +81,7 @@ fun CountdownScreen(
 
         Spacer(modifier = Modifier.weight(1f))
 
-        val startEnabled = state.relayType == "NULL" || state.relayType == "DEMO" ||
-                           state.connectionState is ConnectionState.Connected
+        val startEnabled = true
         BottomControlBar(
             timerState = state.timerState,
             startEnabled = startEnabled,
@@ -90,6 +93,7 @@ fun CountdownScreen(
             isMetronomeEnabled = state.isMetronomeEnabled,
             hasBurnDodgeSteps = state.burnDodgeEntries.isNotEmpty(),
             connectionState = state.connectionState,
+            connectionTint = state.connectionTint,
             relayType = state.relayType,
             errorMessage = state.errorMessage,
             onStart = { viewModel.start() },
@@ -116,6 +120,7 @@ private fun BottomControlBar(
     isMetronomeEnabled: Boolean,
     hasBurnDodgeSteps: Boolean,
     connectionState: ConnectionState,
+    connectionTint: ConnectionTint,
     relayType: String,
     errorMessage: String?,
     onStart: () -> Unit,
@@ -209,12 +214,11 @@ private fun BottomControlBar(
             )
         }
 
-        val linkIconTint = when {
-            relayType == "NULL" || relayType == "DEMO" -> DarkroomRedDim
-            connectionState is ConnectionState.Connected  -> DarkroomRedBright
-            connectionState is ConnectionState.Connecting -> DarkroomRedMedium
-            connectionState is ConnectionState.Error      -> DarkroomRedBright
-            else                                          -> DarkroomRedDim
+        val linkIconTint = when (connectionTint) {
+            ConnectionTint.DIM -> DarkroomRedDim
+            ConnectionTint.BRIGHT -> DarkroomRedBright
+            ConnectionTint.MEDIUM -> DarkroomRedMedium
+            else -> DarkroomRedDim
         }
 
         Row(

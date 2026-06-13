@@ -1,5 +1,5 @@
 // app/src/main/java/fr/mathgl/darkroomtimer/ui/DigitTimePicker.kt
-package fr.mathgl.darkroomtimer.ui
+package fr.mathgl.darkroomtimer.ui.common
 
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown

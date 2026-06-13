@@ -1,6 +1,7 @@
-package fr.mathgl.darkroomtimer.ui
+package fr.mathgl.darkroomtimer.ui.exposure
 
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -10,7 +11,8 @@ import fr.mathgl.darkroomtimer.math.ContrastGrade
 import fr.mathgl.darkroomtimer.math.IncrementType
 import fr.mathgl.darkroomtimer.math.TeststripEngine
 import fr.mathgl.darkroomtimer.math.TeststripMode
-import fr.mathgl.darkroomtimer.storage.PreferenceManager
+import fr.mathgl.darkroomtimer.repository.RelayRepository
+import fr.mathgl.darkroomtimer.repository.SettingsRepository
 import fr.mathgl.darkroomtimer.system.RelaySystem
 import fr.mathgl.darkroomtimer.system.ConnectionState
 import fr.mathgl.darkroomtimer.system.TeststripSession
@@ -45,17 +47,17 @@ data class TeststripUiState(
     val errorMessage: String? = null
 )
 
+private const val TAG = "DT/TeststripVM"
+
 class TeststripViewModel(
     application: Application,
-    private val relaySystemFactory: (kotlinx.coroutines.CoroutineScope) -> RelaySystem
+    private val relayRepository: RelayRepository,
+    private val settingsRepository: SettingsRepository
 ) : AndroidViewModel(application) {
 
     private var exposureJob: Job? = null
     private var tickJob: Job? = null
     private var audioSystem: AudioSystem? = null
-    private lateinit var relaySystem: RelaySystem
-    private var prefs: PreferenceManager? = null
-
     private var selectedPatchIndex: Int = 0
 
     private val _uiState = MutableStateFlow(TeststripUiState(
@@ -84,31 +86,15 @@ class TeststripViewModel(
     private val session: TeststripSession
 
     init {
-        relaySystem = relaySystemFactory(viewModelScope)
-
         audioSystem = createAudioSystem(getApplication())
 
-        var initBaseMs = 8000L
-        var initNumerator = 1
-        var initDenominator = 3
-        var initPatchCount = 6
-        var initMode = TeststripMode.SEPARATE
-        var initIncrementType = IncrementType.F_STOP
-        var initIncrementMs = 0L
-
-        try {
-            val p = PreferenceManager.getInstance(getApplication())
-            prefs = p
-            initBaseMs = p.teststripBaseMs
-            initNumerator = p.teststripStopNumerator
-            initDenominator = p.teststripStopDenominator
-            initPatchCount = p.teststripPatchCount
-            initMode = runCatching { TeststripMode.valueOf(p.teststripMode) }.getOrDefault(TeststripMode.SEPARATE)
-            initIncrementType = runCatching { IncrementType.valueOf(p.teststripIncrementType) }.getOrDefault(IncrementType.F_STOP)
-            initIncrementMs = p.teststripIncrementMs
-        } catch (e: Exception) {
-            // prefs unavailable in test environment, keep hardcoded defaults
-        }
+        var initBaseMs = settingsRepository.teststripBaseMs
+        var initNumerator = settingsRepository.teststripStopNumerator
+        var initDenominator = settingsRepository.teststripStopDenominator
+        var initPatchCount = settingsRepository.teststripPatchCount
+        var initMode = runCatching { TeststripMode.valueOf(settingsRepository.teststripMode) }.getOrDefault(TeststripMode.SEPARATE)
+        var initIncrementType = runCatching { IncrementType.valueOf(settingsRepository.teststripIncrementType) }.getOrDefault(IncrementType.F_STOP)
+        var initIncrementMs = settingsRepository.teststripIncrementMs
 
         engine = TeststripEngine(
             baseTimeMs = initBaseMs,
@@ -118,18 +104,18 @@ class TeststripViewModel(
             mode = initMode,
             incrementType = initIncrementType
         )
-        engine.incrementMs = initIncrementMs
+        engine.updateIncrementMs(initIncrementMs)
         session = TeststripSession(engine = engine)
         updateUiState()
 
         viewModelScope.launch {
-            relaySystem.connect().onFailure { e ->
+            relayRepository.connect().onFailure { e ->
                 _uiState.update { it.copy(errorMessage = "Connection failed: ${e.message}") }
             }
         }
 
         viewModelScope.launch {
-            relaySystem.connectionState.collect {
+            relayRepository.connectionState.collect {
                 updateUiState()
             }
         }
@@ -153,16 +139,13 @@ class TeststripViewModel(
             mode = engine.mode,
             incrementType = engine.incrementType,
             incrementMs = engine.incrementMs,
-            isRelayConnected = relaySystem.connectionState.value is ConnectionState.Connected
+            isRelayConnected = relayRepository.connectionState.value is ConnectionState.Connected
         ) }
     }
 
     fun startSession() {
         if (session.state != TeststripState.INIT && session.state != TeststripState.BETWEEN_PATCHES) return
-        if (relaySystem.connectionState.value !is ConnectionState.Connected) {
-            _uiState.update { it.copy(errorMessage = "Relais déconnecté") }
-            return
-        }
+        Log.d(TAG, "startSession: patch ${session.currentPatchIndex + 1}")
         session.start()
         startExposure()
         updateUiState()
@@ -191,6 +174,7 @@ class TeststripViewModel(
 
     fun finishExposure() {
         if (session.state != TeststripState.EXPOSING) return
+        Log.d(TAG, "finishExposure: patch ${session.currentPatchIndex}")
         exposureJob?.cancel()
         exposureJob = null
         tickJob?.cancel()
@@ -208,6 +192,7 @@ class TeststripViewModel(
 
     fun nextPatch() {
         if (session.state != TeststripState.BETWEEN_PATCHES) return
+        Log.d(TAG, "nextPatch: → patch $selectedPatchIndex")
         session.nextPatch(selectedPatchIndex)
         updateUiState()
         startExposure()
@@ -247,52 +232,54 @@ class TeststripViewModel(
 
     fun updateBaseTime(newTimeMs: Long) {
         if (session.state != TeststripState.INIT && session.state != TeststripState.BETWEEN_PATCHES) return
-        engine.baseTimeMs = newTimeMs
-        prefs?.teststripBaseMs = newTimeMs
+        engine.updateBaseTime(newTimeMs)
+        settingsRepository.teststripBaseMs = newTimeMs
         updateUiState()
     }
 
     fun updateStopFraction(numerator: Int, denominator: Int) {
         if (session.state != TeststripState.INIT && session.state != TeststripState.BETWEEN_PATCHES) return
-        engine.numerator = numerator
-        engine.denominator = denominator
-        prefs?.teststripStopNumerator = numerator
-        prefs?.teststripStopDenominator = denominator
+        engine.updateStopFraction(numerator, denominator)
+        settingsRepository.teststripStopNumerator = numerator
+        settingsRepository.teststripStopDenominator = denominator
         updateUiState()
     }
 
     fun updatePatchCount(count: Int) {
         if (session.state != TeststripState.INIT) return
-        engine.patchCount = count
-        prefs?.teststripPatchCount = count
+        engine.updatePatchCount(count)
+        settingsRepository.teststripPatchCount = count
         updateUiState()
     }
 
     fun updateMode(mode: TeststripMode) {
         if (session.state != TeststripState.INIT) return
-        engine.mode = mode
-        prefs?.teststripMode = mode.name
+        engine.updateMode(mode)
+        settingsRepository.teststripMode = mode.name
         updateUiState()
     }
 
     fun updateIncrementType(type: IncrementType) {
         if (session.state != TeststripState.INIT) return
-        engine.incrementType = type
-        prefs?.teststripIncrementType = type.name
+        engine.updateIncrementType(type)
+        settingsRepository.teststripIncrementType = type.name
         updateUiState()
     }
 
     fun updateIncrementMs(ms: Long) {
         if (session.state != TeststripState.INIT) return
-        engine.incrementMs = ms
-        prefs?.teststripIncrementMs = ms
+        engine.updateIncrementMs(ms)
+        settingsRepository.teststripIncrementMs = ms
         updateUiState()
     }
 
     fun adjustIncrement(delta: Int) {
         if (session.state != TeststripState.INIT) return
         engine.adjustIncrement(delta)
-        prefs?.teststripIncrementMs = engine.incrementMs
+        when (engine.incrementType) {
+            IncrementType.F_STOP -> settingsRepository.teststripStopNumerator = engine.numerator
+            IncrementType.SECONDS -> settingsRepository.teststripIncrementMs = engine.incrementMs
+        }
         updateUiState()
     }
 
@@ -301,18 +288,22 @@ class TeststripViewModel(
     }
 
     private suspend fun shutOffRelays(errorContext: String) {
-        val r1 = relaySystem.setEnlarger(false)
-        val r2 = relaySystem.setSafelight(false)
-        if (!r1.isSuccess || !r2.isSuccess)
+        val r1 = relayRepository.setEnlarger(false)
+        val r2 = relayRepository.setSafelight(false)
+        if (!r1.isSuccess || !r2.isSuccess) {
+            Log.e(TAG, "shutOffRelays ($errorContext): enlarger=${r1.exceptionOrNull()?.message} safelight=${r2.exceptionOrNull()?.message}")
             _uiState.update { it.copy(errorMessage = "Failed to shut off relays ($errorContext)") }
+        }
     }
 
     private fun startExposure() {
         if (session.state != TeststripState.EXPOSING) return
         val durationMs = session.remainingTimeMs
+        Log.d(TAG, "startExposure: patch ${session.currentPatchIndex} duration=${durationMs}ms")
         viewModelScope.launch {
             _uiState.update { it.copy(errorMessage = null) }
-            relaySystem.startTimedExposure(durationMs).onFailure { e ->
+            relayRepository.startTimedExposure(durationMs).onFailure { e ->
+                Log.e(TAG, "startExposure: relay command failed — ${e.message}")
                 _uiState.update { it.copy(errorMessage = "Hardware Error: ${e.message}") }
                 session.pause()
                 updateUiState()
@@ -336,7 +327,7 @@ class TeststripViewModel(
         exposureJob?.cancel()
         tickJob?.cancel()
         kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
-            try { relaySystem.disconnect() } catch (e: Exception) { /* ignore */ }
+            try { relayRepository.disconnect() } catch (e: Exception) { /* ignore */ }
         }
         audioSystem?.release()
     }
@@ -361,9 +352,13 @@ class TeststripViewModel(
                 ] as? Application
                     ?: throw IllegalStateException("Application not available")
                 val prefs = fr.mathgl.darkroomtimer.storage.PreferenceManager.getInstance(application)
+                val settingsRepo = SettingsRepository(application)
+                val relaySystem = prefs.relaySystemConfig.buildRelaySystem(kotlinx.coroutines.MainScope())
+                val relayRepo = RelayRepository(relaySystem)
                 return TeststripViewModel(
                     application,
-                    prefs.relaySystemConfig::buildRelaySystem
+                    relayRepo,
+                    settingsRepo
                 ) as T
             }
         }

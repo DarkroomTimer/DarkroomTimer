@@ -17,6 +17,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -38,19 +39,19 @@ import fr.mathgl.darkroomtimer.storage.PreferenceManager
 import fr.mathgl.darkroomtimer.storage.room.AppDatabase
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
-import fr.mathgl.darkroomtimer.ui.BurnDodgeEntryEditorScreen
-import fr.mathgl.darkroomtimer.ui.BurnDodgeStepsScreen
-import fr.mathgl.darkroomtimer.ui.CountdownScreen
-import fr.mathgl.darkroomtimer.ui.CountdownViewModel
-import fr.mathgl.darkroomtimer.ui.DevelopmentFlowViewModel
-import fr.mathgl.darkroomtimer.ui.DevelopmentLaunchScreen
-import fr.mathgl.darkroomtimer.ui.DevelopmentProfileEditorScreen
-import fr.mathgl.darkroomtimer.ui.DevelopmentProfileListScreen
-import fr.mathgl.darkroomtimer.ui.DevelopmentSessionScreen
-import fr.mathgl.darkroomtimer.ui.EnlargerProfilesScreen
+import fr.mathgl.darkroomtimer.ui.exposure.BurnDodgeEntryEditorScreen
+import fr.mathgl.darkroomtimer.ui.exposure.BurnDodgeStepsScreen
+import fr.mathgl.darkroomtimer.ui.exposure.CountdownScreen
+import fr.mathgl.darkroomtimer.ui.exposure.CountdownViewModel
+import fr.mathgl.darkroomtimer.ui.development.DevelopmentFlowViewModel
+import fr.mathgl.darkroomtimer.ui.development.DevelopmentLaunchScreen
+import fr.mathgl.darkroomtimer.ui.development.DevelopmentProfileEditorScreen
+import fr.mathgl.darkroomtimer.ui.development.DevelopmentProfileListScreen
+import fr.mathgl.darkroomtimer.ui.development.DevelopmentSessionScreen
+import fr.mathgl.darkroomtimer.ui.settings.EnlargerProfilesScreen
 import fr.mathgl.darkroomtimer.system.LuminosityManager
-import fr.mathgl.darkroomtimer.ui.SettingsScreen
-import fr.mathgl.darkroomtimer.ui.TeststripScreen
+import fr.mathgl.darkroomtimer.ui.settings.SettingsScreen
+import fr.mathgl.darkroomtimer.ui.exposure.TeststripScreen
 import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedBright
 import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedDim
 import fr.mathgl.darkroomtimer.ui.theme.DarkroomSurface
@@ -192,7 +193,7 @@ fun AppNavGraph(luminosityManager: LuminosityManager) {
                             navController.getBackStackEntry(AppRoutes.DEVELOPMENT_GRAPH)
                         }
                         val devVM: DevelopmentFlowViewModel = viewModel(devGraphEntry)
-                        val selectedProfile by devVM.selectedProfile.collectAsState()
+                        val selectedProfile by devVM.selectedProfile.collectAsStateWithLifecycle()
                         val context = LocalContext.current
                         val prefManager = remember { PreferenceManager.getInstance(context) }
 
@@ -248,7 +249,7 @@ fun AppNavGraph(luminosityManager: LuminosityManager) {
                             navController.getBackStackEntry(AppRoutes.DEVELOPMENT_GRAPH)
                         }
                         val devVM: DevelopmentFlowViewModel = viewModel(devGraphEntry)
-                        val snapshot by devVM.sessionSnapshot.collectAsState()
+                        val snapshot by devVM.sessionSnapshot.collectAsStateWithLifecycle()
                         val s = snapshot
 
                         if (s != null) {
@@ -282,7 +283,7 @@ fun AppNavGraph(luminosityManager: LuminosityManager) {
                             navController.getBackStackEntry(AppRoutes.DEVELOPMENT_GRAPH)
                         }
                         val devVM: DevelopmentFlowViewModel = viewModel(devGraphEntry)
-                        val editingProfile by devVM.editingProfile.collectAsState()
+                        val editingProfile by devVM.editingProfile.collectAsStateWithLifecycle()
 
                         val context = LocalContext.current
                         val app = context.applicationContext as Application

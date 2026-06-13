@@ -1,6 +1,9 @@
 // app/src/test/java/fr/mathgl/darkroomtimer/ui/DigitTimePickerLogicTest.kt
 package fr.mathgl.darkroomtimer.ui
 
+import fr.mathgl.darkroomtimer.ui.common.DigitTimeFormat
+import fr.mathgl.darkroomtimer.ui.common.applyDelta
+import fr.mathgl.darkroomtimer.ui.common.msToDigits
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Test

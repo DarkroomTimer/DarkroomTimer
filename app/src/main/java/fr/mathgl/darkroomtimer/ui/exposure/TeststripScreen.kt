@@ -1,4 +1,4 @@
-package fr.mathgl.darkroomtimer.ui
+package fr.mathgl.darkroomtimer.ui.exposure
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -10,6 +10,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import fr.mathgl.darkroomtimer.ui.common.DigitTimeFormat
+import fr.mathgl.darkroomtimer.ui.common.DigitTimePicker
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -70,7 +73,7 @@ fun TeststripScreen(
     viewModel: TeststripViewModel = viewModel(factory = TeststripViewModel.Factory),
     onBack: () -> Unit = {}
 ) {
-    val state by viewModel.uiState.collectAsState()
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
 
     LaunchedEffect(state.isSessionComplete) {
         if (state.isSessionComplete) viewModel.abandon()
@@ -188,7 +191,7 @@ fun TeststripScreen(
             Button(
                 onClick = { viewModel.startSession() },
                 modifier = Modifier.fillMaxWidth().height(56.dp),
-                enabled = state.isRelayConnected,
+                enabled = true,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = DarkroomRedBright,
                     disabledContainerColor = DarkroomRedDim

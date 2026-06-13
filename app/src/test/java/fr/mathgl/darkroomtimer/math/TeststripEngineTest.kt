@@ -173,4 +173,99 @@ class TeststripEngineTest {
         assertEquals(1, n)
         assertEquals(3, d)
     }
+
+    // --- update methods ---
+
+    @Test
+    fun `updateBaseTime updates the value`() {
+        val engine = TeststripEngine(1000, 1, 3, 6, TeststripMode.SEPARATE, IncrementType.F_STOP)
+        engine.updateBaseTime(5000)
+        assertEquals(5000L, engine.baseTimeMs)
+    }
+
+    @Test
+    fun `updateBaseTime throws for value below 100ms`() {
+        val engine = TeststripEngine(1000, 1, 3, 6, TeststripMode.SEPARATE, IncrementType.F_STOP)
+        assertThrows(IllegalArgumentException::class.java) { engine.updateBaseTime(99) }
+    }
+
+    @Test
+    fun `updateBaseTime throws for value above 999000ms`() {
+        val engine = TeststripEngine(1000, 1, 3, 6, TeststripMode.SEPARATE, IncrementType.F_STOP)
+        assertThrows(IllegalArgumentException::class.java) { engine.updateBaseTime(999_001) }
+    }
+
+    @Test
+    fun `updatePatchCount updates the value`() {
+        val engine = TeststripEngine(1000, 1, 3, 6, TeststripMode.SEPARATE, IncrementType.F_STOP)
+        engine.updatePatchCount(10)
+        assertEquals(10, engine.patchCount)
+    }
+
+    @Test
+    fun `updatePatchCount throws for value below 3`() {
+        val engine = TeststripEngine(1000, 1, 3, 6, TeststripMode.SEPARATE, IncrementType.F_STOP)
+        assertThrows(IllegalArgumentException::class.java) { engine.updatePatchCount(2) }
+    }
+
+    @Test
+    fun `updatePatchCount throws for value above 12`() {
+        val engine = TeststripEngine(1000, 1, 3, 6, TeststripMode.SEPARATE, IncrementType.F_STOP)
+        assertThrows(IllegalArgumentException::class.java) { engine.updatePatchCount(13) }
+    }
+
+    @Test
+    fun `updateStopFraction updates numerator and denominator`() {
+        val engine = TeststripEngine(1000, 1, 3, 6, TeststripMode.SEPARATE, IncrementType.F_STOP)
+        engine.updateStopFraction(2, 5)
+        assertEquals(2, engine.numerator)
+        assertEquals(5, engine.denominator)
+    }
+
+    @Test
+    fun `updateStopFraction throws for denominator zero`() {
+        val engine = TeststripEngine(1000, 1, 3, 6, TeststripMode.SEPARATE, IncrementType.F_STOP)
+        assertThrows(IllegalArgumentException::class.java) { engine.updateStopFraction(1, 0) }
+    }
+
+    @Test
+    fun `updateIncrementMs updates the value`() {
+        val engine = TeststripEngine(1000, 0, 1, 6, TeststripMode.SEPARATE, IncrementType.SECONDS, 500)
+        engine.updateIncrementMs(1000)
+        assertEquals(1000L, engine.incrementMs)
+    }
+
+    @Test
+    fun `updateIncrementMs throws for value below 100ms`() {
+        val engine = TeststripEngine(1000, 0, 1, 6, TeststripMode.SEPARATE, IncrementType.SECONDS, 500)
+        assertThrows(IllegalArgumentException::class.java) { engine.updateIncrementMs(99) }
+    }
+
+    @Test
+    fun `adjustIncrement in F_STOP mode increments numerator`() {
+        val engine = TeststripEngine(1000, 2, 3, 6, TeststripMode.SEPARATE, IncrementType.F_STOP)
+        engine.adjustIncrement(1)
+        assertEquals(3, engine.numerator)
+    }
+
+    @Test
+    fun `adjustIncrement in F_STOP mode clamps numerator to 1 minimum`() {
+        val engine = TeststripEngine(1000, 1, 3, 6, TeststripMode.SEPARATE, IncrementType.F_STOP)
+        engine.adjustIncrement(-10)
+        assertEquals(1, engine.numerator)
+    }
+
+    @Test
+    fun `adjustIncrement in SECONDS mode increments incrementMs`() {
+        val engine = TeststripEngine(1000, 0, 1, 6, TeststripMode.SEPARATE, IncrementType.SECONDS, 500)
+        engine.adjustIncrement(200)
+        assertEquals(700L, engine.incrementMs)
+    }
+
+    @Test
+    fun `adjustIncrement in SECONDS mode clamps incrementMs to 100ms minimum`() {
+        val engine = TeststripEngine(1000, 0, 1, 6, TeststripMode.SEPARATE, IncrementType.SECONDS, 200)
+        engine.adjustIncrement(-500)
+        assertEquals(100L, engine.incrementMs)
+    }
 }

@@ -11,9 +11,12 @@ import android.net.wifi.WifiManager
 import android.net.wifi.WifiManager.WifiLock
 import android.os.IBinder
 import android.os.PowerManager
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import fr.mathgl.darkroomtimer.MainActivity
 import fr.mathgl.darkroomtimer.R
+
+private const val TAG = "DT/TimerService"
 
 class ForegroundTimerService : Service() {
 
@@ -52,6 +55,9 @@ class ForegroundTimerService : Service() {
                 }
                 wifiLock = wm.createWifiLock(lockType, "DarkroomTimer:WifiLock").apply { acquire() }
 
+                val lockTypeName = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) "FULL_LOW_LATENCY" else "FULL"
+                Log.d(TAG, "ACTION_START: remaining=${remaining}ms wakeLockTimeout=${lockTimeout}ms wifiLock=$lockTypeName")
+
                 startForeground(NOTIFICATION_ID, buildNotification(remaining))
             }
             ACTION_UPDATE -> {
@@ -59,6 +65,7 @@ class ForegroundTimerService : Service() {
                 notificationManager.notify(NOTIFICATION_ID, buildNotification(remaining))
             }
             ACTION_STOP -> {
+                Log.d(TAG, "ACTION_STOP: releasing locks")
                 releaseLocks()
                 stopForeground(STOP_FOREGROUND_REMOVE)
                 stopSelf()
@@ -73,13 +80,16 @@ class ForegroundTimerService : Service() {
     }
 
     private fun releaseLocks() {
+        val wakeHeld = wakeLock?.isHeld == true
+        val wifiHeld = wifiLock?.isHeld == true
         try {
-            if (wakeLock?.isHeld == true) wakeLock?.release()
-            if (wifiLock?.isHeld == true) wifiLock?.release()
+            if (wakeHeld) wakeLock?.release()
+            if (wifiHeld) wifiLock?.release()
         } finally {
             wakeLock = null
             wifiLock = null
         }
+        Log.d(TAG, "releaseLocks: wakeLock=${if (wakeHeld) "released" else "not held"} wifiLock=${if (wifiHeld) "released" else "not held"}")
     }
 
     private fun buildNotification(remainingMs: Long) =

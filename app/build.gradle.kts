@@ -40,6 +40,9 @@ android {
             // Prevents android.util.Log / TrafficStats stubs from throwing in unit tests,
             // which would otherwise break OkHttp's platform detection and network calls.
             isReturnDefaultValues = true
+            all {
+                it.useJUnitPlatform()
+            }
         }
     }
     buildFeatures {
@@ -61,6 +64,7 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.navigation.compose)
@@ -70,6 +74,11 @@ dependencies {
     ksp(libs.room.compiler)
     implementation(libs.okhttp)
     testImplementation(libs.junit)
+    testImplementation(libs.junit.jupiter.api)
+    testImplementation(libs.junit.jupiter.params)
+    testRuntimeOnly(libs.junit.jupiter.engine)
+    testRuntimeOnly(libs.junit.vintage.engine)
+    testRuntimeOnly(libs.junit.platform.launcher)
     testImplementation(libs.okhttp.mockwebserver)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.mockito.core)

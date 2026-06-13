@@ -35,12 +35,32 @@ class RelayDriverTest {
         server.shutdown()
     }
 
+    // Enqueue Status 0 + PulseTime responses, connect, consume both requests.
+    private fun connectTasmota(controller: TasmotaRelayController = tasmotaController) = runBlocking {
+        server.enqueue(MockResponse().setResponseCode(200))
+        server.enqueue(MockResponse().setResponseCode(200))
+        controller.connect()
+        server.takeRequest(10, TimeUnit.SECONDS)!!
+        server.takeRequest(10, TimeUnit.SECONDS)!!
+    }
+
     @Test
     fun `Tasmota connect should send Status 0 command`() = runBlocking {
+        server.enqueue(MockResponse().setResponseCode(200))
         server.enqueue(MockResponse().setResponseCode(200))
         tasmotaController.connect()
         val request: RecordedRequest = server.takeRequest(10, TimeUnit.SECONDS)!!
         assertEquals("/cm?cmnd=Status%200", request.path)
+    }
+
+    @Test
+    fun `Tasmota connect should clear PulseTime in TIMED_POWER mode`() = runBlocking {
+        server.enqueue(MockResponse().setResponseCode(200))
+        server.enqueue(MockResponse().setResponseCode(200))
+        tasmotaController.connect()
+        server.takeRequest(10, TimeUnit.SECONDS)!!  // Status 0
+        val pulseTimeRequest = server.takeRequest(10, TimeUnit.SECONDS)!!
+        assertEquals("/cm?cmnd=PulseTime1%200", pulseTimeRequest.path)
     }
 
     @Test
@@ -55,6 +75,7 @@ class RelayDriverTest {
         )
 
         server.enqueue(MockResponse().setResponseCode(200))
+        server.enqueue(MockResponse().setResponseCode(200))
         authController.connect()
 
         val request: RecordedRequest = server.takeRequest(10, TimeUnit.SECONDS)!!
@@ -63,29 +84,29 @@ class RelayDriverTest {
     }
 
     @Test
-    fun `Tasmota set should send PowerX ON or OFF`() = runBlocking {
-        server.enqueue(MockResponse().setResponseCode(200))
-        tasmotaController.connect()
-        server.takeRequest(10, TimeUnit.SECONDS)!!
+    fun `Tasmota set should fail if JSON response is invalid`() = runBlocking {
+        connectTasmota()
 
-        server.enqueue(MockResponse().setResponseCode(200))
-        tasmotaController.set(true)
-        val reqOn = server.takeRequest(10, TimeUnit.SECONDS)!!
-        assertEquals("/cm?cmnd=Power1%20ON", reqOn.path)
+        server.enqueue(MockResponse().setResponseCode(200).setBody("{\"wrong_key\": \"value\"}"))
+        val result = tasmotaController.set(true)
+        assertEquals(false, result.isSuccess)
+        assertEquals("Tasmota returned invalid response: {\"wrong_key\": \"value\"}", result.exceptionOrNull()?.message)
+    }
 
-        server.enqueue(MockResponse().setResponseCode(200))
-        tasmotaController.set(false)
-        val reqOff = server.takeRequest(10, TimeUnit.SECONDS)!!
-        assertEquals("/cm?cmnd=Power1%20OFF", reqOff.path)
+    @Test
+    fun `Tasmota set should succeed if JSON response is valid`() = runBlocking {
+        connectTasmota()
+
+        server.enqueue(MockResponse().setResponseCode(200).setBody("{\"Power1\": \"ON\"}"))
+        val result = tasmotaController.set(true)
+        assertEquals(true, result.isSuccess)
     }
 
     @Test
     fun `Tasmota startTimed should send TimedPowerX milliseconds`() = runBlocking {
-        server.enqueue(MockResponse().setResponseCode(200))
-        tasmotaController.connect()
-        server.takeRequest(10, TimeUnit.SECONDS)!!
+        connectTasmota()
 
-        server.enqueue(MockResponse().setResponseCode(200))
+        server.enqueue(MockResponse().setResponseCode(200).setBody("{\"Power1\": \"ON\"}"))
         tasmotaController.startTimed(2000L)
 
         val request: RecordedRequest = server.takeRequest(10, TimeUnit.SECONDS)!!
@@ -93,14 +114,31 @@ class RelayDriverTest {
     }
 
     @Test
-    fun `Tasmota should reconnect after disconnect`() = runBlocking {
-        server.enqueue(MockResponse().setResponseCode(200))
-        tasmotaController.connect()
-        server.takeRequest(10, TimeUnit.SECONDS)!!
+    fun `Tasmota startTimed should succeed if JSON response is valid`() = runBlocking {
+        connectTasmota()
 
+        server.enqueue(MockResponse().setResponseCode(200).setBody("{\"Power1\": \"ON\"}"))
+        val result = tasmotaController.startTimed(2000L)
+        assertEquals(true, result.isSuccess)
+    }
+
+    @Test
+    fun `Tasmota startTimed should fail if JSON response is invalid`() = runBlocking {
+        connectTasmota()
+
+        server.enqueue(MockResponse().setResponseCode(200).setBody("{\"wrong_key\": \"value\"}"))
+        val result = tasmotaController.startTimed(2000L)
+        assertEquals(false, result.isSuccess)
+        assertEquals("Tasmota returned invalid response: {\"wrong_key\": \"value\"}", result.exceptionOrNull()?.message)
+    }
+
+    @Test
+    fun `Tasmota should reconnect after disconnect`() = runBlocking {
+        connectTasmota()
         tasmotaController.disconnect()
         assertEquals(ConnectionState.Disconnected, tasmotaController.connectionState.value)
 
+        server.enqueue(MockResponse().setResponseCode(200))
         server.enqueue(MockResponse().setResponseCode(200))
         val result = tasmotaController.connect()
         assertEquals(true, result.isSuccess)

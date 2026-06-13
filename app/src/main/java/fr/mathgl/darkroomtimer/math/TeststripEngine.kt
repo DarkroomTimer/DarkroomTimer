@@ -18,14 +18,29 @@ enum class IncrementType { F_STOP, SECONDS }
  * @param incrementMs The increment in milliseconds (used if [incrementType] is SECONDS)
  */
 class TeststripEngine(
-    var baseTimeMs: Long,
-    var numerator: Int,
-    var denominator: Int,
-    var patchCount: Int,
-    var mode: TeststripMode,
-    var incrementType: IncrementType,
-    var incrementMs: Long = 0L
+    baseTimeMs: Long,
+    numerator: Int,
+    denominator: Int,
+    patchCount: Int,
+    mode: TeststripMode,
+    incrementType: IncrementType,
+    incrementMs: Long = 0L
 ) {
+    var baseTimeMs: Long = baseTimeMs
+        private set
+    var numerator: Int = numerator
+        private set
+    var denominator: Int = denominator
+        private set
+    var patchCount: Int = patchCount
+        private set
+    var mode: TeststripMode = mode
+        private set
+    var incrementType: IncrementType = incrementType
+        private set
+    var incrementMs: Long = incrementMs
+        private set
+
     init {
         require(baseTimeMs in 100L..999_000L) {
             "baseTimeMs must be in [100, 999000], was $baseTimeMs"
@@ -36,6 +51,35 @@ class TeststripEngine(
         require(denominator != 0) {
             "denominator cannot be zero"
         }
+    }
+
+    fun updateBaseTime(newTime: Long) {
+        require(newTime in 100L..999_000L) { "baseTimeMs must be in [100, 999000], was $newTime" }
+        baseTimeMs = newTime
+    }
+
+    fun updatePatchCount(count: Int) {
+        require(count in 3..12) { "patchCount must be in [3, 12], was $count" }
+        patchCount = count
+    }
+
+    fun updateStopFraction(newNum: Int, newDen: Int) {
+        require(newDen != 0) { "denominator cannot be zero" }
+        numerator = newNum
+        denominator = newDen
+    }
+
+    fun updateMode(newMode: TeststripMode) {
+        mode = newMode
+    }
+
+    fun updateIncrementType(newType: IncrementType) {
+        incrementType = newType
+    }
+
+    fun updateIncrementMs(ms: Long) {
+        require(ms >= 100L) { "incrementMs must be at least 100ms, was $ms" }
+        incrementMs = ms
     }
 
     /**

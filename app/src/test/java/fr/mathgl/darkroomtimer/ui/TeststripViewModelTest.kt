@@ -4,8 +4,11 @@ import android.app.Application
 import fr.mathgl.darkroomtimer.math.ContrastGrade
 import fr.mathgl.darkroomtimer.math.IncrementType
 import fr.mathgl.darkroomtimer.math.TeststripMode
+import fr.mathgl.darkroomtimer.repository.RelayRepository
+import fr.mathgl.darkroomtimer.repository.SettingsRepository
 import fr.mathgl.darkroomtimer.system.MockRelaySystem
 import fr.mathgl.darkroomtimer.system.TeststripState
+import fr.mathgl.darkroomtimer.ui.exposure.TeststripViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.*
@@ -13,6 +16,7 @@ import org.junit.After
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
+import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.mock
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -27,7 +31,16 @@ class TeststripViewModelTest {
         Dispatchers.setMain(testDispatcher)
         application = mock()
         relaySystem = MockRelaySystem(TestScope(testDispatcher))
-        viewModel = TeststripViewModel(application, { relaySystem })
+        val settingsRepository = mock<SettingsRepository> {
+            on { teststripBaseMs } doReturn 8000L
+            on { teststripStopNumerator } doReturn 1
+            on { teststripStopDenominator } doReturn 3
+            on { teststripPatchCount } doReturn 6
+            on { teststripMode } doReturn "SEPARATE"
+            on { teststripIncrementType } doReturn "F_STOP"
+            on { teststripIncrementMs } doReturn 1000L
+        }
+        viewModel = TeststripViewModel(application, RelayRepository(relaySystem), settingsRepository)
     }
 
     @After
@@ -112,11 +125,11 @@ class TeststripViewModelTest {
     // ── startSession guards ──────────────────────────────────────────────────────
 
     @Test
-    fun `startSession with disconnected relay sets errorMessage`() {
-        // Don't run scheduler — relay stays Disconnected (stateIn initialValue)
+    fun `startSession starts even when relay is not yet connected`() {
+        // Don't run scheduler — relay stays Disconnected in stateIn initial value
+        // startSession no longer blocks on connection state
         viewModel.startSession()
-        assertNotNull(viewModel.uiState.value.errorMessage)
-        assertEquals(TeststripState.INIT, viewModel.uiState.value.sessionState)
+        assertEquals(TeststripState.EXPOSING, viewModel.uiState.value.sessionState)
     }
 
     @Test
@@ -198,11 +211,21 @@ class TeststripViewModelTest {
 
     @Test
     fun `finishing the last patch marks session complete`() = runTest {
-        viewModel.updatePatchCount(1)
+        viewModel.updatePatchCount(3) // minimum valid value
         connectRelay()
+        // Patch 1
         viewModel.startSession()
         testDispatcher.scheduler.runCurrent()
-
+        viewModel.finishExposure()
+        testDispatcher.scheduler.runCurrent()
+        // Patch 2
+        viewModel.nextPatch()
+        testDispatcher.scheduler.runCurrent()
+        viewModel.finishExposure()
+        testDispatcher.scheduler.runCurrent()
+        // Patch 3 (last)
+        viewModel.nextPatch()
+        testDispatcher.scheduler.runCurrent()
         viewModel.finishExposure()
         testDispatcher.scheduler.runCurrent()
 
