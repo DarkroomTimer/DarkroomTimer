@@ -12,6 +12,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -360,12 +361,6 @@ fun SettingsScreen(
                 modifier = Modifier.padding(top = 4.dp, start = 8.dp)
             )
         }
-        Text(
-            text = "Les changements s'appliquent au prochain démarrage de l'app.",
-            color = DarkroomRedDim,
-            fontSize = 11.sp,
-            modifier = Modifier.padding(top = 8.dp, start = 8.dp)
-        )
 
         // DONNÉES
         SettingsSectionHeader("DONNÉES")
@@ -593,13 +588,15 @@ private fun LuminositySlider(label: String, value: Float, onValueChange: (Float)
 
 @Composable
 private fun RelayTextField(label: String, value: String, onValueChange: (String) -> Unit) {
+    var localValue by remember(value) { mutableStateOf(value) }
     OutlinedTextField(
-        value = value,
-        onValueChange = onValueChange,
+        value = localValue,
+        onValueChange = { localValue = it },
         label = { Text(label, color = DarkroomRedDim, fontSize = 12.sp) },
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 2.dp),
+            .padding(vertical = 2.dp)
+            .onFocusChanged { if (!it.isFocused) onValueChange(localValue) },
         singleLine = true,
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = DarkroomRedBright,
@@ -613,13 +610,15 @@ private fun RelayTextField(label: String, value: String, onValueChange: (String)
 
 @Composable
 private fun RelayNumberField(label: String, value: Int, onValueChange: (Int) -> Unit) {
+    var localValue by remember(value) { mutableStateOf(value.toString()) }
     OutlinedTextField(
-        value = value.toString(),
-        onValueChange = { onValueChange(it.toIntOrNull() ?: value) },
+        value = localValue,
+        onValueChange = { localValue = it },
         label = { Text(label, color = DarkroomRedDim, fontSize = 12.sp) },
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 2.dp),
+            .padding(vertical = 2.dp)
+            .onFocusChanged { if (!it.isFocused) onValueChange(localValue.toIntOrNull() ?: value) },
         singleLine = true,
         keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
             keyboardType = androidx.compose.ui.text.input.KeyboardType.Number

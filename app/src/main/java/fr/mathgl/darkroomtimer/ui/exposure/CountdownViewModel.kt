@@ -168,10 +168,12 @@ open class CountdownViewModel(
 
         viewModelScope.launch {
             relayRepository.connectionState.collect { connState ->
-                _uiState.update { it.copy(
-                    connectionState = connState,
-                    connectionTint = calculateConnectionTint(relayType, connState)
-                ) }
+                _uiState.update { state ->
+                    state.copy(
+                        connectionState = connState,
+                        connectionTint = calculateConnectionTint(state.relayType, connState)
+                    )
+                }
             }
         }
 
@@ -179,6 +181,22 @@ open class CountdownViewModel(
         viewModelScope.launch {
             relayRepository.connect().onFailure { e ->
                 _uiState.update { it.copy(errorMessage = "Connection failed: ${e.message}") }
+            }
+        }
+
+        viewModelScope.launch {
+            try {
+                fr.mathgl.darkroomtimer.storage.PreferenceManager.getInstance(getApplication())
+                    .relayConfigFlow.collect { newConfig ->
+                        if (_uiState.value.timerState != TimerState.STOPPED) return@collect
+                        relayRepository.reloadConfig(newConfig)
+                        relayRepository.connect().onFailure { e ->
+                            _uiState.update { it.copy(errorMessage = "Reconnection failed: ${e.message}") }
+                        }
+                        _uiState.update { it.copy(relayType = newConfig.enlargerType) }
+                    }
+            } catch (_: Exception) {
+                // PreferenceManager unavailable in test environment
             }
         }
     }
@@ -465,6 +483,7 @@ open class CountdownViewModel(
     override fun onCleared() {
         super.onCleared()
         tickJob?.cancel()
+        relayRepository.close()
         kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
             try { relayRepository.disconnect() } catch (e: Exception) { /* ignore */ }
         }
@@ -492,8 +511,7 @@ open class CountdownViewModel(
                     ?: throw IllegalStateException("Application not available")
                 val prefs = fr.mathgl.darkroomtimer.storage.PreferenceManager.getInstance(application)
                 val settingsRepo = SettingsRepository(application)
-                val relaySystem = prefs.relaySystemConfig.buildRelaySystem(kotlinx.coroutines.MainScope())
-                val relayRepo = RelayRepository(relaySystem)
+                val relayRepo = RelayRepository(prefs.relaySystemConfig)
                 return CountdownViewModel(
                     application,
                     relayRepo,

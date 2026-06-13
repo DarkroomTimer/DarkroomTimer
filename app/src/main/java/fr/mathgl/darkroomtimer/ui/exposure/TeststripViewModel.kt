@@ -119,6 +119,22 @@ class TeststripViewModel(
                 updateUiState()
             }
         }
+
+        viewModelScope.launch {
+            try {
+                fr.mathgl.darkroomtimer.storage.PreferenceManager.getInstance(getApplication())
+                    .relayConfigFlow.collect { newConfig ->
+                        val s = session.state
+                        if (s == TeststripState.EXPOSING || s == TeststripState.PAUSED) return@collect
+                        relayRepository.reloadConfig(newConfig)
+                        relayRepository.connect().onFailure { e ->
+                            _uiState.update { it.copy(errorMessage = "Reconnection failed: ${e.message}") }
+                        }
+                    }
+            } catch (_: Exception) {
+                // PreferenceManager unavailable in test environment
+            }
+        }
     }
 
     private fun updateUiState() {
@@ -326,6 +342,7 @@ class TeststripViewModel(
         super.onCleared()
         exposureJob?.cancel()
         tickJob?.cancel()
+        relayRepository.close()
         kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
             try { relayRepository.disconnect() } catch (e: Exception) { /* ignore */ }
         }
@@ -353,8 +370,7 @@ class TeststripViewModel(
                     ?: throw IllegalStateException("Application not available")
                 val prefs = fr.mathgl.darkroomtimer.storage.PreferenceManager.getInstance(application)
                 val settingsRepo = SettingsRepository(application)
-                val relaySystem = prefs.relaySystemConfig.buildRelaySystem(kotlinx.coroutines.MainScope())
-                val relayRepo = RelayRepository(relaySystem)
+                val relayRepo = RelayRepository(prefs.relaySystemConfig)
                 return TeststripViewModel(
                     application,
                     relayRepo,

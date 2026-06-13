@@ -6,6 +6,9 @@ import androidx.core.content.edit
 import com.google.gson.Gson
 import fr.mathgl.darkroomtimer.math.ContrastGrade
 import fr.mathgl.darkroomtimer.system.RelaySystemConfigFlat
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 
 /**
  * Manager for handling basic scalar settings for the application using SharedPreferences.
@@ -131,6 +134,9 @@ class PreferenceManager internal constructor(context: Context) {
     // Relay System Config (stored as JSON)
     private val gson = Gson()
 
+    private val _relayConfigFlow = MutableSharedFlow<RelaySystemConfigFlat>(extraBufferCapacity = 1)
+    val relayConfigFlow: SharedFlow<RelaySystemConfigFlat> = _relayConfigFlow.asSharedFlow()
+
     var relaySystemConfig: RelaySystemConfigFlat
         get() {
             val json = prefs.getString(KEY_RELAY_SYSTEM_CONFIG, null)
@@ -141,7 +147,10 @@ class PreferenceManager internal constructor(context: Context) {
                 RelaySystemConfigFlat()
             }
         }
-        set(value) = prefs.edit {putString(KEY_RELAY_SYSTEM_CONFIG, gson.toJson(value))}
+        set(value) {
+            prefs.edit { putString(KEY_RELAY_SYSTEM_CONFIG, gson.toJson(value)) }
+            _relayConfigFlow.tryEmit(value)
+        }
 
     companion object {
         private const val PREFS_NAME = "darkroom_timer_prefs"
