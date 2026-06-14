@@ -25,6 +25,7 @@ class DevelopmentFlowViewModel : ViewModel() {
     val editingProfile: StateFlow<DevelopmentProfile?> = _editingProfile.asStateFlow()
 
     private var currentSession: DevelopmentSession? = null
+    private var sessionCollectJob: Job? = null
 
     fun setSelectedProfile(profile: DevelopmentProfile) {
         _selectedProfile.value = profile
@@ -39,10 +40,11 @@ class DevelopmentFlowViewModel : ViewModel() {
     }
 
     fun startSession(profile: DevelopmentProfile) {
+        sessionCollectJob?.cancel()
         _selectedProfile.value = profile
         val session = DevelopmentSession(profile)
         currentSession = session
-        viewModelScope.launch {
+        sessionCollectJob = viewModelScope.launch {
             var tickJob: Job? = null
             session.stateFlow.collect { snapshot ->
                 _sessionSnapshot.value = snapshot
@@ -60,6 +62,8 @@ class DevelopmentFlowViewModel : ViewModel() {
     }
 
     fun cancelSession() {
+        sessionCollectJob?.cancel()
+        sessionCollectJob = null
         currentSession = null
         _sessionSnapshot.value = null
         _selectedProfile.value = null

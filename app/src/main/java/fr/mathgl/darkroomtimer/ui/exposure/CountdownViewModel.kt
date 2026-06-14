@@ -484,6 +484,9 @@ open class CountdownViewModel(
     override fun onCleared() {
         super.onCleared()
         tickJob?.cancel()
+        if (timer.state != TimerState.STOPPED) {
+            sendServiceIntent(ForegroundTimerService.ACTION_STOP, 0L)
+        }
         relayRepository.close()
         GlobalScope.launch(kotlinx.coroutines.Dispatchers.IO) {
             try { withTimeout(5_000L) { relayRepository.disconnect() } } catch (_: Exception) { }
