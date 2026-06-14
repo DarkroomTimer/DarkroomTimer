@@ -153,7 +153,21 @@ class TeststripEngine(
      * Formats a time in milliseconds to MM:SS.t format (minutes:seconds.tenths).
      * Negative values are clamped to zero.
      */
+    fun adjustIncrement(delta: Int) {
+        when (incrementType) {
+            IncrementType.F_STOP -> {
+                numerator += delta
+                if (numerator < 1) numerator = 1
+            }
+            IncrementType.SECONDS -> {
+                incrementMs = (incrementMs + delta * SECONDS_INCREMENT_STEP_MS).coerceAtLeast(100L)
+            }
+        }
+    }
+
     companion object {
+        private const val SECONDS_INCREMENT_STEP_MS = 1000L
+
         fun formatStopTime(ms: Long): String {
             val clamped = maxOf(0L, ms)
             val totalTenths = clamped / 100
@@ -162,26 +176,6 @@ class TeststripEngine(
             val seconds = totalSeconds % 60
             val minutes = totalSeconds / 60
             return "%02d:%02d.%d".format(minutes, seconds, tenths)
-        }
-    }
-
-    /**
-     * Adjusts the increment value by the given delta.
-     * For f-stop mode: adjusts the numerator by delta.
-     * For seconds mode: adjusts the incrementMs by delta.
-     */
-    fun adjustIncrement(delta: Int) {
-        when (incrementType) {
-            IncrementType.F_STOP -> {
-                numerator += delta
-                // Keep numerator positive, minimum 1
-                if (numerator < 1) numerator = 1
-            }
-            IncrementType.SECONDS -> {
-                incrementMs += delta
-                // Keep increment positive, minimum 100ms
-                if (incrementMs < 100L) incrementMs = 100L
-            }
         }
     }
 }

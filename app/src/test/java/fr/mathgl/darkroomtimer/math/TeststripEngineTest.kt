@@ -258,8 +258,8 @@ class TeststripEngineTest {
     @Test
     fun `adjustIncrement in SECONDS mode increments incrementMs`() {
         val engine = TeststripEngine(1000, 0, 1, 6, TeststripMode.SEPARATE, IncrementType.SECONDS, 500)
-        engine.adjustIncrement(200)
-        assertEquals(700L, engine.incrementMs)
+        engine.adjustIncrement(1)
+        assertEquals(1500L, engine.incrementMs)
     }
 
     @Test

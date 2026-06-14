@@ -61,11 +61,15 @@ class BurnDodgeManager(
         val index = entries.indexOfFirst { it.id == id }
         if (index == -1) return null
         val original = entries[index]
+        val finalNum = numerator ?: original.numerator
+        val finalDen = denominator ?: original.denominator
+        require(finalNum > 0) { "numerator must be > 0" }
+        require(finalDen > 0) { "denominator must be > 0" }
         val updated = original.copy(
             label = (label ?: original.label).take(MAX_LABEL_LENGTH),
             type = type ?: original.type,
-            numerator = numerator ?: original.numerator,
-            denominator = denominator ?: original.denominator,
+            numerator = finalNum,
+            denominator = finalDen,
             contrastGrade = contrastGrade ?: original.contrastGrade
         )
         entries[index] = updated

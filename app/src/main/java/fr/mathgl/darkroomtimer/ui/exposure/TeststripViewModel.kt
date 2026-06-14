@@ -17,6 +17,7 @@ import fr.mathgl.darkroomtimer.system.RelaySystem
 import fr.mathgl.darkroomtimer.system.ConnectionState
 import fr.mathgl.darkroomtimer.system.TeststripSession
 import fr.mathgl.darkroomtimer.system.TeststripState
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,6 +25,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeout
 
 data class TeststripUiState(
     val sessionState: TeststripState,
@@ -319,6 +321,8 @@ class TeststripViewModel(
         viewModelScope.launch {
             _uiState.update { it.copy(errorMessage = null) }
             relayRepository.startTimedExposure(durationMs).onFailure { e ->
+                exposureJob?.cancel(); exposureJob = null
+                tickJob?.cancel();    tickJob = null
                 Log.e(TAG, "startExposure: relay command failed — ${e.message}")
                 _uiState.update { it.copy(errorMessage = "Hardware Error: ${e.message}") }
                 session.pause()
@@ -343,8 +347,8 @@ class TeststripViewModel(
         exposureJob?.cancel()
         tickJob?.cancel()
         relayRepository.close()
-        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
-            try { relayRepository.disconnect() } catch (e: Exception) { /* ignore */ }
+        GlobalScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            try { withTimeout(5_000L) { relayRepository.disconnect() } } catch (_: Exception) { }
         }
         audioSystem?.release()
     }

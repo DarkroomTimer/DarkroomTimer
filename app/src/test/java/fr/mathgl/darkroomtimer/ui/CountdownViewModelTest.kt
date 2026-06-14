@@ -63,7 +63,8 @@ class CountdownViewModelTest {
         viewModel.start()
         testDispatcher.scheduler.runCurrent()
         assertEquals(true, relaySystem.setEnlargerCalls.contains(true))
-        assertEquals(true, relaySystem.setSafelightCalls.isEmpty())
+        // setSafelight(false) is called first to ensure the safelight is off before the exposure starts
+        assertEquals(listOf(false), relaySystem.setSafelightCalls)
         assertEquals(0, relaySystem.startTimedExposureCallCount)
     }
 
@@ -241,7 +242,8 @@ class CountdownViewModelTest {
 
         assertEquals(1, relaySystemNoPause.startTimedExposureCallCount)
         assertEquals(true, relaySystemNoPause.setEnlargerCalls.isEmpty())
-        assertEquals(true, relaySystemNoPause.setSafelightCalls.isEmpty())
+        // setSafelight(false) is called first to ensure the safelight is off before the exposure starts
+        assertEquals(listOf(false), relaySystemNoPause.setSafelightCalls)
     }
 
     @Test

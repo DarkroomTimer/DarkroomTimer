@@ -13,7 +13,6 @@ import fr.mathgl.darkroomtimer.math.BurnDodgeEntry
 import fr.mathgl.darkroomtimer.math.BurnDodgeType
 import fr.mathgl.darkroomtimer.math.ContrastGrade
 import fr.mathgl.darkroomtimer.math.FStopMath
-import fr.mathgl.darkroomtimer.storage.PreferenceManager
 import fr.mathgl.darkroomtimer.repository.RelayRepository
 import fr.mathgl.darkroomtimer.repository.SettingsRepository
 import fr.mathgl.darkroomtimer.ui.exposure.ConnectionTint
@@ -23,6 +22,7 @@ import fr.mathgl.darkroomtimer.system.ForegroundTimerService
 import fr.mathgl.darkroomtimer.system.ConnectionState
 import fr.mathgl.darkroomtimer.system.RelayStates
 import fr.mathgl.darkroomtimer.system.TimerState
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -30,6 +30,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeout
 
 data class CountdownUiState(
     val displayTime: String,
@@ -67,8 +68,6 @@ open class CountdownViewModel(
     private var audioSystem: AudioSystem? = null
     private var tickJob: Job? = null
     private var baseTimeMs: Long = timer.configuredTimeMs
-
-    private var prefs: PreferenceManager? = null
 
     private fun calculatedTimeMs(): Long {
         val state = _uiState.value
@@ -112,7 +111,7 @@ open class CountdownViewModel(
         val calc = calculatedTimeMs()
         baseTimeMs = calc
         timer.configuredTimeMs = calc
-        prefs?.defaultExposureMs = calc
+        settingsRepository.defaultExposureMs = calc
         _uiState.update { it.copy(
             configuredTimeMs = calc,
             baseTimeMs = calc,
@@ -209,6 +208,7 @@ open class CountdownViewModel(
 
         viewModelScope.launch {
             _uiState.update { it.copy(errorMessage = null) }
+            relayRepository.setSafelight(false)
             val result = if (!relayRepository.capabilities.canPause) {
                 // TIMED_POWER : Tasmota gère l'extinction via TimedPower
                 relayRepository.startTimedExposure(timer.configuredTimeMs)
@@ -221,6 +221,7 @@ open class CountdownViewModel(
                 Log.e(TAG, "start: relay command failed — ${result.exceptionOrNull()?.message}")
                 _uiState.update { it.copy(errorMessage = "Hardware Error: ${result.exceptionOrNull()?.message}") }
                 timer.stop()
+                sendServiceIntent(ForegroundTimerService.ACTION_STOP, 0L)
             }
         }
 
@@ -251,9 +252,8 @@ open class CountdownViewModel(
         Log.d(TAG, "resume: ${timer.remainingMs()}ms remaining")
         viewModelScope.launch {
             val res1 = relayRepository.setEnlarger(true)
-            val res2 = relayRepository.setSafelight(true)
-            if (!res1.isSuccess || !res2.isSuccess) {
-                Log.e(TAG, "resume: relay command failed — enlarger=${res1.exceptionOrNull()?.message} safelight=${res2.exceptionOrNull()?.message}")
+            if (!res1.isSuccess) {
+                Log.e(TAG, "resume: relay command failed — enlarger=${res1.exceptionOrNull()?.message}")
                 _uiState.update { it.copy(errorMessage = "Resume failed: Hardware did not respond") }
                 timer.pause()
             }
@@ -291,6 +291,7 @@ open class CountdownViewModel(
             // Timer was stopped externally (e.g., relay failure)
             if (timer.state == TimerState.STOPPED) {
                 audioSystem?.stopExposure()
+                sendServiceIntent(ForegroundTimerService.ACTION_STOP, 0L)
                 tickJob = null
                 break
             }
@@ -484,8 +485,8 @@ open class CountdownViewModel(
         super.onCleared()
         tickJob?.cancel()
         relayRepository.close()
-        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
-            try { relayRepository.disconnect() } catch (e: Exception) { /* ignore */ }
+        GlobalScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            try { withTimeout(5_000L) { relayRepository.disconnect() } } catch (_: Exception) { }
         }
         audioSystem?.release()
     }

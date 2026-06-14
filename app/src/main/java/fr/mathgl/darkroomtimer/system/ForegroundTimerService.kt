@@ -35,7 +35,8 @@ class ForegroundTimerService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        when (intent?.action) {
+        if (intent == null) { stopSelf(); return START_NOT_STICKY }
+        when (intent.action) {
             ACTION_START -> {
                 val remaining = intent.getLongExtra(EXTRA_REMAINING_MS, 0L)
 
@@ -71,7 +72,7 @@ class ForegroundTimerService : Service() {
                 stopSelf()
             }
         }
-        return START_STICKY
+        return START_NOT_STICKY
     }
 
     override fun onDestroy() {
