@@ -292,39 +292,6 @@ private fun BottomControlBar(
     }
 }
 
-@Composable
-private fun RelayButton(
-    label: String,
-    isOn: Boolean,
-    hasOverride: Boolean,
-    clickEnabled: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val containerColor = if (isOn) DarkroomRedBright else Color.Transparent
-    val contentColor = if (isOn) Color.Black else DarkroomRedDim
-    val borderColor = if (clickEnabled && isOn) DarkroomRedBright else DarkroomRedFaint
-    OutlinedButton(
-        onClick = onClick,
-        enabled = clickEnabled,
-        colors = ButtonDefaults.outlinedButtonColors(
-            containerColor = containerColor,
-            contentColor = contentColor,
-            disabledContainerColor = Color.Transparent,
-            disabledContentColor = DarkroomRedFaint
-        ),
-        border = BorderStroke(1.dp, borderColor),
-        modifier = modifier.height(48.dp),
-        contentPadding = PaddingValues(horizontal = 8.dp)
-    ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(text = label, fontSize = 11.sp)
-            if (hasOverride) {
-                Text(text = "override", fontSize = 8.sp)
-            }
-        }
-    }
-}
 
 @Composable
 private fun FStopCorrectionSection(

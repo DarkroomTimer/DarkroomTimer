@@ -15,8 +15,10 @@ import fr.mathgl.darkroomtimer.repository.RelayRepository
 import fr.mathgl.darkroomtimer.repository.SettingsRepository
 import fr.mathgl.darkroomtimer.system.RelaySystem
 import fr.mathgl.darkroomtimer.system.ConnectionState
+import fr.mathgl.darkroomtimer.system.RelayStates
 import fr.mathgl.darkroomtimer.system.TeststripSession
 import fr.mathgl.darkroomtimer.system.TeststripState
+import fr.mathgl.darkroomtimer.ui.exposure.ConnectionTint
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -45,7 +47,12 @@ data class TeststripUiState(
     val mode: TeststripMode,
     val incrementType: IncrementType,
     val incrementMs: Long,
-    val isRelayConnected: Boolean,
+    val relayState: RelayStates = RelayStates.INITIAL,
+    val enlargerOverride: Boolean = false,
+    val safelightOverride: Boolean = false,
+    val connectionState: ConnectionState = ConnectionState.Disconnected,
+    val connectionTint: ConnectionTint = ConnectionTint.DIM,
+    val relayType: String = "NULL",
     val errorMessage: String? = null
 )
 
@@ -54,7 +61,8 @@ private const val TAG = "DT/TeststripVM"
 class TeststripViewModel(
     application: Application,
     private val relayRepository: RelayRepository,
-    private val settingsRepository: SettingsRepository
+    private val settingsRepository: SettingsRepository,
+    private val relayType: String = "NULL"
 ) : AndroidViewModel(application) {
 
     private var exposureJob: Job? = null
@@ -79,8 +87,7 @@ class TeststripViewModel(
         selectedGrade = ContrastGrade.DEFAULT,
         mode = TeststripMode.SEPARATE,
         incrementType = IncrementType.F_STOP,
-        incrementMs = 0L,
-        isRelayConnected = false
+        incrementMs = 0L
     ))
     val uiState: StateFlow<TeststripUiState> = _uiState.asStateFlow()
 
@@ -97,6 +104,8 @@ class TeststripViewModel(
         var initMode = runCatching { TeststripMode.valueOf(settingsRepository.teststripMode) }.getOrDefault(TeststripMode.SEPARATE)
         var initIncrementType = runCatching { IncrementType.valueOf(settingsRepository.teststripIncrementType) }.getOrDefault(IncrementType.F_STOP)
         var initIncrementMs = settingsRepository.teststripIncrementMs
+
+        _uiState.update { it.copy(relayType = relayType) }
 
         engine = TeststripEngine(
             baseTimeMs = initBaseMs,
@@ -117,8 +126,17 @@ class TeststripViewModel(
         }
 
         viewModelScope.launch {
-            relayRepository.connectionState.collect {
-                updateUiState()
+            relayRepository.relayStates.collect { rs ->
+                _uiState.update { it.copy(relayState = rs) }
+            }
+        }
+
+        viewModelScope.launch {
+            relayRepository.connectionState.collect { cs ->
+                _uiState.update { s -> s.copy(
+                    connectionState = cs,
+                    connectionTint = calculateConnectionTint(s.relayType, cs)
+                ) }
             }
         }
 
@@ -132,6 +150,7 @@ class TeststripViewModel(
                         relayRepository.connect().onFailure { e ->
                             _uiState.update { it.copy(errorMessage = "Reconnection failed: ${e.message}") }
                         }
+                        _uiState.update { it.copy(relayType = newConfig.enlargerType) }
                     }
             } catch (_: Exception) {
                 // PreferenceManager unavailable in test environment
@@ -156,8 +175,7 @@ class TeststripViewModel(
             denominator = engine.denominator,
             mode = engine.mode,
             incrementType = engine.incrementType,
-            incrementMs = engine.incrementMs,
-            isRelayConnected = relayRepository.connectionState.value is ConnectionState.Connected
+            incrementMs = engine.incrementMs
         ) }
     }
 
@@ -165,6 +183,7 @@ class TeststripViewModel(
         if (session.state != TeststripState.INIT && session.state != TeststripState.BETWEEN_PATCHES) return
         Log.d(TAG, "startSession: patch ${session.currentPatchIndex + 1}")
         session.start()
+        _uiState.update { it.copy(enlargerOverride = false, safelightOverride = false) }
         startExposure()
         updateUiState()
     }
@@ -179,6 +198,7 @@ class TeststripViewModel(
         selectedPatchIndex = session.currentPatchIndex
         viewModelScope.launch { shutOffRelays("pause") }
         audioSystem?.pause()
+        _uiState.update { it.copy(enlargerOverride = false, safelightOverride = false) }
         updateUiState()
     }
 
@@ -199,6 +219,7 @@ class TeststripViewModel(
         tickJob = null
         viewModelScope.launch { shutOffRelays("finish exposure") }
         audioSystem?.stopTeststripPatch()
+        _uiState.update { it.copy(enlargerOverride = false, safelightOverride = false) }
         session.finishExposure()
         selectedPatchIndex = (session.currentPatchIndex + 1) % engine.patchCount
 
@@ -245,6 +266,7 @@ class TeststripViewModel(
         audioSystem?.stop()
         session.abandon()
         selectedPatchIndex = 0
+        _uiState.update { it.copy(enlargerOverride = false, safelightOverride = false) }
         updateUiState()
     }
 
@@ -303,6 +325,28 @@ class TeststripViewModel(
 
     fun selectGrade(grade: ContrastGrade) {
         _uiState.update { it.copy(selectedGrade = grade) }
+    }
+
+    fun toggleEnlargerOverride() {
+        if (session.state == TeststripState.EXPOSING) return
+        val new = !_uiState.value.enlargerOverride
+        viewModelScope.launch { relayRepository.setEnlarger(new) }
+        _uiState.update { it.copy(enlargerOverride = new) }
+    }
+
+    fun toggleSafelightOverride() {
+        if (session.state == TeststripState.EXPOSING) return
+        val new = !_uiState.value.safelightOverride
+        viewModelScope.launch { relayRepository.setSafelight(new) }
+        _uiState.update { it.copy(safelightOverride = new) }
+    }
+
+    private fun calculateConnectionTint(type: String, state: ConnectionState): ConnectionTint = when {
+        type == "NULL" || type == "DEMO" -> ConnectionTint.DIM
+        state is ConnectionState.Connected  -> ConnectionTint.BRIGHT
+        state is ConnectionState.Connecting -> ConnectionTint.MEDIUM
+        state is ConnectionState.Error      -> ConnectionTint.BRIGHT
+        else                                -> ConnectionTint.DIM
     }
 
     private suspend fun shutOffRelays(errorContext: String) {
@@ -378,7 +422,8 @@ class TeststripViewModel(
                 return TeststripViewModel(
                     application,
                     relayRepo,
-                    settingsRepo
+                    settingsRepo,
+                    prefs.relaySystemConfig.enlargerType
                 ) as T
             }
         }

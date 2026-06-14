@@ -8,6 +8,9 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Link
+import androidx.compose.material.icons.filled.LinkOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -25,6 +28,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import fr.mathgl.darkroomtimer.math.IncrementType
 import fr.mathgl.darkroomtimer.math.TeststripEngine
 import fr.mathgl.darkroomtimer.math.TeststripMode
+import fr.mathgl.darkroomtimer.system.ConnectionState
+import fr.mathgl.darkroomtimer.system.RelayState
 import fr.mathgl.darkroomtimer.system.TeststripState
 import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedBright
 import fr.mathgl.darkroomtimer.ui.theme.DarkroomRedDim
@@ -203,6 +208,20 @@ fun TeststripScreen(
                     fontWeight = FontWeight.Bold
                 )
             }
+
+            TeststripRelayBar(
+                enlargerOn = state.relayState.enlarger == RelayState.ON,
+                safelightOn = state.relayState.safelight == RelayState.ON,
+                enlargerOverride = state.enlargerOverride,
+                safelightOverride = state.safelightOverride,
+                overrideEnabled = true,
+                connectionState = state.connectionState,
+                connectionTint = state.connectionTint,
+                relayType = state.relayType,
+                errorMessage = state.errorMessage,
+                onToggleEnlarger = { viewModel.toggleEnlargerOverride() },
+                onToggleSafelight = { viewModel.toggleSafelightOverride() }
+            )
         }
     } else {
         Column(
@@ -393,7 +412,121 @@ fun TeststripScreen(
                     Text("Annuler", fontSize = 14.sp)
                 }
             }
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            TeststripRelayBar(
+                enlargerOn = state.relayState.enlarger == RelayState.ON,
+                safelightOn = state.relayState.safelight == RelayState.ON,
+                enlargerOverride = state.enlargerOverride,
+                safelightOverride = state.safelightOverride,
+                overrideEnabled = state.sessionState != TeststripState.EXPOSING,
+                connectionState = state.connectionState,
+                connectionTint = state.connectionTint,
+                relayType = state.relayType,
+                errorMessage = state.errorMessage,
+                onToggleEnlarger = { viewModel.toggleEnlargerOverride() },
+                onToggleSafelight = { viewModel.toggleSafelightOverride() }
+            )
         }
+    }
+}
+
+@Composable
+private fun TeststripRelayBar(
+    enlargerOn: Boolean,
+    safelightOn: Boolean,
+    enlargerOverride: Boolean,
+    safelightOverride: Boolean,
+    overrideEnabled: Boolean,
+    connectionState: ConnectionState,
+    connectionTint: ConnectionTint,
+    relayType: String,
+    errorMessage: String?,
+    onToggleEnlarger: () -> Unit,
+    onToggleSafelight: () -> Unit
+) {
+    var showConnectionDialog by remember { mutableStateOf(false) }
+
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            RelayButton(
+                label = "Safelight",
+                isOn = safelightOn,
+                hasOverride = safelightOverride,
+                clickEnabled = overrideEnabled,
+                onClick = onToggleSafelight,
+                modifier = Modifier.weight(1f)
+            )
+            RelayButton(
+                label = "Agrandisseur",
+                isOn = enlargerOn,
+                hasOverride = enlargerOverride,
+                clickEnabled = overrideEnabled,
+                onClick = onToggleEnlarger,
+                modifier = Modifier.weight(1f)
+            )
+        }
+
+        val linkIconTint = when (connectionTint) {
+            ConnectionTint.DIM    -> DarkroomRedDim
+            ConnectionTint.BRIGHT -> DarkroomRedBright
+            ConnectionTint.MEDIUM -> DarkroomRedMedium
+            else                  -> DarkroomRedDim
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(
+                onClick = { showConnectionDialog = true },
+                modifier = Modifier.size(40.dp)
+            ) {
+                Icon(
+                    imageVector = if (connectionState is ConnectionState.Connected) Icons.Default.Link else Icons.Default.LinkOff,
+                    contentDescription = "Statut connexion",
+                    tint = linkIconTint
+                )
+            }
+        }
+    }
+
+    if (showConnectionDialog) {
+        val stateLabel = when {
+            relayType == "NULL"  -> "Simulation (sans matériel)"
+            relayType == "DEMO"  -> "Démonstration"
+            connectionState is ConnectionState.Connected  -> "Connecté"
+            connectionState is ConnectionState.Connecting -> "Connexion en cours…"
+            connectionState is ConnectionState.Error      -> "Erreur"
+            else                                          -> "Déconnecté"
+        }
+        AlertDialog(
+            onDismissRequest = { showConnectionDialog = false },
+            title = { Text("Connexion", color = DarkroomRedBright) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text("Driver : $relayType", fontSize = 14.sp, color = DarkroomRedDim)
+                    Text("État : $stateLabel", fontSize = 14.sp, color = DarkroomRedDim)
+                    if (errorMessage != null) {
+                        Text("Erreur : $errorMessage", fontSize = 13.sp, color = Color.Red)
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showConnectionDialog = false }) {
+                    Text("OK", color = DarkroomRedBright)
+                }
+            },
+            containerColor = Color.Black,
+            titleContentColor = DarkroomRedBright,
+            textContentColor = DarkroomRedDim
+        )
     }
 }
 
