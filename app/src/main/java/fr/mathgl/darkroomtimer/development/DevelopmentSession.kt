@@ -17,7 +17,8 @@ data class DevelopmentSessionStateSnapshot(
     val remainingSteps: Int,
     val progress: Int, // 0-100
     val isPreEndAlertTriggered: Boolean,
-    val isCompleted: Boolean
+    val isCompleted: Boolean,
+    val isStepEnded: Boolean = false
 )
 
 /**
@@ -118,7 +119,8 @@ class DevelopmentSession(
                     state = DevelopmentSessionState.COMPLETED,
                     isCompleted = true,
                     progress = 100,
-                    isPreEndAlertTriggered = false
+                    isPreEndAlertTriggered = false,
+                    isStepEnded = true
                 ) }
             } else if (profile.navigationMode == DevelopmentNavigationMode.AUTOMATIC) {
                 // Auto-advance to next step in AUTOMATIC mode
@@ -129,13 +131,15 @@ class DevelopmentSession(
                     currentStep = nextStep,
                     remainingSteps = totalSteps - (currentIdx + 1),
                     progress = ((currentIdx + 1) * 100) / totalSteps,
-                    isPreEndAlertTriggered = false
+                    isPreEndAlertTriggered = false,
+                    isStepEnded = true
                 ) }
             } else {
                 // In MANUAL mode, stay on the current step but clear the preEndAlert
                 // The step has ended, so preEndAlert is no longer relevant
                 updateState { it.copy(
-                    isPreEndAlertTriggered = false
+                    isPreEndAlertTriggered = false,
+                    isStepEnded = true
                 ) }
             }
         } else {
@@ -144,7 +148,8 @@ class DevelopmentSession(
             val isPreEndAlert = isPreEndAlertTriggered(updatedStep, newElapsed)
             updateState { it.copy(
                 currentStep = updatedStep,
-                isPreEndAlertTriggered = isPreEndAlert
+                isPreEndAlertTriggered = isPreEndAlert,
+                isStepEnded = false
             ) }
         }
     }
@@ -171,7 +176,8 @@ class DevelopmentSession(
                 currentStep = nextStep,
                 remainingSteps = totalSteps - (currentIndex + 1),
                 progress = ((currentIndex + 1) * 100) / totalSteps,
-                isPreEndAlertTriggered = false
+                isPreEndAlertTriggered = false,
+                isStepEnded = false
             ) }
         }
     }

@@ -1,7 +1,10 @@
 package fr.mathgl.darkroomtimer.ui.development
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import fr.mathgl.darkroomtimer.audio.AudioSystem
+import fr.mathgl.darkroomtimer.audio.createAudioSystem
 import fr.mathgl.darkroomtimer.development.DevelopmentProfile
 import fr.mathgl.darkroomtimer.development.DevelopmentSession
 import fr.mathgl.darkroomtimer.development.DevelopmentSessionState
@@ -13,7 +16,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-class DevelopmentFlowViewModel : ViewModel() {
+class DevelopmentFlowViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _selectedProfile = MutableStateFlow<DevelopmentProfile?>(null)
     val selectedProfile: StateFlow<DevelopmentProfile?> = _selectedProfile.asStateFlow()
@@ -26,6 +29,9 @@ class DevelopmentFlowViewModel : ViewModel() {
 
     private var currentSession: DevelopmentSession? = null
     private var sessionCollectJob: Job? = null
+    private var prevSnapshot: DevelopmentSessionStateSnapshot? = null
+
+    private val audioSystem: AudioSystem? = createAudioSystem(application)
 
     fun setSelectedProfile(profile: DevelopmentProfile) {
         _selectedProfile.value = profile
@@ -41,12 +47,25 @@ class DevelopmentFlowViewModel : ViewModel() {
 
     fun startSession(profile: DevelopmentProfile) {
         sessionCollectJob?.cancel()
+        prevSnapshot = null
         _selectedProfile.value = profile
         val session = DevelopmentSession(profile)
         currentSession = session
         sessionCollectJob = viewModelScope.launch {
             var tickJob: Job? = null
             session.stateFlow.collect { snapshot ->
+                val prev = prevSnapshot
+                if (prev != null) {
+                    when {
+                        snapshot.isPreEndAlertTriggered && !prev.isPreEndAlertTriggered ->
+                            audioSystem?.stopExposure()
+                        snapshot.isCompleted && !prev.isCompleted ->
+                            audioSystem?.stopTeststripSession()
+                        snapshot.isStepEnded && !prev.isStepEnded ->
+                            audioSystem?.stopTeststripPatch()
+                    }
+                }
+                prevSnapshot = snapshot
                 _sessionSnapshot.value = snapshot
                 tickJob?.cancel()
                 if (snapshot.state == DevelopmentSessionState.ACTIVE) {
@@ -65,12 +84,31 @@ class DevelopmentFlowViewModel : ViewModel() {
         sessionCollectJob?.cancel()
         sessionCollectJob = null
         currentSession = null
+        prevSnapshot = null
         _sessionSnapshot.value = null
         _selectedProfile.value = null
+        audioSystem?.stop()
     }
 
-    fun sessionStart() { currentSession?.start() }
-    fun sessionPause() { currentSession?.pause() }
-    fun sessionResume() { currentSession?.resume() }
+    fun sessionStart() {
+        currentSession?.start()
+        audioSystem?.startExposure()
+    }
+
+    fun sessionPause() {
+        currentSession?.pause()
+        audioSystem?.pause()
+    }
+
+    fun sessionResume() {
+        currentSession?.resume()
+        audioSystem?.resume()
+    }
+
     fun sessionNextStep() { currentSession?.nextStep() }
+
+    override fun onCleared() {
+        super.onCleared()
+        audioSystem?.release()
+    }
 }
