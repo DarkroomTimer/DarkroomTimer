@@ -1,0 +1,127 @@
+esphome:
+  name: darkroomtimer
+
+esp32:
+  variant: esp32
+  framework:
+    type: esp-idf
+
+logger:
+  level: INFO
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+api:
+  encryption:
+    key: !secret esp_api_key
+
+web_server:
+  port: 80
+  auth:
+    username: !secret web_server_username
+    password: !secret web_server_password
+
+ota:
+  platform: web_server
+
+sensor:
+  - platform: wifi_signal
+    name: "RSSI"
+    id: sensor_rssi
+    update_interval: 90s
+    entity_category: "diagnostic"
+
+  - platform: uptime
+    name: "Uptime"
+    id: sensor_uptime
+    update_interval: 300s
+    entity_category: "diagnostic"
+
+button:
+  - platform: restart
+    name: "Restart"
+    id: button_restart
+
+light:
+  - platform: status_led
+    name: "LED"
+    id: led_status
+    pin:
+      number: GPIO13
+      inverted: True
+    internal: True
+
+switch:
+  - platform: gpio
+    name: "1"
+    pin: GPIO27
+    id: relay_1
+    on_turn_off:
+      - script.stop: timed_power_script
+
+  - platform: gpio
+    name: "2"
+    pin: GPIO14
+    id: relay_2
+
+binary_sensor:
+  - platform: gpio
+    name: "Button"
+    id: sensor_button
+    pin:
+      number: GPIO00
+      mode:
+        input: True
+        pullup: True
+      inverted: True
+    disabled_by_default: True
+    icon: "mdi:radiobox-blank"
+    filters:
+      - delayed_on: 50ms
+    on_press:
+      - switch.toggle: relay_1
+
+  - platform: gpio
+    name: "1"
+    pin:
+      number: GPIO32
+      mode:
+        input: True
+        pullup: True
+      inverted: True
+    filters:
+      - delayed_on_off: 50ms
+    on_press:
+      - switch.turn_on: relay_1
+    on_release:
+      - switch.turn_off: relay_1
+
+  - platform: gpio
+    name: "2"
+    pin:
+      number: GPIO33
+      mode:
+        input: True
+        pullup: True
+      inverted: True
+    filters:
+      - delayed_on_off: 50ms
+    on_press:
+      - switch.turn_on: relay_2
+    on_release:
+      - switch.turn_off: relay_2
+
+# Timed Power
+script:
+  - id: timed_power_script
+    mode: restart
+    # Define the parameter explicitly as milliseconds
+    parameters:
+      duration_ms: int
+    then:
+      - switch.turn_on: relay_1
+      # Pass the milliseconds directly to the delay component
+      - delay: !lambda "return duration_ms;"
+      - switch.turn_off: relay_1
