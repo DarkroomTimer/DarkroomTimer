@@ -3,8 +3,10 @@ package fr.mathgl.darkroomtimer.system
 import android.util.Log
 import fr.mathgl.darkroomtimer.system.drivers.DemoRelayController
 import fr.mathgl.darkroomtimer.system.drivers.ESPhomeHttpRelayController
+import fr.mathgl.darkroomtimer.system.drivers.ESPhomeNativeRelayController
 import fr.mathgl.darkroomtimer.system.drivers.NullRelayController
 import fr.mathgl.darkroomtimer.system.drivers.TasmotaRelayController
+import java.util.Base64
 
 /**
  * Flat, JSON-serializable representation of the full relay system configuration.
@@ -19,6 +21,7 @@ data class RelaySystemConfigFlat(
     val enlargerUsername: String = "",
     val enlargerPassword: String = "",
     val enlargerEntityId: String = "",        // ESPHome
+    val enlargerEncryptionKey: String = "",   // ESPHome Native: base64-encoded PSK
     val enlargerTimingMode: String = "TIMED_POWER", // Tasmota: "TIMED_POWER" or "EXPLICIT_ON_OFF"
     // Safelight
     val safelightEnabled: Boolean = false,
@@ -28,6 +31,7 @@ data class RelaySystemConfigFlat(
     val safelightPort: Int = 80,
     val safelightChannel: Int = 2,            // Tasmota: channel 2 when same device
     val safelightEntityId: String = "",       // ESPHome when independent
+    val safelightEncryptionKey: String = "",  // ESPHome Native: base64-encoded PSK
     val safelightUsername: String = "",
     val safelightPassword: String = ""
 ) {
@@ -53,6 +57,12 @@ data class RelaySystemConfigFlat(
             port     = enlargerPort,
             entityId = enlargerEntityId
         )
+        "ESPHOME_NATIVE" -> ESPhomeNativeRelayController(
+            host          = enlargerHost,
+            port          = enlargerPort,
+            entityId      = enlargerEntityId,
+            encryptionKey = Base64.getDecoder().decode(enlargerEncryptionKey)
+        )
         else           -> {
             if (enlargerType != "NULL") Log.w(TAG, "Unknown enlarger type '$enlargerType', using NullRelayController")
             NullRelayController()
@@ -77,6 +87,12 @@ data class RelaySystemConfigFlat(
                     port     = enlargerPort,
                     entityId = safelightEntityId
                 )
+                "ESPHOME_NATIVE" -> ESPhomeNativeRelayController(
+                    host          = enlargerHost,
+                    port          = enlargerPort,
+                    entityId      = safelightEntityId,
+                    encryptionKey = Base64.getDecoder().decode(enlargerEncryptionKey)
+                )
                 else -> {
                     if (enlargerType != "NULL") Log.w(TAG, "Unknown enlarger type '$enlargerType' for same-device safelight, using NullRelayController")
                     NullRelayController()
@@ -97,6 +113,12 @@ data class RelaySystemConfigFlat(
                 host     = safelightHost,
                 port     = safelightPort,
                 entityId = safelightEntityId
+            )
+            "ESPHOME_NATIVE" -> ESPhomeNativeRelayController(
+                host          = safelightHost,
+                port          = safelightPort,
+                entityId      = safelightEntityId,
+                encryptionKey = Base64.getDecoder().decode(safelightEncryptionKey)
             )
             else           -> {
                 if (safelightType != "NULL") Log.w(TAG, "Unknown safelight type '$safelightType', using NullRelayController")

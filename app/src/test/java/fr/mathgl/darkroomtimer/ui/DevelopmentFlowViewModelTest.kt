@@ -26,7 +26,7 @@ class DevelopmentFlowViewModelTest {
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
-        viewModel = DevelopmentFlowViewModel()
+        viewModel = DevelopmentFlowViewModel(android.app.Application())
     }
 
     @After

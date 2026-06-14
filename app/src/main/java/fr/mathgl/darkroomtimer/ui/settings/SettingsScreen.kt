@@ -200,7 +200,7 @@ fun SettingsScreen(
         // Enlarger driver
         SettingsDropdown(
             label = "Agrandisseur",
-            options = listOf("NULL", "DEMO", "TASMOTA", "ESPHOME_HTTP"),
+            options = listOf("NULL", "DEMO", "TASMOTA", "ESPHOME_HTTP", "ESPHOME_NATIVE"),
             selected = relayCfg.enlargerType,
             onSelect = { newType ->
                 val updated = relayCfg.copy(enlargerType = newType)
@@ -209,7 +209,7 @@ fun SettingsScreen(
             }
         )
 
-        if (relayCfg.enlargerType == "TASMOTA" || relayCfg.enlargerType == "ESPHOME_HTTP") {
+        if (relayCfg.enlargerType == "TASMOTA" || relayCfg.enlargerType == "ESPHOME_HTTP" || relayCfg.enlargerType == "ESPHOME_NATIVE") {
             RelayTextField(
                 label = "Hôte (IP ou hostname)",
                 value = relayCfg.enlargerHost,
@@ -251,9 +251,21 @@ fun SettingsScreen(
                 onValueChange = { v -> val u = relayCfg.copy(enlargerEntityId = v); relayCfg = u; prefs.relaySystemConfig = u }
             )
         }
+        if (relayCfg.enlargerType == "ESPHOME_NATIVE") {
+            RelayTextField(
+                label = "Object ID (ex: relay_1)",
+                value = relayCfg.enlargerEntityId,
+                onValueChange = { v -> val u = relayCfg.copy(enlargerEntityId = v); relayCfg = u; prefs.relaySystemConfig = u }
+            )
+            RelayTextField(
+                label = "Clé de chiffrement (base64)",
+                value = relayCfg.enlargerEncryptionKey,
+                onValueChange = { v -> val u = relayCfg.copy(enlargerEncryptionKey = v); relayCfg = u; prefs.relaySystemConfig = u }
+            )
+        }
 
-        // Safelight (only for TASMOTA or ESPHOME_HTTP)
-        if (relayCfg.enlargerType == "TASMOTA" || relayCfg.enlargerType == "ESPHOME_HTTP") {
+        // Safelight (only for TASMOTA, ESPHOME_HTTP, or ESPHOME_NATIVE)
+        if (relayCfg.enlargerType == "TASMOTA" || relayCfg.enlargerType == "ESPHOME_HTTP" || relayCfg.enlargerType == "ESPHOME_NATIVE") {
             Spacer(modifier = Modifier.height(8.dp))
             SettingsSwitch(
                 label = "Safelight activé",
@@ -275,7 +287,7 @@ fun SettingsScreen(
                         )
                     } else {
                         RelayTextField(
-                            label = "Entity ID safelight",
+                            label = "Object ID safelight",
                             value = relayCfg.safelightEntityId,
                             onValueChange = { v -> val u = relayCfg.copy(safelightEntityId = v); relayCfg = u; prefs.relaySystemConfig = u }
                         )
@@ -284,11 +296,11 @@ fun SettingsScreen(
                     // Independent safelight
                     SettingsDropdown(
                         label = "Driver safelight",
-                        options = listOf("NULL", "TASMOTA", "ESPHOME_HTTP"),
+                        options = listOf("NULL", "TASMOTA", "ESPHOME_HTTP", "ESPHOME_NATIVE"),
                         selected = relayCfg.safelightType,
                         onSelect = { v -> val u = relayCfg.copy(safelightType = v); relayCfg = u; prefs.relaySystemConfig = u }
                     )
-                    if (relayCfg.safelightType == "TASMOTA" || relayCfg.safelightType == "ESPHOME_HTTP") {
+                    if (relayCfg.safelightType == "TASMOTA" || relayCfg.safelightType == "ESPHOME_HTTP" || relayCfg.safelightType == "ESPHOME_NATIVE") {
                         RelayTextField(
                             label = "Hôte safelight",
                             value = relayCfg.safelightHost,
@@ -322,6 +334,18 @@ fun SettingsScreen(
                             label = "Entity ID safelight",
                             value = relayCfg.safelightEntityId,
                             onValueChange = { v -> val u = relayCfg.copy(safelightEntityId = v); relayCfg = u; prefs.relaySystemConfig = u }
+                        )
+                    }
+                    if (relayCfg.safelightType == "ESPHOME_NATIVE") {
+                        RelayTextField(
+                            label = "Object ID safelight (ex: relay_2)",
+                            value = relayCfg.safelightEntityId,
+                            onValueChange = { v -> val u = relayCfg.copy(safelightEntityId = v); relayCfg = u; prefs.relaySystemConfig = u }
+                        )
+                        RelayTextField(
+                            label = "Clé de chiffrement safelight (base64)",
+                            value = relayCfg.safelightEncryptionKey,
+                            onValueChange = { v -> val u = relayCfg.copy(safelightEncryptionKey = v); relayCfg = u; prefs.relaySystemConfig = u }
                         )
                     }
                 }

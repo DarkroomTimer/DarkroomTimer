@@ -2,6 +2,7 @@ package fr.mathgl.darkroomtimer.system
 
 import fr.mathgl.darkroomtimer.system.drivers.*
 import kotlinx.coroutines.CoroutineDispatcher
+import java.util.Base64
 
 object RelayControllerFactory {
     fun create(config: RelayControllerConfig, dispatcher: CoroutineDispatcher): RelayController =
@@ -21,6 +22,12 @@ object RelayControllerFactory {
                 host = config.host,
                 port = config.port,
                 entityId = config.entityId
+            )
+            is RelayControllerConfig.ESPhomeNative -> ESPhomeNativeRelayController(
+                host = config.host,
+                port = config.port,
+                entityId = config.entityId,
+                encryptionKey = Base64.getDecoder().decode(config.encryptionKey)
             )
         }
 }
