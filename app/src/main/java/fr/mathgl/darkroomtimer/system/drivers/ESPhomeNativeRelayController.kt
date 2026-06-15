@@ -123,9 +123,10 @@ class ESPhomeNativeRelayController(
             val (type, payload) = recvEncrypted(inp, n)
             when (type) {
                 EspHomeProto.MSG_LIST_ENTITIES_SWITCH_RESPONSE -> {
+                    Log.d(TAG, "switch entity raw: ${payload.joinToString("") { "%02x".format(it) }}")
                     val entity = EspHomeProto.decodeSwitchEntity(payload)
                     Log.d(TAG, "switch entity: objectId=${entity.objectId} key=${entity.key} name=${entity.name}")
-                    if (entity.objectId == entityId) foundKey = entity.key
+                    if (entity.objectId == entityId || entity.name == entityId) foundKey = entity.key
                 }
                 EspHomeProto.MSG_LIST_ENTITIES_DONE_RESPONSE -> break@loop
                 EspHomeProto.MSG_DISCONNECT_REQUEST -> throw Exception("Device requested disconnect during entity listing")
