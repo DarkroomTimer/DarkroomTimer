@@ -39,10 +39,27 @@ sensor:
     update_interval: 300s
     entity_category: "diagnostic"
 
+# number:
+#   - platform: template
+#     name: "Number of ms for TimedPower"
+#     id: timed_power_ms
+#     optimistic: true
+#     min_value: 1000
+#     max_value: 30000
+#     step: 100
+#     initial_value: 4000
+
 button:
   - platform: restart
     name: "Restart"
     id: button_restart
+  # - platform: template
+  #   name: "Timed Power Test"
+  #   id: trigger_script_timed_power
+  #   on_press:
+  #     - script.execute:
+  #         id: timed_power_script
+  #         duration_ms: !lambda "return (int)id(timed_power_ms).state;"
 
 light:
   - platform: status_led
